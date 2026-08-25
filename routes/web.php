@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CinemaController as AdminCinemaController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
