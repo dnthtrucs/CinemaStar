@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Banner;
 use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Showtime;
@@ -10,6 +11,8 @@ class HomeController extends Controller
 {
     public function index()
     {
+        $banners = Banner::query()->active()->ordered()->get();
+
         $featuredMovies = Movie::query()
             ->where('status', 'now_showing')
             ->orderByDesc('is_featured')
@@ -33,6 +36,6 @@ class HomeController extends Controller
 
         $cinemas = Cinema::query()->where('is_active', true)->withCount('rooms')->limit(6)->get();
 
-        return view('welcome', compact('featuredMovies', 'upcomingMovies', 'showtimes', 'cinemas'));
+        return view('welcome', compact('banners', 'featuredMovies', 'upcomingMovies', 'showtimes', 'cinemas'));
     }
 }
