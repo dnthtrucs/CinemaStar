@@ -14,7 +14,7 @@
             <div class="col-lg-5 d-none d-lg-block">
                 <div class="p-4 rounded-4" style="background:linear-gradient(135deg,#e11d2e,#5d0610);">
                     <div class="display-1 text-center"><i class="bi bi-ticket-perforated"></i></div>
-                    <div class="text-center fw-bold fs-4">CineBook Membership</div>
+                    <div class="text-center fw-bold fs-4">CinemaStar Membership</div>
                     <div class="text-center text-white-50 mt-2">Quản lý vé và lịch sử giao dịch tập trung</div>
                 </div>
             </div>
@@ -28,7 +28,7 @@
         @forelse($featuredMovies as $movie)
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="card movie-card p-2 shadow-soft">
-                    <a href="{{ route('movies.show', $movie) }}"><img class="movie-poster" src="{{ $movie->poster ?: 'https://placehold.co/500x750/222/fff?text=CineBook' }}" alt="{{ $movie->title }}"></a>
+                    <a href="{{ route('movies.show', $movie) }}"><img class="movie-poster" src="{{ $movie->poster ?: 'https://placehold.co/500x750/222/fff?text=CinemaStar' }}" alt="{{ $movie->title }}"></a>
                     <div class="card-body px-2 pb-2">
                         <div class="d-flex gap-2 mb-2"><span class="badge text-bg-danger">{{ $movie->age_rating }}</span><span class="small text-muted">{{ $movie->duration }} phút</span></div>
                         <h5 class="fw-bold text-truncate"><a class="text-dark text-decoration-none" href="{{ route('movies.show', $movie) }}">{{ $movie->title }}</a></h5>
