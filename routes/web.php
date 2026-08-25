@@ -68,6 +68,7 @@ Route::post('/payments/momo/ipn', [PaymentController::class, 'momoIpn'])->name('
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::resource('movies', AdminMovieController::class)->except('show');
+    Route::resource('banners', AdminBannerController::class)->except('show');
     Route::resource('cinemas', AdminCinemaController::class)->except('show');
     Route::resource('rooms', AdminRoomController::class)->except('show');
     Route::get('/showtimes/bulk/create', [AdminShowtimeController::class, 'bulkCreate'])->name('showtimes.bulk.create');
