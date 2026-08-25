@@ -1,3 +1,6 @@
+@extends('layouts.app')
+@section('title', 'Trang chủ')
+@section('content')
 @if($banners->isNotEmpty())
 <section class="home-banner mb-5">
     <div id="cinemaStarBanner" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5500">
