@@ -48,7 +48,7 @@ Tạo database trong phpMyAdmin, ví dụ `cinema_db`, sau đó chỉnh file `.e
 ```env
 APP_NAME=CinemaStar
 APP_URL=http://127.0.0.1:8000
-APP_TIMEZONE=Asia/Ho_Chi_Minh
+APP_TIMEZONE=Asia/Ha_Noi
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -68,8 +68,6 @@ php artisan serve
 ```
 
 Mở: http://127.0.0.1:8000
-
-> Không commit file `.env`. File này chứa cấu hình database, email và khóa thanh toán.
 
 ## Cấu hình email
 
