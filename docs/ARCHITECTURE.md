@@ -1,14 +1,23 @@
-# Kiến trúc hệ thống CineBook
+# Kiến trúc hệ thống CinemaStar
 
 ## Phạm vi nghiệp vụ
 
-Hệ thống phục vụ hai nhóm người dùng: khách hàng đặt vé và quản trị viên vận hành rạp. Luồng chính là chọn phim → chọn suất chiếu → chọn ghế → giữ ghế → thanh toán → phát hành vé → check-in.
+CinemaStar có ba nhóm người dùng:
+
+| Vai trò | Phạm vi |
+|---|---|
+| Khách hàng | Xem lịch, chọn ghế, đặt vé, thanh toán, dùng voucher/điểm, xem vé và gửi yêu cầu hoàn tiền |
+| Nhân viên (Staff) | Tra cứu mã đơn/QR và check-in khách vào rạp |
+| Quản trị viên (Admin) | Quản lý dữ liệu rạp, lịch chiếu, ưu đãi, tài khoản, hoàn tiền và báo cáo |
+
+Luồng chính: **chọn phim → chọn suất → chọn ghế → giữ ghế → thanh toán → phát hành vé QR/email → check-in**.
 
 ## Mô hình dữ liệu
 
-```mermaid
+~~~mermaid
 erDiagram
     USERS ||--o{ BOOKINGS : creates
+    USERS ||--o{ REFUND_REQUESTS : requests
     CINEMAS ||--o{ ROOMS : contains
     ROOMS ||--o{ SEATS : has
     MOVIES ||--o{ SHOWTIMES : scheduled
@@ -17,32 +26,39 @@ erDiagram
     BOOKINGS ||--|{ TICKETS : issues
     SEATS ||--o{ TICKETS : assigned
     BOOKINGS ||--o{ PAYMENTS : attempts
-```
+    VOUCHERS ||--o{ BOOKINGS : applied_to
+~~~
 
-## Quy tắc quan trọng
+## Quy tắc nghiệp vụ quan trọng
 
-1. Mỗi ghế chỉ có một ticket cho một suất chiếu; ràng buộc unique nằm ở database.
-2. Việc tạo booking chạy trong transaction và khóa bản ghi suất chiếu/ghế.
-3. Booking chưa trả tiền có thời hạn. Scheduler xóa ticket giữ chỗ và đổi booking sang `expired`.
-4. Tổng tiền luôn tính từ `showtimes.base_price + seats.price_surcharge` tại server.
-5. Booking chỉ được xác nhận khi callback hợp lệ, đúng số tiền và trạng thái gateway thành công.
-6. Callback thanh toán có thể gửi lại nhiều lần nhưng không ghi nhận doanh thu hai lần.
+1. Mỗi ghế chỉ được bán một lần cho một suất chiếu. Việc giữ/tạo booking chạy trong transaction để chống hai khách đặt cùng ghế.
+2. Booking chưa thanh toán có hạn giữ ghế. Khi quá hạn, tác vụ định kỳ giải phóng ghế và cập nhật trạng thái đơn.
+3. Tổng tiền do server tính từ giá suất chiếu, phụ thu ghế, voucher và điểm đổi; không tin dữ liệu giá từ trình duyệt.
+4. Voucher được áp dụng trước, sau đó điểm thành viên giảm tiếp trên số tiền còn lại. Một điểm tương đương 1.000đ.
+5. Điểm được cộng một lần sau khi thanh toán thành công; điểm đã dùng được hoàn lại khi đơn chưa thanh toán bị hủy/hết hạn.
+6. Mỗi đơn thanh toán có một mã đơn BK... và QR. Nhân viên check-in một lần cho cả đơn, không check-in lặp.
+7. Trạng thái vé ưu tiên: **Đã check-in** → **Đã hết hiệu lực** (quá giờ kết thúc phim, chưa check-in) → **Sẵn sàng vào rạp**.
+8. Khi tạo lịch chiếu, giờ kết thúc = giờ bắt đầu + thời lượng phim + 15 phút chuẩn bị phòng. Các suất chồng thời gian trong cùng phòng bị từ chối hoặc bỏ qua khi tạo hàng loạt.
+9. Callback thanh toán chỉ xác nhận khi hợp lệ; không ghi nhận thanh toán/điểm/doanh thu hai lần.
 
-## Trạng thái
+## Trạng thái chính
 
-| Thực thể | Trạng thái |
+| Thực thể | Trạng thái tiêu biểu |
 |---|---|
-| Booking | `pending`, `confirmed`, `cancelled`, `expired` |
-| Payment | `initiated`, `pending`, `success`, `failed` |
-| Ticket | `valid`, `used`, `cancelled` |
-| Showtime | `scheduled`, `cancelled` |
+| Booking | pending, confirmed, cancelled, expired |
+| Payment | initiated, pending, success, failed |
+| Showtime | scheduled, cancelled |
+| Refund request | requested, approved, refunded, rejected |
+| Vé hiển thị | Sẵn sàng vào rạp, Đã check-in, Đã hết hiệu lực |
 
 ## Tổ chức mã nguồn
 
-- `app/Http/Controllers`: luồng khách hàng, xác thực và thanh toán.
-- `app/Http/Controllers/Admin`: nghiệp vụ quản trị.
-- `app/Services/BookingService.php`: transaction giữ/hủy/trả ghế.
-- `app/Services/PaymentGatewayService.php`: tạo yêu cầu và xác minh chữ ký cổng thanh toán.
-- `app/Http/Requests`: validation cho dữ liệu quản trị.
-- `database/migrations`: schema và ràng buộc toàn vẹn.
-- `tests/Feature`: kiểm thử luồng nghiệp vụ trọng yếu.
+- app/Http/Controllers: luồng khách hàng, hồ sơ, đặt vé, thanh toán, hoàn tiền và xác thực vé.
+- app/Http/Controllers/Admin: dashboard, quản lý dữ liệu rạp, lịch chiếu, voucher, báo cáo, check-in và xử lý hoàn tiền.
+- app/Services/BookingService.php: giữ ghế, transaction và tính tiền đơn.
+- app/Services/PaymentGatewayService.php: tạo yêu cầu thanh toán và xác minh callback.
+- app/Notifications: email xác nhận thanh toán và thông báo hoàn tiền.
+- app/Http/Requests: validation phía server cho dữ liệu quản trị.
+- database/migrations: schema, khóa ngoại và ràng buộc toàn vẹn.
+- resources/views: giao diện Blade cho khách hàng, Admin và Staff.
+- tests/Feature: kiểm thử các luồng nghiệp vụ trọng yếu.
