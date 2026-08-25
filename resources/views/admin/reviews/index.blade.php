@@ -1,0 +1,3 @@
+@extends('layouts.app')
+@section('title','Duyệt đánh giá')
+@section('content')<div class="container py-4"><h1 class="h3 mb-4">Duyệt đánh giá phim</h1>@foreach($reviews as $r)<div class="card mb-3"><div class="card-body"><strong>{{ $r->movie->title }}</strong> · {{ $r->user->name }} · {{ str_repeat('★',$r->rating) }} <span class="badge bg-secondary">{{ $r->status }}</span><p class="mb-2 mt-2">{{ $r->comment }}</p><form method="POST" action="{{ route('admin.reviews.update',$r) }}">@csrf @method('PATCH')<button name="status" value="approved" class="btn btn-sm btn-success">Duyệt</button><button name="status" value="rejected" class="btn btn-sm btn-outline-danger">Từ chối</button></form></div></div>@endforeach{{ $reviews->links() }}</div>@endsection

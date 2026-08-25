@@ -1,0 +1,3 @@
+@extends('layouts.app')
+@section('title','Yêu cầu hoàn tiền')
+@section('content')<div class="container py-5"><div class="card shadow-sm mx-auto" style="max-width:680px"><div class="card-body p-4"><h1 class="h3">Yêu cầu hoàn tiền</h1><p>Đơn <strong>{{ $booking->code }}</strong> · Số tiền: <strong>{{ number_format($booking->total_price) }}₫</strong></p><form method="POST" action="{{ route('refunds.store',$booking) }}">@csrf<label class="form-label">Lý do hoàn tiền</label><textarea class="form-control @error('reason') is-invalid @enderror" name="reason" rows="5" required>{{ old('reason') }}</textarea>@error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror<button class="btn btn-danger mt-3">Gửi yêu cầu</button></form></div></div></div>@endsection

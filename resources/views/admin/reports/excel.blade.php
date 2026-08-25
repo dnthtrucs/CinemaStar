@@ -1,0 +1,1 @@
+<table border="1"><thead><tr><th>Mã đơn</th><th>Phim</th><th>Phương thức</th><th>Số tiền</th><th>Thời điểm</th></tr></thead><tbody>@foreach($rows as $p)<tr><td>{{ $p->booking->code }}</td><td>{{ $p->booking->showtime->movie->title }}</td><td>{{ strtoupper($p->provider) }}</td><td>{{ $p->amount }}</td><td>{{ $p->paid_at }}</td></tr>@endforeach</tbody></table>

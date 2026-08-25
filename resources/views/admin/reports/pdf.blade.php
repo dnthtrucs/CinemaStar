@@ -1,0 +1,1 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Báo cáo CinemaStar</title><style>body{font-family:Arial;padding:30px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #aaa;padding:8px;text-align:left}</style></head><body><h1>Báo cáo doanh thu CinemaStar</h1><p>Nhấn Ctrl+P → Save as PDF để xuất PDF.</p>@include('admin.reports.excel')</body></html>
