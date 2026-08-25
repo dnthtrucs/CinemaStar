@@ -1,128 +1,120 @@
 # CinemaStar – Hệ thống quản lý và đặt vé rạp chiếu phim
 
-CinemaStar là  tốt nghiệp xây dựng bằng Laravel 11,  đầy đủ quy trình vận hành rạp chiếu phim: quản lý phim/rạp/phòng/ghế/suất chiếu, giữ ghế chống đặt trùng, đặt vé, thanh toán, phát hành mã QR vé, check-in và báo cáo doanh thu.
+CinemaStar là đồ án tốt nghiệp xây dựng bằng **Laravel 11, MySQL và Blade/Bootstrap**. Hệ thống mô phỏng quy trình vận hành rạp chiếu phim: quản lý nội dung, lập lịch chiếu, đặt ghế, thanh toán, phát hành vé QR, check-in, ưu đãi thành viên, hoàn tiền và báo cáo.
 
-## Chức năng
+## Chức năng chính
 
 ### Khách hàng
 
-- Đăng ký, đăng nhập, cập nhật hồ sơ và bảo vệ đăng nhập bằng rate limit.
-- Xem phim đang chiếu/sắp chiếu, thông tin rạp và lịch chiếu.
-- Chọn ghế trực quan; giá được tính ở máy chủ theo loại ghế.
-- Giữ ghế trong thời gian cấu hình; đơn hết hạn tự trả ghế.
-- Thanh toán qua MoMo, VNPAY hoặc cổng  khi demo.
-- Xem lịch sử đơn, mã vé và hủy đơn chưa thanh toán.
+- Đăng ký, đăng nhập, cập nhật hồ sơ.
+- Xem phim, rạp, phòng chiếu và suất chiếu còn hiệu lực.
+- Chọn ghế trực quan, giữ ghế trong thời gian cấu hình và chống đặt trùng.
+- Áp dụng voucher; dùng điểm thành viên để giảm giá (**1 điểm = 1.000đ**).
+- Thanh toán mô phỏng hoặc qua MoMo/VNPAY khi đã cấu hình sandbox.
+- Nhận email xác nhận thanh toán kèm thông tin vé, mã đơn và QR.
+- Xem lịch sử đơn/vé; gửi yêu cầu hủy hoặc hoàn tiền theo điều kiện của hệ thống.
+- Theo dõi trạng thái vé: **Sẵn sàng vào rạp**, **Đã check-in** hoặc **Đã hết hiệu lực**.
 
-### Quản trị viên
+### Quản trị viên và nhân viên
 
-- Dashboard doanh thu, đơn hàng, khách hàng và giao dịch gần đây.
-- CRUD phim, rạp, phòng chiếu, sơ đồ ghế và suất chiếu.
-- Phát hiện lịch chiếu trùng phòng.
-- Quản lý đơn đặt vé, giao dịch, tài khoản và phân quyền.
-- Tra cứu mã vé và check-in; ngăn tái sử dụng vé.
+- Dashboard doanh thu, đơn vé, tài khoản và hoạt động gần đây.
+- Quản lý phim, rạp, phòng, ghế, suất chiếu và người dùng.
+- Tạo một suất hoặc **tạo suất chiếu hàng loạt** theo khoảng ngày và nhiều khung giờ.
+- Tự tính giờ kết thúc theo thời lượng phim + 15 phút chuẩn bị phòng; tự bỏ qua lịch trùng phòng.
+- Quản lý voucher, điểm thành viên, đơn vé và yêu cầu hoàn tiền.
+- Admin/Staff check-in bằng mã đơn `BK...` hoặc QR; một đơn chỉ check-in một lần.
+- Xuất báo cáo doanh thu CSV, Excel và PDF.
 
-### An toàn dữ liệu
+## Công nghệ
 
-- CSRF, escaping Blade, validation phía server và rate limiting đăng nhập.
-- Middleware phân quyền admin; kiểm tra quyền sở hữu đơn hàng.
-- Transaction và row lock khi giữ ghế; unique constraint chống trùng ghế.
-- Xác minh chữ ký callback và số tiền từ MoMo/VNPAY; xử lý callback idempotent.
-- Không lưu khóa thanh toán trong source code.
+- PHP 8.2+, Laravel 11
+- MySQL 8+/MariaDB 10.6+
+- Blade, Bootstrap, Vite
+- Endroid QR Code
+- MoMo/VNPAY (chế độ mô phỏng hoặc sandbox)
 
-## Yêu cầu
+## Cài đặt trên XAMPP
 
-- PHP 8.2 trở lên và Composer 2
-- MySQL 8/MariaDB 10.6 trở lên (SQLite dùng được cho kiểm thử)
-- Node.js 20 trở lên
-
-## Cài đặt
-
-```bash
-git clone https://github.com/dnthtrucs/WebNangCao.git
-cd WebNangCao/Cinema
+```powershell
+git clone https://github.com/dnthtrucs/CinemaStar.git
+cd CinemaStar
 composer install
-cp .env.example .env
+copy .env.example .env
 php artisan key:generate
 ```
 
-Tạo database MySQL rồi cấu hình `.env`:
+Tạo database trong phpMyAdmin, ví dụ `cinema_db`, sau đó chỉnh file `.env`:
 
 ```env
+APP_NAME=CinemaStar
+APP_URL=http://127.0.0.1:8000
+APP_TIMEZONE=Asia/Ho_Chi_Minh
+
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=cinema_graduate
+DB_DATABASE=cinema_db
 DB_USERNAME=root
 DB_PASSWORD=
 ```
 
 Khởi tạo dữ liệu và chạy ứng dụng:
 
-```bash
-php artisan migrate:fresh --seed
+```powershell
+php artisan migrate --seed
 npm install
 npm run build
 php artisan serve
 ```
 
-Mở `http://127.0.0.1:8000`.
+Mở: http://127.0.0.1:8000
 
-Tài khoản demo:
+> Không commit file `.env`. File này chứa cấu hình database, email và khóa thanh toán.
 
-| Vai trò | Email | Mật khẩu |
-|---|---|---|
-| Admin | `admin@cinema.test` | `Admin@123` |
-| Khách hàng | `customer@cinema.test` | `User@123` |
+## Cấu hình email
 
-Đổi các mật khẩu này trước khi triển khai thật.
+CinemaStar gửi email sau khi thanh toán thành công. Cấu hình SMTP trong `.env`, sau đó xóa cache cấu hình:
+
+```powershell
+php artisan optimize:clear
+```
+
+Khi dùng Gmail, nên dùng App Password thay cho mật khẩu đăng nhập Gmail thông thường.
 
 ## Cấu hình thanh toán
 
-Chế độ trình diễn trên XAMPP không cần khóa API và vẫn cho phép chọn giao diện MoMo/VNPAY:
+Khi demo trên XAMPP:
 
 ```env
 DEMO_PAYMENT_ENABLED=true
 PAYMENT_MODE=simulate
 ```
 
-Muốn kết nối môi trường thử nghiệm thật, đổi sang:
+Để kết nối MoMo/VNPAY sandbox, nhập thông tin do cổng thanh toán cung cấp trong `.env` và đặt:
 
 ```env
 PAYMENT_MODE=sandbox
-APP_URL=https://ten-mien-https-cong-khai.example
+APP_URL=https://ten-mien-cong-khai.example
 ```
 
-VNPAY sandbox:
+Return URL/IPN chỉ hoạt động ổn định khi `APP_URL` là địa chỉ HTTPS công khai.
 
-```env
-VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-VNPAY_TMN_CODE=your_tmn_code
-VNPAY_HASH_SECRET=your_hash_secret
-```
+## Tác vụ theo thời gian
 
-MoMo sandbox:
+Chạy lệnh sau trong một cửa sổ PowerShell riêng khi demo để xử lý các tác vụ đã lập lịch, như giải phóng ghế giữ quá hạn:
 
-```env
-MOMO_URL=https://test-payment.momo.vn/v2/gateway/api/create
-MOMO_PARTNER_CODE=your_partner_code
-MOMO_ACCESS_KEY=your_access_key
-MOMO_SECRET_KEY=your_secret_key
-```
-
-Khi dùng callback/IPN thật, `APP_URL` phải là URL HTTPS công khai. Sau khi sửa `.env`, chạy `php artisan optimize:clear`. Tắt `DEMO_PAYMENT_ENABLED` trên production.
-
-## Tác vụ nền và kiểm thử
-
-Giải phóng đơn hết hạn tự động:
-
-```bash
+```powershell
 php artisan schedule:work
 ```
 
-Chạy kiểm thử:
+## Kiểm thử
 
-```bash
+```powershell
 php artisan test
 ```
 
-Xem [tài liệu kiến trúc](docs/ARCHITECTURE.md), [kịch bản kiểm thử](docs/TEST_PLAN.md) và [hướng dẫn triển khai](docs/DEPLOYMENT.md).
+Tài liệu chi tiết:
+
+- [Kiến trúc hệ thống](docs/ARCHITECTURE.md)
+- [Kế hoạch kiểm thử](docs/TEST_PLAN.md)
+- [Hướng dẫn triển khai](docs/DEPLOYMENT.md)
