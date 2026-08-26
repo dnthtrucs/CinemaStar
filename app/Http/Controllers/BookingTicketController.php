@@ -34,8 +34,8 @@ class BookingTicketController extends Controller
 
         return view('bookings.print', [
             'booking' => $booking,
-            'qrDataUri' => 'data:image/png;base64,'.base64_encode(
-                $this->makeQrPng(route('bookings.verify', [
+            'qrDataUri' => 'data:image/svg+xml;base64,'.base64_encode(
+                $this->makeQrSvg(route('bookings.verify', [
                     'booking' => $booking->id,
                     'signature' => $this->signature($booking),
                 ]))
@@ -58,7 +58,7 @@ class BookingTicketController extends Controller
         return hash_hmac('sha256', $booking->id.'|'.$booking->code, (string) config('app.key'));
     }
 
-    private function makeQrPng(string $url): string
+    private function makeQrSvg(string $url): string
     {
         $qrCode = new QrCode(
             data: $url,
@@ -71,6 +71,6 @@ class BookingTicketController extends Controller
             backgroundColor: new Color(255, 255, 255),
         );
 
-        return (new PngWriter())->write($qrCode)->getString();
+        return (new SvgWriter())->write($qrCode)->getString();
     }
 }
