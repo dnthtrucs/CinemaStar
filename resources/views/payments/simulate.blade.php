@@ -26,18 +26,8 @@
                     </div>
 
                     <div class="text-center py-3">
-                        @if($isMomo)
-                            <div class="mx-auto border rounded-4 d-grid place-items-center bg-light" style="width:180px;height:180px">
-                                <i class="bi bi-qr-code display-1" style="color:{{ $providerColor }}"></i>
-                            </div>
-                            <p class="small text-muted mt-3 mb-0"> quét QR bằng ứng dụng MoMo</p>
-                        @else
-                            <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                <span class="badge text-bg-light p-3"><i class="bi bi-qr-code me-1"></i>QR</span>
-                                <span class="badge text-bg-light p-3"><i class="bi bi-bank me-1"></i>ATM</span>
-                                <span class="badge text-bg-light p-3"><i class="bi bi-credit-card me-1"></i>Thẻ</span>
-                            </div>
-                        @endif
+                        <img src="{{ $paymentQr }}" class="payment-qr border rounded-4 p-2 bg-white" alt="Mã QR thanh toán {{ $providerName }}">
+                        <p class="small text-muted mt-3 mb-0">Dùng điện thoại quét QR để mở trang xác nhận thanh toán {{ $providerName }} mô phỏng.</p>
                     </div>
 
                     <div class="bg-light rounded-4 p-4 my-4">
@@ -72,5 +62,5 @@
 @endsection
 
 @push('styles')
-<style>.place-items-center { place-items:center; }</style>
+<style>.payment-qr { width:210px; height:210px; }</style>
 @endpush
