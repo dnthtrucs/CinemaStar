@@ -3,7 +3,7 @@
 @section('content')
 @if($banners->isNotEmpty())
 <section class="home-banner mb-5">
-    <div id="cinemaStarBanner" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5500">
+    <div id="cinemaStarBanner" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="3000">
         <div class="carousel-indicators">
             @foreach($banners as $banner)
                 <button type="button" data-bs-target="#cinemaStarBanner" data-bs-slide-to="{{ $loop->index }}" class="{{ $loop->first ? 'active' : '' }}" @if($loop->first) aria-current="true" @endif aria-label="Banner {{ $loop->iteration }}"></button>
