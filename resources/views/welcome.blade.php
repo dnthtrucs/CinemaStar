@@ -12,11 +12,10 @@
         <div class="carousel-inner">
             @foreach($banners as $banner)
                 <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
-                    <img src="{{ asset('storage/'.$banner->image_path) }}" class="d-block w-100" alt="{{ $banner->title }}">
-                    <div class="banner-overlay"></div>
-                    <div class="carousel-caption banner-cta">
-                        @if($banner->button_url)<a href="{{ $banner->button_url }}" class="btn btn-primary btn-lg px-4">{{ $banner->button_label ?: 'Đặt vé ngay' }} <i class="bi bi-arrow-right ms-2"></i></a>@endif
-                    </div>
+                    <a href="{{ route('cinemas.index') }}" class="banner-link" aria-label="Xem danh sách rạp">
+                        <img src="{{ asset('storage/'.$banner->image_path) }}" class="d-block w-100" alt="{{ $banner->title }}">
+                        <div class="banner-overlay"></div>
+                    </a>
                 </div>
             @endforeach
         </div>
@@ -44,12 +43,11 @@
 <style>
 .home-banner .carousel-item { height:clamp(280px,42vw,560px); background:#171717; }
 .home-banner .carousel-item img { height:100%; object-fit:cover; }
+.home-banner .banner-link { display:block; height:100%; cursor:pointer; }
 .home-banner .banner-overlay { position:absolute; inset:0; background:linear-gradient(90deg,rgba(0,0,0,.7) 0%,rgba(0,0,0,.28) 50%,rgba(0,0,0,.05) 100%); }
-.home-banner .carousel-caption.banner-cta { right:7%; left:auto; bottom:12%; z-index:2; padding:0; text-shadow:none; }
-.home-banner .banner-cta .btn { min-width:170px; box-shadow:0 4px 14px rgba(0,0,0,.35); }
 .home-banner .carousel-indicators { z-index:3; margin-bottom:1rem; }
 .home-banner .carousel-indicators button { width:9px; height:9px; border-radius:50%; margin:0 5px; }
-@media (max-width: 767px) { .home-banner .carousel-item { height:360px; } .home-banner .carousel-caption.banner-cta { right:7%; bottom:14%; } .home-banner .banner-cta .btn { min-width:auto; } }
+@media (max-width: 767px) { .home-banner .carousel-item { height:360px; } }
 </style>
 @endpush
 
