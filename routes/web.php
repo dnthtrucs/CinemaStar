@@ -88,6 +88,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
     Route::patch('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::get('/tickets/check-in', [AdminTicketController::class, 'index'])->name('tickets.index');
+    Route::post('/tickets/check-in/scan', [AdminTicketController::class, 'scan'])->name('tickets.scan');
     Route::patch('/tickets/{booking}/check-in', [AdminTicketController::class, 'update'])->name('tickets.update');
 });
 
