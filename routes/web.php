@@ -94,6 +94,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
 Route::prefix('staff')->name('staff.')->middleware(['auth', 'staff'])->group(function () {
     Route::get('/tickets/check-in', [AdminTicketController::class, 'index'])->name('tickets.index');
+    Route::post('/tickets/check-in/scan', [AdminTicketController::class, 'scan'])->name('tickets.scan');
     Route::patch('/tickets/{booking}/check-in', [AdminTicketController::class, 'update'])->name('tickets.update');
 });
 
