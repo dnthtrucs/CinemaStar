@@ -6,6 +6,12 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Notifications\PaymentReceiptNotification;
 use App\Services\PaymentGatewayService;
+use Endroid\QrCode\Color\Color;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Writer\SvgWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -127,7 +133,9 @@ class PaymentController extends Controller
 
         $payment->loadMissing('booking.showtime.movie');
 
-        return view('payments.simulate', compact('payment'));
+        $paymentQr = $this->makeQrDataUri(route('payments.simulate', $payment));
+
+        return view('payments.simulate', compact('payment', 'paymentQr'));
     }
 
     public function completeSimulation(Request $request, Payment $payment)
@@ -307,6 +315,24 @@ class PaymentController extends Controller
         }
 
         return response()->json(['message' => 'OK']);
+    }
+
+    private function makeQrDataUri(string $value): string
+    {
+        $qrCode = new QrCode(
+            data: $value,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::Medium,
+            size: 360,
+            margin: 12,
+            roundBlockSizeMode: RoundBlockSizeMode::Margin,
+            foregroundColor: new Color(23, 23, 23),
+            backgroundColor: new Color(255, 255, 255),
+        );
+
+        return 'data:image/svg+xml;base64,'.base64_encode(
+            (new SvgWriter())->write($qrCode)->getString(),
+        );
     }
 
     private function markSuccessful(Payment $payment, string $transactionId, array $payload): bool
