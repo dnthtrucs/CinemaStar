@@ -46,15 +46,15 @@ class PaymentReceiptNotification extends Notification
             ]);
 
         $message->attachData(
-            $this->makeQrPng($verificationUrl),
-            'CinemaStar-QR-DON-'.$booking->code.'.png',
-            ['mime' => 'image/png'],
+            $this->makeQrSvg($verificationUrl),
+            'CinemaStar-QR-DON-'.$booking->code.'.svg',
+            ['mime' => 'image/svg+xml'],
         );
 
         return $message;
     }
 
-    private function makeQrPng(string $verificationUrl): string
+    private function makeQrSvg(string $verificationUrl): string
     {
         $qrCode = new QrCode(
             data: $verificationUrl,
@@ -67,7 +67,7 @@ class PaymentReceiptNotification extends Notification
             backgroundColor: new Color(255, 255, 255),
         );
 
-        return (new PngWriter())->write($qrCode)->getString();
+        return (new SvgWriter())->write($qrCode)->getString();
     }
 
     private function bookingSignature(): string
