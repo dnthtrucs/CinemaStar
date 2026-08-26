@@ -14,14 +14,8 @@
                 <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
                     <img src="{{ asset('storage/'.$banner->image_path) }}" class="d-block w-100" alt="{{ $banner->title }}">
                     <div class="banner-overlay"></div>
-                    <div class="carousel-caption text-start">
-                        <div class="container px-0">
-                            <div class="col-lg-7">
-                                <h1 class="display-5 fw-bold">{{ $banner->title }}</h1>
-                                @if($banner->subtitle)<p class="lead mb-4">{{ $banner->subtitle }}</p>@endif
-                                @if($banner->button_url)<a href="{{ $banner->button_url }}" class="btn btn-primary btn-lg px-4">{{ $banner->button_label ?: 'Đặt vé ngay' }} <i class="bi bi-arrow-right ms-2"></i></a>@endif
-                            </div>
-                        </div>
+                    <div class="carousel-caption banner-cta">
+                        @if($banner->button_url)<a href="{{ $banner->button_url }}" class="btn btn-primary btn-lg px-4">{{ $banner->button_label ?: 'Đặt vé ngay' }} <i class="bi bi-arrow-right ms-2"></i></a>@endif
                     </div>
                 </div>
             @endforeach
@@ -51,10 +45,11 @@
 .home-banner .carousel-item { height:clamp(280px,42vw,560px); background:#171717; }
 .home-banner .carousel-item img { height:100%; object-fit:cover; }
 .home-banner .banner-overlay { position:absolute; inset:0; background:linear-gradient(90deg,rgba(0,0,0,.7) 0%,rgba(0,0,0,.28) 50%,rgba(0,0,0,.05) 100%); }
-.home-banner .carousel-caption { right:8%; left:8%; bottom:14%; z-index:2; text-shadow:0 2px 12px rgba(0,0,0,.75); }
+.home-banner .carousel-caption.banner-cta { right:7%; left:auto; bottom:12%; z-index:2; padding:0; text-shadow:none; }
+.home-banner .banner-cta .btn { min-width:170px; box-shadow:0 4px 14px rgba(0,0,0,.35); }
 .home-banner .carousel-indicators { z-index:3; margin-bottom:1rem; }
 .home-banner .carousel-indicators button { width:9px; height:9px; border-radius:50%; margin:0 5px; }
-@media (max-width: 767px) { .home-banner .carousel-item { height:360px; } .home-banner .carousel-caption { bottom:16%; left:12%; right:12%; } .home-banner h1 { font-size:1.9rem; } .home-banner .lead { font-size:1rem; } }
+@media (max-width: 767px) { .home-banner .carousel-item { height:360px; } .home-banner .carousel-caption.banner-cta { right:7%; bottom:14%; } .home-banner .banner-cta .btn { min-width:auto; } }
 </style>
 @endpush
 
