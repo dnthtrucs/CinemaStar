@@ -52,6 +52,8 @@
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('bookings.*') ? 'active' : '' }}" href="{{ route('bookings.index') }}">Vé của tôi</a></li>
                     @if(auth()->user()->isAdmin())
                         <li class="nav-item"><a class="nav-link text-warning" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>Quản trị</a></li>
+                    @elseif(auth()->user()->isStaff())
+                        <li class="nav-item"><a class="nav-link text-warning" href="{{ route('staff.tickets.index') }}"><i class="bi bi-qr-code-scan me-1"></i>Check-in</a></li>
                     @endif
                 @endauth
             </ul>
