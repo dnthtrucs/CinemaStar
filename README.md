@@ -1,6 +1,6 @@
 # CinemaStar – Hệ thống quản lý và đặt vé rạp chiếu phim
 
-CinemaStar là đồ án tốt nghiệp xây dựng bằng **Laravel 11, MySQL và Blade/Bootstrap**. Hệ thống mô phỏng quy trình vận hành rạp chiếu phim: quản lý nội dung, lập lịch chiếu, đặt ghế, thanh toán, phát hành vé QR, check-in, ưu đãi thành viên, hoàn tiền và báo cáo.
+CinemaStar là đồ án tốt nghiệp xây dựng bằng **Laravel 11, MySQL và Blade/Bootstrap**. Hệ thống hỗ trợ quy trình vận hành rạp chiếu phim: quản lý nội dung, lập lịch chiếu, đặt ghế, thanh toán, phát hành vé QR, check-in, ưu đãi thành viên, hoàn tiền và báo cáo.
 
 ## Chức năng chính
 
@@ -10,7 +10,7 @@ CinemaStar là đồ án tốt nghiệp xây dựng bằng **Laravel 11, MySQL v
 - Xem phim, rạp, phòng chiếu và suất chiếu còn hiệu lực.
 - Chọn ghế trực quan, giữ ghế trong thời gian cấu hình và chống đặt trùng.
 - Áp dụng voucher; dùng điểm thành viên để giảm giá (**1 điểm = 1.000đ**).
-- Thanh toán mô phỏng hoặc qua MoMo/VNPAY khi đã cấu hình sandbox.
+- Thanh toán qua SePay, MoMo hoặc VNPAY khi đã cấu hình.
 - Nhận email xác nhận thanh toán kèm thông tin vé, mã đơn và QR.
 - Xem lịch sử đơn/vé; gửi yêu cầu hủy hoặc hoàn tiền theo điều kiện của hệ thống.
 - Theo dõi trạng thái vé: **Sẵn sàng vào rạp**, **Đã check-in** hoặc **Đã hết hiệu lực**.
@@ -31,7 +31,7 @@ CinemaStar là đồ án tốt nghiệp xây dựng bằng **Laravel 11, MySQL v
 - MySQL 8+/MariaDB 10.6+
 - Blade, Bootstrap, Vite
 - Endroid QR Code
-- MoMo/VNPAY (chế độ mô phỏng hoặc sandbox)
+- SePay, MoMo/VNPAY
 
 ## Cài đặt trên XAMPP
 
@@ -81,10 +81,9 @@ Khi dùng Gmail, nên dùng App Password thay cho mật khẩu đăng nhập Gma
 
 ## Cấu hình thanh toán
 
-Khi demo trên XAMPP:
+Khi chạy trên XAMPP:
 
 ```env
-DEMO_PAYMENT_ENABLED=true
 PAYMENT_MODE=simulate
 ```
 
@@ -99,7 +98,7 @@ Return URL/IPN chỉ hoạt động ổn định khi `APP_URL` là địa chỉ 
 
 ## Tác vụ theo thời gian
 
-Chạy lệnh sau trong một cửa sổ PowerShell riêng khi demo để xử lý các tác vụ đã lập lịch, như giải phóng ghế giữ quá hạn:
+Chạy lệnh sau trong một cửa sổ PowerShell riêng để xử lý các tác vụ đã lập lịch, như giải phóng ghế giữ quá hạn:
 
 ```powershell
 php artisan schedule:work
