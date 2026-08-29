@@ -2,7 +2,6 @@
 
 return [
     'booking_hold_minutes' => (int) env('BOOKING_HOLD_MINUTES', 10),
-    'demo_payment_enabled' => (bool) env('DEMO_PAYMENT_ENABLED', true),
     'payment_mode' => env('PAYMENT_MODE', 'simulate'),
 
     'vnpay' => [
