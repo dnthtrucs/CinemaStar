@@ -34,6 +34,7 @@ class PaymentController extends Controller
         $providerStatus = [
             'momo' => $paymentMode === 'simulate' || $this->gateway->isConfigured('momo'),
             'vnpay' => $paymentMode === 'simulate' || $this->gateway->isConfigured('vnpay'),
+            'sepay' => $this->gateway->isSepayConfigured(),
         ];
 
         return view('payments.checkout', compact('booking', 'paymentMode', 'providerStatus'));
@@ -45,14 +46,14 @@ class PaymentController extends Controller
         abort_unless($booking->isPayable(), 422, 'Đơn hàng không còn hiệu lực thanh toán.');
 
         $validated = $request->validate([
-            'provider' => ['required', 'in:demo,vnpay,momo'],
+            'provider' => ['required', 'in:sepay,vnpay,momo'],
             'points_to_use' => ['nullable', 'integer', 'min:0'],
         ]);
         $provider = $validated['provider'];
         $pointsToUse = (int) ($validated['points_to_use'] ?? 0);
 
-        if ($provider === 'demo' && ! config('cinema.demo_payment_enabled')) {
-            return back()->with('error', 'Thanh toán mô phỏng đã bị tắt.');
+        if ($provider === 'sepay' && ! $this->gateway->isSepayConfigured()) {
+            return back()->withInput()->with('error', 'Cổng SePay chưa được cấu hình.');
         }
 
         if (in_array($provider, ['momo', 'vnpay'], true)
@@ -103,6 +104,12 @@ class PaymentController extends Controller
         }
 
         try {
+            if ($provider === 'sepay') {
+                $payment->update(['status' => 'pending']);
+
+                return redirect()->route('payments.sepay.show', $payment);
+            }
+
             $url = $this->gateway->paymentUrl(
                 $payment->load('booking'),
                 (string) $request->ip(),
@@ -119,6 +126,57 @@ class PaymentController extends Controller
 
             return back()->withInput()->with('error', $exception->getMessage());
         }
+    }
+
+    public function sepay(Payment $payment)
+    {
+        $this->authorizePayment($payment);
+        abort_unless($payment->provider === 'sepay', 404);
+        abort_unless(in_array($payment->status, ['initiated', 'pending'], true), 422, 'Giao dịch đã kết thúc.');
+
+        $payment->update(['status' => 'pending']);
+        $paymentQrUrl = $this->gateway->sepayQrUrl($payment);
+
+        return view('payments.sepay', compact('payment', 'paymentQrUrl'));
+    }
+
+    public function sepayStatus(Payment $payment)
+    {
+        $this->authorizePayment($payment);
+
+        return response()->json([
+            'status' => $payment->fresh()->status,
+            'redirect_url' => route('bookings.show', $payment->booking_id),
+        ]);
+    }
+
+    public function sepayWebhook(Request $request)
+    {
+        if (! $this->gateway->hasValidSepayWebhookKey($request)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $payload = $request->all();
+        if (! $this->gateway->isValidSepayTransfer($payload)) {
+            return response()->json(['message' => 'Invalid transaction'], 422);
+        }
+
+        $content = strtoupper(trim(implode(' ', array_filter([
+            $payload['content'] ?? null, $payload['description'] ?? null, $payload['code'] ?? null,
+        ]))));
+        $payment = Payment::query()->where('provider', 'sepay')->whereIn('status', ['initiated', 'pending', 'success'])
+            ->latest('id')->get()->first(fn (Payment $item) => str_contains($content, strtoupper($item->request_id)));
+
+        if (! $payment) {
+            return response()->json(['message' => 'Payment not found'], 404);
+        }
+        if ((int) ($payload['transferAmount'] ?? 0) !== (int) $payment->amount) {
+            return response()->json(['message' => 'Invalid amount'], 422);
+        }
+
+        $successful = $this->markSuccessful($payment, (string) ($payload['referenceCode'] ?? $payload['id'] ?? 'SEPAY-'.$payment->id), $payload);
+
+        return response()->json(['message' => $successful ? 'Payment confirmed' : 'Payment cannot be confirmed'], $successful ? 200 : 422);
     }
 
     public function simulate(Payment $payment)
@@ -171,24 +229,6 @@ class PaymentController extends Controller
                 ? "Thanh toán {$provider} mô phỏng thành công. Mã QR vé đã được kích hoạt."
                 : 'Đơn không còn đủ điều kiện để xác nhận thanh toán.',
         );
-    }
-
-    public function demo(Payment $payment)
-    {
-        $this->authorizePayment($payment);
-        abort_unless($payment->provider === 'demo' && config('cinema.demo_payment_enabled'), 404);
-
-        return view('payments.demo', compact('payment'));
-    }
-
-    public function completeDemo(Payment $payment)
-    {
-        $this->authorizePayment($payment);
-        abort_unless($payment->provider === 'demo' && config('cinema.demo_payment_enabled'), 404);
-        $this->markSuccessful($payment, 'DEMO-'.$payment->id, ['result' => 'success']);
-
-        return redirect()->route('bookings.show', $payment->booking_id)
-            ->with('success', 'Thanh toán mô phỏng thành công.');
     }
 
     public function vnpayReturn(Request $request)
