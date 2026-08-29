@@ -27,16 +27,53 @@ class BookingService
 
             $this->expirePendingBookings($showtime->id);
 
+            $requestedSeatIds = array_values(array_unique($seatIds));
             $seats = Seat::query()
                 ->where('room_id', $showtime->room_id)
                 ->where('is_active', true)
-                ->whereIn('id', array_unique($seatIds))
+                ->whereIn('id', $requestedSeatIds)
                 ->lockForUpdate()
                 ->get();
 
-            if ($seats->count() !== count(array_unique($seatIds))) {
+            if ($seats->count() !== count($requestedSeatIds)) {
                 throw ValidationException::withMessages([
                     'seats' => 'Danh sách ghế không hợp lệ.',
+                ]);
+            }
+
+            $partnerNumbers = $seats->where('type', 'couple')
+                ->map(fn (Seat $seat) => [
+                    'row' => $seat->row,
+                    'number' => $seat->number % 2 === 0 ? $seat->number - 1 : $seat->number + 1,
+                ]);
+
+            if ($partnerNumbers->isNotEmpty()) {
+                $partnerSeats = Seat::query()
+                    ->where('room_id', $showtime->room_id)
+                    ->where('is_active', true)
+                    ->where('type', 'couple')
+                    ->where(function ($query) use ($partnerNumbers) {
+                        foreach ($partnerNumbers as $partner) {
+                            $query->orWhere(fn ($pair) => $pair
+                                ->where('row', $partner['row'])
+                                ->where('number', $partner['number']));
+                        }
+                    })
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($partnerSeats->count() !== $partnerNumbers->unique(fn ($seat) => $seat['row'].'-'.$seat['number'])->count()) {
+                    throw ValidationException::withMessages([
+                        'seats' => 'Ghế đôi không đầy đủ hoặc không còn khả dụng.',
+                    ]);
+                }
+
+                $seats = $seats->merge($partnerSeats)->unique('id')->values();
+            }
+
+            if ($seats->count() > 10) {
+                throw ValidationException::withMessages([
+                    'seats' => 'Mỗi đơn được chọn tối đa 10 vị trí.',
                 ]);
             }
 
