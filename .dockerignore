@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+vendor
+node_modules
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+sepay_patch
+sepay_patch_correct
+README_UPGRADE.txt
