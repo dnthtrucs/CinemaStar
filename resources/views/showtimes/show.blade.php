@@ -22,11 +22,39 @@
             </div>
         </div>
         <div class="col-lg-4">
-            <div class="card shadow-soft p-4 sticky-lg-top" style="top:90px"><h4 class="fw-bold">Tóm tắt đặt vé</h4><hr><div class="d-flex justify-content-between mb-2"><span>Giá cơ bản</span><strong>{{ number_format($showtime->base_price,0,',','.') }}₫</strong></div><div class="mb-3"><div class="text-muted small">Ghế đã chọn</div><div id="selectedSeats" class="fw-semibold">Chưa chọn ghế</div></div><div class="d-flex justify-content-between fs-5"><span>Tạm tính</span><strong class="text-brand" id="totalPrice">0₫</strong></div><hr><div class="small text-muted mb-3"><i class="bi bi-clock me-1"></i>Ghế được giữ {{ config('cinema.booking_hold_minutes') }} phút sau khi xác nhận.</div>@auth<button form="seatForm" id="submitSeats" class="btn btn-primary btn-lg w-100" disabled>Tiếp tục thanh toán</button>@else<a href="{{ route('login') }}" class="btn btn-primary w-100">Đăng nhập để đặt vé</a>@endauth</div>
+            <div class="card shadow-soft p-4 sticky-lg-top" style="top:90px"><h4 class="fw-bold">Tóm tắt đặt vé</h4><hr><div class="d-flex justify-content-between mb-2"><span>Giá cơ bản</span><strong>{{ number_format($showtime->base_price,0,',','.') }}₫</strong></div><div class="mb-3"><div class="text-muted small">Ghế đã chọn</div><div id="selectedSeats" class="fw-semibold">Chưa chọn ghế</div></div><div class="d-flex justify-content-between fs-5"><span>Tạm tính</span><strong class="text-brand" id="totalPrice">0₫</strong></div><hr><div class="small text-muted mb-3"><i class="bi bi-clock me-1"></i>Ghế được giữ {{ config('cinema.booking_hold_minutes') }} phút sau khi xác nhận.</div>@auth<button form="seatForm" id="submitSeats" class="btn btn-primary btn-lg w-100" disabled>Tiếp tục thanh toán</button>@else<a id="loginToBook" href="{{ route('login', ['showtime' => $showtime->id]) }}" class="btn btn-primary w-100">Đăng nhập để đặt vé</a><p class="small text-muted text-center mt-2 mb-0">Ghế và mã giảm giá đã chọn sẽ được giữ lại sau khi đăng nhập.</p>@endauth</div>
         </div>
     </div>
 </div>
 @endsection
 @push('scripts')
-<script>const inputs=[...document.querySelectorAll('.seat-input:not(:disabled)')],selected=document.getElementById('selectedSeats'),total=document.getElementById('totalPrice'),submit=document.getElementById('submitSeats');function update(){const checked=inputs.filter(i=>i.checked);selected.textContent=checked.length?checked.map(i=>i.dataset.label).join(', '):'Chưa chọn ghế';total.textContent=new Intl.NumberFormat('vi-VN').format(checked.reduce((sum,i)=>sum+Number(i.dataset.price),0))+'₫';if(submit)submit.disabled=!checked.length}inputs.forEach(i=>i.addEventListener('change',update));</script>
+<script>
+const inputs=[...document.querySelectorAll('.seat-input:not(:disabled)')];
+const selected=document.getElementById('selectedSeats');
+const total=document.getElementById('totalPrice');
+const submit=document.getElementById('submitSeats');
+const voucherInput=document.querySelector('[name="voucher_code"]');
+const savedSeatsKey='cinemastar:showtime:{{ $showtime->id }}:seats';
+const savedVoucherKey='cinemastar:showtime:{{ $showtime->id }}:voucher';
+
+try {
+    const savedSeatIds=JSON.parse(localStorage.getItem(savedSeatsKey) || '[]').map(String);
+    inputs.forEach(input=>input.checked=savedSeatIds.includes(input.value));
+    if (voucherInput && !voucherInput.value) voucherInput.value=localStorage.getItem(savedVoucherKey) || '';
+} catch (error) {
+    localStorage.removeItem(savedSeatsKey);
+}
+
+function update(){
+    const checked=inputs.filter(i=>i.checked);
+    selected.textContent=checked.length?checked.map(i=>i.dataset.label).join(', '):'Chưa chọn ghế';
+    total.textContent=new Intl.NumberFormat('vi-VN').format(checked.reduce((sum,i)=>sum+Number(i.dataset.price),0))+'₫';
+    localStorage.setItem(savedSeatsKey,JSON.stringify(checked.map(i=>i.value)));
+    if(submit)submit.disabled=!checked.length;
+}
+
+inputs.forEach(i=>i.addEventListener('change',update));
+if(voucherInput) voucherInput.addEventListener('input',()=>localStorage.setItem(savedVoucherKey,voucherInput.value));
+update();
+</script>
 @endpush
