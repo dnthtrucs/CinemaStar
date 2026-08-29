@@ -25,7 +25,6 @@ DB_DATABASE=cinema_db
 DB_USERNAME=your_database_user
 DB_PASSWORD=your_database_password
 
-DEMO_PAYMENT_ENABLED=false
 PAYMENT_MODE=sandbox
 SESSION_SECURE_COOKIE=true
 ~~~
@@ -57,7 +56,7 @@ Scheduler xử lý các công việc theo thời gian, bao gồm giải phóng g
 * * * * * cd /var/www/cinemastar && php artisan schedule:run >> /dev/null 2>&1
 ~~~
 
-Khi demo trên Windows/XAMPP, chạy cửa sổ PowerShell riêng:
+Khi chạy trên Windows/XAMPP, mở một cửa sổ PowerShell riêng:
 
 ~~~powershell
 php artisan schedule:work
@@ -73,7 +72,7 @@ php artisan schedule:work
 ## 6. Checklist trước khi bàn giao
 
 - APP_DEBUG=false và HTTPS hợp lệ.
-- Đã đổi mật khẩu tài khoản Admin demo.
+- Đã đổi mật khẩu tài khoản Admin mặc định.
 - Đã kiểm tra đặt vé, voucher, đổi điểm, thanh toán, email QR và check-in.
 - Đã kiểm tra tạo lịch chiếu hàng loạt không sinh lịch trùng phòng.
 - Đã chạy backup database và thử khôi phục trên môi trường thử nghiệm.
