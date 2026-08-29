@@ -89,42 +89,22 @@
                     @elseif($booking->status === 'confirmed')
                         <div class="alert alert-success">
                             <i class="bi bi-check-circle-fill me-2"></i>
-                            Vé đã sẵn sàng. Mỗi ghế có một mã QR riêng; hãy đưa mã tương ứng cho nhân viên khi vào rạp.
+                            Vé đã sẵn sàng. Một mã QR dùng để check-in toàn bộ ghế trong đơn.
                         </div>
 
-                        <div class="row g-4 mt-1">
-                            @foreach($booking->tickets as $ticket)
-                                @php($verificationUrl = route('tickets.verify', ['qrToken' => $ticket->qr_token]))
-                                <div class="col-md-6">
-                                    <article class="card border h-100 p-4 text-center ticket-qr-card">
-                                        <div class="d-flex justify-content-between align-items-start text-start mb-3">
-                                            <div>
-                                                <div class="small text-muted">GHẾ</div>
-                                                <div class="fs-3 fw-bold text-brand">{{ $ticket->seat->label }}</div>
-                                            </div>
-                                            <span class="badge text-bg-{{ $ticket->status === 'valid' ? 'success' : 'secondary' }} p-2">
-                                                {{ $ticket->status === 'valid' ? 'Sẵn sàng' : 'Đã sử dụng' }}
-                                            </span>
-                                        </div>
-
-                                        <div class="ticket-qr-wrap mx-auto">
-                                            <canvas
-                                                class="ticket-qr"
-                                                data-ticket-qr="{{ $verificationUrl }}"
-                                                aria-label="Mã QR vé ghế {{ $ticket->seat->label }}"
-                                            ></canvas>
-                                            <div class="ticket-qr-loading small text-muted">Đang tạo mã QR...</div>
-                                        </div>
-
-                                        <div class="small text-muted mt-3">MÃ VÉ</div>
-                                        <div class="fw-bold text-break">{{ $ticket->code }}</div>
-                                    </article>
-                                </div>
-                            @endforeach
-                        </div>
+                        <article class="card border p-4 text-center ticket-qr-card mx-auto mt-4" style="max-width:460px">
+                            <div class="small text-muted">MÃ QR ĐƠN VÉ</div>
+                            <div class="fw-bold fs-4 text-brand mb-3">{{ $booking->code }}</div>
+                            <div class="ticket-qr-wrap mx-auto">
+                                <canvas class="ticket-qr" data-ticket-qr="{{ $bookingQrUrl }}" aria-label="Mã QR đơn {{ $booking->code }}"></canvas>
+                                <div class="ticket-qr-loading small text-muted">Đang tạo mã QR...</div>
+                            </div>
+                            <div class="mt-3"><strong>Áp dụng cho ghế: {{ $booking->tickets->pluck('seat.label')->join(', ') }}</strong></div>
+                            <div class="small text-muted mt-1">Nhân viên quét một lần để check-in toàn bộ ghế của đơn.</div>
+                        </article>
 
                         <p class="small text-muted text-center mt-4 mb-0">
-                            Không chia sẻ mã QR công khai. Mã QR chứa đường dẫn xác thực riêng của từng vé.
+                            Không chia sẻ mã QR công khai. Mã QR chứa đường dẫn xác thực của đơn vé.
                         </p>
                     @endif
                 </div>
