@@ -44,8 +44,12 @@ class BookingController extends Controller
     {
         $this->authorizeOwner($booking);
         $booking->load(['showtime.movie', 'showtime.room.cinema', 'tickets.seat', 'payments']);
+        $bookingQrUrl = route('bookings.verify', [
+            'booking' => $booking->id,
+            'signature' => $this->bookingSignature($booking),
+        ]);
 
-        return view('bookings.show', compact('booking'));
+        return view('bookings.show', compact('booking', 'bookingQrUrl'));
     }
 
     public function cancel(Booking $booking)
@@ -59,5 +63,14 @@ class BookingController extends Controller
     private function authorizeOwner(Booking $booking): void
     {
         abort_unless($booking->user_id === auth()->id() || auth()->user()->isAdmin(), 403);
+    }
+
+    private function bookingSignature(Booking $booking): string
+    {
+        return hash_hmac(
+            'sha256',
+            $booking->id.'|'.$booking->code,
+            (string) config('app.key'),
+        );
     }
 }
