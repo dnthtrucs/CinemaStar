@@ -36,6 +36,8 @@ class PaymentReceiptNotification extends Notification
             'signature' => $this->bookingSignature(),
         ]);
 
+        $qrSvg = $this->makeQrSvg($verificationUrl);
+
         $message = (new MailMessage)
             ->subject('CinemaStar | Vé điện tử '.$booking->code)
             ->view('emails.payment-receipt', [
@@ -43,10 +45,11 @@ class PaymentReceiptNotification extends Notification
                 'booking' => $booking,
                 'showtime' => $showtime,
                 'seatLabels' => $seatLabels !== '' ? $seatLabels : 'Đang cập nhật',
+                'qrSvg' => $qrSvg,
             ]);
 
         $message->attachData(
-            $this->makeQrSvg($verificationUrl),
+            $qrSvg,
             'CinemaStar-QR-DON-'.$booking->code.'.svg',
             ['mime' => 'image/svg+xml'],
         );
