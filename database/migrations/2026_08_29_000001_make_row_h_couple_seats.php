@@ -11,8 +11,8 @@ return new class extends Migration
             ->where('row', 'H')
             ->update([
                 'type' => 'couple',
-                // Two physical seats make one couple seat: 2 × base price + 30,000 VND.
-                'price_surcharge' => 15000,
+                // 2 × (base price + 30,000 VND) + 30,000 VND per couple pair.
+                'price_surcharge' => 45000,
                 'updated_at' => now(),
             ]);
     }
