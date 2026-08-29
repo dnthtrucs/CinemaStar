@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use RuntimeException;
 
 class PaymentGatewayService
@@ -27,7 +28,7 @@ class PaymentGatewayService
     {
         $mode = (string) config('cinema.payment_mode', 'simulate');
 
-        return in_array($mode, ['simulate', 'sandbox'], true) ? $mode : 'simulate';
+        return in_array($mode, ['simulate', 'sandbox', 'production'], true) ? $mode : 'simulate';
     }
 
     public function isSimulationMode(): bool
@@ -44,8 +45,48 @@ class PaymentGatewayService
                 && (string) config('cinema.momo.access_key') !== ''
                 && (string) config('cinema.momo.secret_key') !== '',
             'demo' => (bool) config('cinema.demo_payment_enabled'),
+            'sepay' => $this->isSepayConfigured(),
             default => false,
         };
+    }
+
+    public function isSepayConfigured(): bool
+    {
+        return (string) config('cinema.sepay.api_key') !== ''
+            && (string) config('cinema.sepay.bank_code') !== ''
+            && (string) config('cinema.sepay.account_number') !== '';
+    }
+
+    public function sepayQrUrl(Payment $payment): string
+    {
+        if (! $this->isSepayConfigured()) {
+            throw new RuntimeException('Chưa cấu hình SePay.');
+        }
+
+        return rtrim((string) config('cinema.sepay.qr_url'), '?').'?'.http_build_query([
+            'acc' => config('cinema.sepay.account_number'),
+            'bank' => config('cinema.sepay.bank_code'),
+            'amount' => (int) $payment->amount,
+            'des' => $payment->request_id,
+            'template' => 'compact',
+        ], '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public function hasValidSepayWebhookKey(Request $request): bool
+    {
+        $key = (string) config('cinema.sepay.api_key');
+
+        return $key !== '' && hash_equals('Apikey '.$key, trim((string) $request->header('Authorization')));
+    }
+
+    public function isValidSepayTransfer(array $payload): bool
+    {
+        $expected = preg_replace('/\D+/', '', (string) config('cinema.sepay.account_number'));
+        $received = preg_replace('/\D+/', '', (string) ($payload['accountNumber'] ?? ''));
+
+        return $expected !== '' && $expected === $received
+            && strtolower((string) ($payload['transferType'] ?? '')) === 'in'
+            && (int) ($payload['transferAmount'] ?? 0) > 0;
     }
 
     public function verifyVnpay(array $data): bool
