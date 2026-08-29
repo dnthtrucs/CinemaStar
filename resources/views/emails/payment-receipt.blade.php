@@ -20,7 +20,7 @@
           <div style="padding:18px 0 2px">
             <img src="{{ $message->embedData($qrSvg, 'CinemaStar-QR-'.$booking->code.'.svg', 'image/svg+xml') }}" width="210" height="210" alt="Mã QR vé CinemaStar" style="display:block;width:210px;height:210px;margin:0 auto;border:8px solid #fff;border-radius:8px">
           </div>
-          <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#52647a">Đưa mã QR này cho nhân viên khi check-in. File QR cũng được đính kèm trong email.</p>
+          <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#52647a">Đưa mã QR này cho nhân viên khi check-in.</p>
         </div>
       </td></tr>
       <tr><td style="padding:0 24px 20px;border-bottom:4px dotted #eef1f4">
