@@ -62,19 +62,29 @@ class CinemaBookingTest extends TestCase
         $this->assertDatabaseCount('tickets', 0);
     }
 
-    public function test_demo_payment_confirms_the_booking_idempotently(): void
+    public function test_sepay_webhook_confirms_the_booking_idempotently(): void
     {
-        config(['cinema.demo_payment_enabled' => true]);
+        config([
+            'cinema.sepay.api_key' => 'sepay-test-key',
+            'cinema.sepay.bank_code' => 'MBBank',
+            'cinema.sepay.account_number' => '0123456789',
+        ]);
         [$showtime, $seats] = $this->showtimeWithSeats();
         $user = User::factory()->create();
         $this->actingAs($user)->post(route('bookings.store', $showtime), ['seats' => [$seats[0]->id]]);
         $booking = Booking::firstOrFail();
 
-        $this->actingAs($user)->post(route('payments.store', $booking), ['provider' => 'demo']);
+        $this->actingAs($user)->post(route('payments.store', $booking), ['provider' => 'sepay']);
         $payment = Payment::firstOrFail();
-        $response = $this->actingAs($user)->post(route('payments.demo.complete', $payment));
+        $response = $this->postJson(route('payments.sepay.webhook'), [
+            'accountNumber' => '0123456789',
+            'transferType' => 'in',
+            'transferAmount' => (int) $payment->amount,
+            'content' => $payment->request_id,
+            'referenceCode' => 'FT123456789',
+        ], ['Authorization' => 'Apikey sepay-test-key']);
 
-        $response->assertRedirect(route('bookings.show', $booking));
+        $response->assertOk();
         $this->assertSame('success', $payment->fresh()->status);
         $this->assertSame('confirmed', $booking->fresh()->status);
         $this->assertSame('paid', $booking->fresh()->payment_status);
