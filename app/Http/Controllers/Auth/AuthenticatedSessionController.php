@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Showtime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +15,14 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        $showtimeId = $request->integer('showtime');
+
+        if ($showtimeId > 0 && Showtime::query()->whereKey($showtimeId)->exists()) {
+            $request->session()->put('url.intended', route('showtimes.show', $showtimeId));
+        }
+
         return view('auth.login');
     }
 
