@@ -19,7 +19,7 @@ Bộ test hiện có kiểm tra xác thực, hồ sơ người dùng và các lu
 | BK-03 | Đơn chưa thanh toán bị hủy hoặc quá hạn | Ghế được giải phóng; điểm đã đổi được hoàn lại nếu có |
 | VC-01 | Voucher hợp lệ | Giá giảm đúng theo điều kiện voucher |
 | LP-01 | Khách dùng điểm | 1 điểm giảm 1.000đ; không giảm quá tổng còn lại |
-| PM-01 | Thanh toán demo thành công | Payment và booking cập nhật thành công; cộng điểm một lần |
+| PM-01 | Thanh toán thành công | Payment và booking cập nhật thành công; cộng điểm một lần |
 | PM-02 | Callback thanh toán lặp | Không tạo doanh thu, email hay điểm thưởng lần thứ hai |
 | QR-01 | Check-in theo mã đơn BK hoặc QR | Check-in toàn bộ vé của đơn một lần |
 | QR-02 | Check-in lại đơn đã dùng | Bị từ chối, trạng thái vẫn là Đã check-in |
@@ -36,7 +36,7 @@ Bộ test hiện có kiểm tra xác thực, hồ sơ người dùng và các lu
 2. Admin tạo phim, rạp, phòng; thử tạo suất đơn lẻ và lịch hàng loạt có giờ trùng.
 3. Customer chọn ghế, áp voucher và dùng điểm; xác nhận số tiền trước khi thanh toán.
 4. Mở cùng một suất bằng tài khoản thứ hai để xác minh ghế đã giữ/mua không thể chọn lại.
-5. Hoàn tất thanh toán demo; kiểm tra email xác nhận, mã đơn BK, QR và điểm được cộng.
+5. Hoàn tất thanh toán; kiểm tra email xác nhận, mã đơn BK, QR và điểm được cộng.
 6. Admin hoặc Staff nhập mã BK/quét QR để check-in; thử check-in lần thứ hai.
 7. Kiểm tra một vé đã qua giờ phim nhưng chưa check-in có trạng thái Đã hết hiệu lực.
 8. Tạo yêu cầu hoàn tiền và xác minh Admin có thể duyệt/từ chối đúng trạng thái.
