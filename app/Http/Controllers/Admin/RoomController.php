@@ -76,7 +76,7 @@ class RoomController extends Controller
         for ($rowIndex = 0; $rowIndex < $room->rows; $rowIndex++) {
             $row = chr(65 + $rowIndex);
             $isCouple = $row === 'H';
-            $isVip = ! $isCouple && $rowIndex >= $room->rows - 2;
+            $isVip = ! $isCouple && in_array($row, ['E', 'F', 'G'], true);
             for ($number = 1; $number <= $room->seats_per_row; $number++) {
                 $room->seats()->create([
                     'row' => $row,
