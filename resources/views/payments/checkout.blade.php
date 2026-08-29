@@ -15,7 +15,7 @@
                     <p class="text-muted mb-0">Mã đơn {{ $booking->code }}</p>
                 </div>
                 <span class="badge rounded-pill text-bg-{{ $paymentMode === 'simulate' ? 'warning' : 'success' }} p-2 px-3">
-                    {{ $paymentMode === 'simulate' ? 'Chế độ mô phỏng' : 'Sandbox thật' }}
+                    {{ $paymentMode === 'simulate' ? 'Chế độ mô phỏng' : ($paymentMode === 'production' ? 'Thanh toán thật' : 'Sandbox thử nghiệm') }}
                 </span>
             </div>
 
@@ -31,7 +31,7 @@
                 <div class="alert alert-success d-flex gap-2 align-items-start">
                     <i class="bi bi-shield-check mt-1"></i>
                     <div>
-                        Giao dịch được chuyển sang môi trường thử nghiệm của nhà cung cấp.
+                        Giao dịch được chuyển sang trang thanh toán chính thức của nhà cung cấp.
                         Kết quả chỉ được ghi nhận sau khi hệ thống kiểm tra chữ ký, số tiền và mã đơn.
                     </div>
                 </div>
@@ -78,7 +78,7 @@
                             <span class="flex-grow-1">
                                 <strong class="d-block">Ví MoMo</strong>
                                 <span class="small text-muted">
-                                    {{ $paymentMode === 'simulate' ? 'Mô phỏng luồng quét QR/xác nhận MoMo' : 'Thanh toán bằng ứng dụng MoMo sandbox' }}
+                                    {{ $paymentMode === 'simulate' ? 'Mô phỏng luồng quét QR/xác nhận MoMo' : ($paymentMode === 'production' ? 'Chuyển đến ứng dụng hoặc website MoMo để thanh toán' : 'Thanh toán bằng ứng dụng MoMo sandbox') }}
                                 </span>
                             </span>
                             <span class="badge text-bg-{{ $providerStatus['momo'] ? 'light' : 'secondary' }}">
@@ -94,7 +94,7 @@
                             <span class="flex-grow-1">
                                 <strong class="d-block">VNPAY</strong>
                                 <span class="small text-muted">
-                                    {{ $paymentMode === 'simulate' ? 'Mô phỏng thanh toán QR, ATM hoặc thẻ' : 'QR, ATM nội địa và thẻ quốc tế trên VNPAY sandbox' }}
+                                    {{ $paymentMode === 'simulate' ? 'Mô phỏng thanh toán QR, ATM hoặc thẻ' : ($paymentMode === 'production' ? 'Chuyển đến QR/trang thanh toán VNPAY' : 'QR, ATM nội địa và thẻ quốc tế trên VNPAY sandbox') }}
                                 </span>
                             </span>
                             <span class="badge text-bg-{{ $providerStatus['vnpay'] ? 'light' : 'secondary' }}">
@@ -102,17 +102,19 @@
                             </span>
                         </label>
 
-                        @if(config('cinema.demo_payment_enabled'))
-                            <label class="payment-option border rounded-4 p-3 mb-4 d-flex align-items-center gap-3">
-                                <input class="form-check-input flex-shrink-0" type="radio" name="provider" value="demo"
-                                    {{ old('provider') === 'demo' ? 'checked' : '' }}>
-                                <span class="brand-mark flex-shrink-0" style="background:#555"><i class="bi bi-laptop"></i></span>
-                                <span>
-                                    <strong class="d-block">Thanh toán demo chung</strong>
-                                    <span class="small text-muted">Dùng để kiểm thử nhanh, không gắn thương hiệu cổng thanh toán</span>
-                                </span>
-                            </label>
-                        @endif
+                        <label class="payment-option border rounded-4 p-3 mb-4 d-flex align-items-center gap-3 {{ $providerStatus['sepay'] ? '' : 'opacity-50' }}">
+                            <input class="form-check-input flex-shrink-0" type="radio" name="provider" value="sepay"
+                                {{ old('provider') === 'sepay' ? 'checked' : '' }}
+                                {{ $providerStatus['sepay'] ? '' : 'disabled' }}>
+                            <span class="brand-mark flex-shrink-0" style="background:#1261d8"><i class="bi bi-qr-code-scan"></i></span>
+                            <span class="flex-grow-1">
+                                <strong class="d-block">Chuyển khoản QR SePay</strong>
+                                <span class="small text-muted">Quét QR bằng ứng dụng ngân hàng để chuyển khoản đúng số tiền</span>
+                            </span>
+                            <span class="badge text-bg-{{ $providerStatus['sepay'] ? 'light' : 'secondary' }}">
+                                {{ $providerStatus['sepay'] ? 'Sẵn sàng' : 'Chưa cấu hình' }}
+                            </span>
+                        </label>
 
                         @error('provider')
                             <div class="text-danger small mb-3">{{ $message }}</div>
