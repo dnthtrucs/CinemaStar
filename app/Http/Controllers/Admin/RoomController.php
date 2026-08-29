@@ -75,13 +75,14 @@ class RoomController extends Controller
     {
         for ($rowIndex = 0; $rowIndex < $room->rows; $rowIndex++) {
             $row = chr(65 + $rowIndex);
-            $isVip = $rowIndex >= $room->rows - 2;
+            $isCouple = $row === 'H';
+            $isVip = ! $isCouple && $rowIndex >= $room->rows - 2;
             for ($number = 1; $number <= $room->seats_per_row; $number++) {
                 $room->seats()->create([
                     'row' => $row,
                     'number' => $number,
-                    'type' => $isVip ? 'vip' : 'standard',
-                    'price_surcharge' => $isVip ? 30000 : 0,
+                    'type' => $isCouple ? 'couple' : ($isVip ? 'vip' : 'standard'),
+                    'price_surcharge' => $isCouple ? 15000 : ($isVip ? 30000 : 0),
                     'is_active' => true,
                 ]);
             }
