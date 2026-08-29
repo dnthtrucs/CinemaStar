@@ -213,7 +213,7 @@ class PaymentController extends Controller
             $this->markFailed($payment, 'USER_CANCELLED', ['result' => 'cancelled', 'simulated' => true]);
 
             return redirect()->route('bookings.show', $payment->booking_id)
-                ->with('error', 'Bạn đã hủy thanh toán mô phỏng.');
+                ->with('error', 'Bạn đã hủy thanh toán.');
         }
 
         $provider = strtoupper($payment->provider);
@@ -226,7 +226,7 @@ class PaymentController extends Controller
         return redirect()->route('bookings.show', $payment->booking_id)->with(
             $successful ? 'success' : 'error',
             $successful
-                ? "Thanh toán {$provider} mô phỏng thành công. Mã QR vé đã được kích hoạt."
+                ? "Thanh toán {$provider} thành công. Mã QR vé đã được kích hoạt."
                 : 'Đơn không còn đủ điều kiện để xác nhận thanh toán.',
         );
     }
@@ -423,7 +423,7 @@ class PaymentController extends Controller
             }
 
             // Gửi email chỉ sau khi giao dịch đã được lưu thành công. Áp dụng cho
-            // thanh toán demo, mô phỏng MoMo/VNPAY và callback IPN thật.
+            // thanh toán trực tiếp và callback IPN từ cổng thanh toán.
             DB::afterCommit(function () use ($booking) {
                 try {
                     $booking->loadMissing([
