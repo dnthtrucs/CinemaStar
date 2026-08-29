@@ -82,7 +82,7 @@ class RoomController extends Controller
                     'row' => $row,
                     'number' => $number,
                     'type' => $isCouple ? 'couple' : ($isVip ? 'vip' : 'standard'),
-                    'price_surcharge' => $isCouple ? 15000 : ($isVip ? 30000 : 0),
+                    'price_surcharge' => $isCouple ? 45000 : ($isVip ? 30000 : 0),
                     'is_active' => true,
                 ]);
             }
