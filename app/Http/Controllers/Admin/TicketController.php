@@ -24,20 +24,7 @@ class TicketController extends Controller
 
     public function update(Booking $booking)
     {
-        $booking->loadMissing('showtime', 'tickets');
-        abort_unless($booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
-        abort_if($booking->showtime?->ends_at?->isPast(), 422, 'Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.');
-
-        DB::transaction(function () use ($booking) {
-            $validTickets = $booking->tickets->where('status', 'valid');
-            abort_if($validTickets->isEmpty(), 422, 'Đơn vé này đã được check-in hoặc không còn hiệu lực.');
-
-            foreach ($validTickets as $ticket) {
-                $this->checkInTicket($ticket);
-            }
-
-            ActivityLog::record('booking.checked_in', "Check-in đơn {$booking->code}", $booking);
-        });
+        $this->checkInBooking($booking);
 
         return back()->with('success', "Check-in thành công cho toàn bộ ghế trong đơn {$booking->code}.");
     }
@@ -47,6 +34,12 @@ class TicketController extends Controller
         $value = $request->validate([
             'ticket_token' => ['required', 'string', 'max:2048'],
         ])['ticket_token'];
+
+        if ($booking = $this->bookingFromQr($value)) {
+            $this->checkInBooking($booking);
+
+            return back()->with('success', "Check-in thành công toàn bộ ghế trong đơn {$booking->code}.");
+        }
 
         $token = $this->extractQrToken($value);
         if (! $token) {
@@ -89,6 +82,50 @@ class TicketController extends Controller
 
             ActivityLog::record('ticket.checked_in', "Check-in vé {$ticket->code}", $ticket);
         });
+    }
+
+    private function checkInBooking(Booking $booking): void
+    {
+        DB::transaction(function () use ($booking) {
+            $booking = Booking::query()
+                ->with(['showtime', 'tickets'])
+                ->lockForUpdate()
+                ->findOrFail($booking->id);
+
+            abort_unless($booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
+            abort_if($booking->showtime?->ends_at?->isPast(), 422, 'Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.');
+
+            $validTickets = $booking->tickets->where('status', 'valid');
+            abort_if($validTickets->isEmpty(), 422, 'Đơn vé này đã được check-in hoặc không còn hiệu lực.');
+
+            foreach ($validTickets as $ticket) {
+                $this->checkInTicket($ticket);
+            }
+
+            ActivityLog::record('booking.checked_in', "Check-in đơn {$booking->code}", $booking);
+        });
+    }
+
+    private function bookingFromQr(string $value): ?Booking
+    {
+        $path = rtrim((string) parse_url($value, PHP_URL_PATH), '/');
+        if (! preg_match('#/verify-ticket/(\\d+)$#', $path, $matches)) {
+            return null;
+        }
+
+        parse_str((string) parse_url($value, PHP_URL_QUERY), $query);
+        $booking = Booking::find($matches[1]);
+        if (! $booking || empty($query['signature'])) {
+            return null;
+        }
+
+        $expectedSignature = hash_hmac(
+            'sha256',
+            $booking->id.'|'.$booking->code,
+            (string) config('app.key'),
+        );
+
+        return hash_equals($expectedSignature, (string) $query['signature']) ? $booking : null;
     }
 
     private function extractQrToken(string $value): ?string
