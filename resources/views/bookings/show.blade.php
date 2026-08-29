@@ -60,7 +60,7 @@
                             @if($booking->payment_status === 'paid')
                                 <div class="small text-muted mt-3">Phương thức</div>
                                 <strong>
-                                    {{ match($booking->payment_method) {'momo' => 'Ví MoMo', 'vnpay' => 'VNPAY', 'demo' => 'Thanh toán demo', default => strtoupper((string) $booking->payment_method)} }}
+                                    {{ match($booking->payment_method) {'momo' => 'Ví MoMo', 'vnpay' => 'VNPAY', 'sepay' => 'Chuyển khoản QR SePay', default => strtoupper((string) $booking->payment_method)} }}
                                 </strong>
                             @endif
                         </div>
