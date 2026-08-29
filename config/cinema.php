@@ -17,4 +17,12 @@ return [
         'access_key' => env('MOMO_ACCESS_KEY'),
         'secret_key' => env('MOMO_SECRET_KEY'),
     ],
+
+    'sepay' => [
+        'api_key' => env('SEPAY_API_KEY'),
+        'bank_code' => env('SEPAY_BANK_CODE'),
+        'account_number' => env('SEPAY_ACCOUNT_NUMBER'),
+        'account_name' => env('SEPAY_ACCOUNT_NAME'),
+        'qr_url' => env('SEPAY_QR_URL', 'https://qr.sepay.vn/img'),
+    ],
 ];
