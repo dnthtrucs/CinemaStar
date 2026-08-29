@@ -17,8 +17,10 @@
         <div style="border-top:1px dashed #ccd5df;padding-top:18px;text-align:center">
           <div style="font-size:12px;color:#52647a">MÃ VÉ / MÃ ĐẶT CHỖ</div>
           <div style="font-size:25px;font-weight:700;letter-spacing:1px;margin-top:6px">{{ $booking->code }}</div>
-          <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#52647a">Đơn sử dụng một mã QR duy nhất cho toàn bộ ghế. Mở vé điện tử để xuất trình mã khi check-in.</p>
-          <p style="margin:18px 0 2px"><a href="{{ $verificationUrl }}" style="display:inline-block;background:#d71920;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:700">Xem vé điện tử</a></p>
+          <div style="padding:18px 0 2px">
+            <img src="{{ $message->embedData($qrPng, 'CinemaStar-QR-'.$booking->code.'.png', 'image/png') }}" width="210" height="210" alt="Mã QR đơn vé CinemaStar" style="display:block;width:210px;height:210px;margin:0 auto;border:8px solid #fff;border-radius:8px">
+          </div>
+          <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#52647a">Đơn sử dụng một mã QR duy nhất cho toàn bộ ghế. Đưa mã này cho nhân viên khi check-in.</p>
         </div>
       </td></tr>
       <tr><td style="padding:0 24px 20px;border-bottom:4px dotted #eef1f4">
