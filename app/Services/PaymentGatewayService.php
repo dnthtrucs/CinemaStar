@@ -17,7 +17,6 @@ class PaymentGatewayService
         }
 
         return match ($payment->provider) {
-            'demo' => route('payments.demo', $payment),
             'vnpay' => $this->vnpayUrl($payment, $ipAddress),
             'momo' => $this->momoUrl($payment),
             default => throw new RuntimeException('Cổng thanh toán không được hỗ trợ.'),
@@ -44,7 +43,6 @@ class PaymentGatewayService
             'momo' => (string) config('cinema.momo.partner_code') !== ''
                 && (string) config('cinema.momo.access_key') !== ''
                 && (string) config('cinema.momo.secret_key') !== '',
-            'demo' => (bool) config('cinema.demo_payment_enabled'),
             'sepay' => $this->isSepayConfigured(),
             default => false,
         };
