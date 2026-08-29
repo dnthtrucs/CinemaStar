@@ -20,12 +20,13 @@ class RoomSeeder extends Seeder
                 if ($room->seats()->doesntExist()) {
                     for ($rowIndex = 0; $rowIndex < 8; $rowIndex++) {
                         for ($number = 1; $number <= 10; $number++) {
-                            $isVip = $rowIndex >= 6;
+                            $isCouple = $rowIndex === 7;
+                            $isVip = ! $isCouple && $rowIndex >= 6;
                             $room->seats()->create([
                                 'row' => chr(65 + $rowIndex),
                                 'number' => $number,
-                                'type' => $isVip ? 'vip' : 'standard',
-                                'price_surcharge' => $isVip ? 30000 : 0,
+                                'type' => $isCouple ? 'couple' : ($isVip ? 'vip' : 'standard'),
+                                'price_surcharge' => $isCouple ? 15000 : ($isVip ? 30000 : 0),
                                 'is_active' => true,
                             ]);
                         }
