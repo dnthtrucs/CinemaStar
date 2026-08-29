@@ -48,6 +48,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        return redirect()->route('dashboard')->with('success', 'Đăng ký tài khoản thành công.');
+        return redirect()->intended(route('dashboard', absolute: false))
+            ->with('success', 'Đăng ký tài khoản thành công.');
     }
 }
