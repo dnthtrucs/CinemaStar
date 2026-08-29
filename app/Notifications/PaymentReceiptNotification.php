@@ -48,12 +48,6 @@ class PaymentReceiptNotification extends Notification
                 'qrSvg' => $qrSvg,
             ]);
 
-        $message->attachData(
-            $qrSvg,
-            'CinemaStar-QR-DON-'.$booking->code.'.svg',
-            ['mime' => 'image/svg+xml'],
-        );
-
         return $message;
     }
 
