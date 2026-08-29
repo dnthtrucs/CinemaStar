@@ -21,7 +21,7 @@ class RoomSeeder extends Seeder
                     for ($rowIndex = 0; $rowIndex < 8; $rowIndex++) {
                         for ($number = 1; $number <= 10; $number++) {
                             $isCouple = $rowIndex === 7;
-                            $isVip = ! $isCouple && $rowIndex >= 6;
+                            $isVip = ! $isCouple && in_array($rowIndex, [4, 5, 6], true);
                             $room->seats()->create([
                                 'row' => chr(65 + $rowIndex),
                                 'number' => $number,
