@@ -50,10 +50,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/bookings/{booking}/payment', [PaymentController::class, 'show'])->name('payments.show');
     Route::post('/bookings/{booking}/payment', [PaymentController::class, 'store'])->name('payments.store');
+    Route::get('/payments/{payment}/sepay', [PaymentController::class, 'sepay'])->name('payments.sepay.show');
+    Route::get('/payments/{payment}/sepay/status', [PaymentController::class, 'sepayStatus'])->name('payments.sepay.status');
     Route::get('/payments/{payment}/simulate', [PaymentController::class, 'simulate'])->name('payments.simulate');
     Route::post('/payments/{payment}/simulate', [PaymentController::class, 'completeSimulation'])->name('payments.simulate.complete');
-    Route::get('/payments/{payment}/demo', [PaymentController::class, 'demo'])->name('payments.demo');
-    Route::post('/payments/{payment}/demo', [PaymentController::class, 'completeDemo'])->name('payments.demo.complete');
     Route::get('/verify-ticket/{booking}', [BookingTicketController::class, 'verify'])->name('bookings.verify');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -65,6 +65,7 @@ Route::get('/payments/vnpay/return', [PaymentController::class, 'vnpayReturn'])-
 Route::get('/payments/vnpay/ipn', [PaymentController::class, 'vnpayIpn'])->name('payments.vnpay.ipn');
 Route::get('/payments/momo/return', [PaymentController::class, 'momoReturn'])->name('payments.momo.return');
 Route::post('/payments/momo/ipn', [PaymentController::class, 'momoIpn'])->name('payments.momo.ipn');
+Route::post('/payments/sepay/webhook', [PaymentController::class, 'sepayWebhook'])->name('payments.sepay.webhook');
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
