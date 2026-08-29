@@ -27,7 +27,7 @@
 
                     <div class="text-center py-3">
                         <img src="{{ $paymentQr }}" class="payment-qr border rounded-4 p-2 bg-white" alt="Mã QR thanh toán {{ $providerName }}">
-                        <p class="small text-muted mt-3 mb-0">Dùng điện thoại quét QR để mở trang xác nhận thanh toán {{ $providerName }} mô phỏng.</p>
+                        <p class="small text-muted mt-3 mb-0">Dùng điện thoại quét QR để mở trang xác nhận thanh toán {{ $providerName }}.</p>
                     </div>
 
                     <div class="bg-light rounded-4 p-4 my-4">
