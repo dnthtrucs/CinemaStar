@@ -15,7 +15,7 @@
                     <p class="text-muted mb-0">Mã đơn {{ $booking->code }}</p>
                 </div>
                 <span class="badge rounded-pill text-bg-{{ $paymentMode === 'simulate' ? 'warning' : 'success' }} p-2 px-3">
-                    {{ $paymentMode === 'simulate' ? 'Chế độ mô phỏng' : ($paymentMode === 'production' ? 'Thanh toán thật' : 'Sandbox thử nghiệm') }}
+                    {{ $paymentMode === 'production' ? 'Thanh toán trực tuyến' : 'Quét QR hoặc xác nhận trên ứng dụng' }}
                 </span>
             </div>
 
@@ -78,7 +78,7 @@
                             <span class="flex-grow-1">
                                 <strong class="d-block">Ví MoMo</strong>
                                 <span class="small text-muted">
-                                    {{ $paymentMode === 'simulate' ? 'Mô phỏng luồng quét QR/xác nhận MoMo' : ($paymentMode === 'production' ? 'Chuyển đến ứng dụng hoặc website MoMo để thanh toán' : 'Thanh toán bằng ứng dụng MoMo sandbox') }}
+                                    {{ $paymentMode === 'production' ? 'Chuyển đến ứng dụng hoặc website MoMo để thanh toán' : 'Quét QR hoặc xác nhận trên ứng dụng MoMo' }}
                                 </span>
                             </span>
                             <span class="badge text-bg-{{ $providerStatus['momo'] ? 'light' : 'secondary' }}">
@@ -94,7 +94,7 @@
                             <span class="flex-grow-1">
                                 <strong class="d-block">VNPAY</strong>
                                 <span class="small text-muted">
-                                    {{ $paymentMode === 'simulate' ? 'Mô phỏng thanh toán QR, ATM hoặc thẻ' : ($paymentMode === 'production' ? 'Chuyển đến QR/trang thanh toán VNPAY' : 'QR, ATM nội địa và thẻ quốc tế trên VNPAY sandbox') }}
+                                    {{ $paymentMode === 'production' ? 'Chuyển đến QR/trang thanh toán VNPAY' : 'QR, ATM nội địa và thẻ quốc tế' }}
                                 </span>
                             </span>
                             <span class="badge text-bg-{{ $providerStatus['vnpay'] ? 'light' : 'secondary' }}">
