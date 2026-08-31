@@ -2,49 +2,39 @@
 
 ## Kiểm thử tự động
 
-Chạy:
-
-~~~powershell
+```powershell
 php artisan test
-~~~
-
-Bộ test hiện có kiểm tra xác thực, hồ sơ người dùng và các luồng đặt vé quan trọng.
+```
 
 ## Test case nghiệp vụ chính
 
 | ID | Trường hợp | Kết quả mong đợi |
 |---|---|---|
-| BK-01 | Khách chọn nhiều ghế với loại ghế khác nhau | Tạo đơn đúng giá và đúng số vé |
-| BK-02 | Hai khách chọn cùng một ghế | Khách thứ hai không tạo được đơn/ghế trùng |
-| BK-03 | Đơn chưa thanh toán bị hủy hoặc quá hạn | Ghế được giải phóng; điểm đã đổi được hoàn lại nếu có |
-| VC-01 | Voucher hợp lệ | Giá giảm đúng theo điều kiện voucher |
-| LP-01 | Khách dùng điểm | 1 điểm giảm 1.000đ; không giảm quá tổng còn lại |
-| PM-01 | Thanh toán thành công | Payment và booking cập nhật thành công; cộng điểm một lần |
-| PM-02 | Callback thanh toán lặp | Không tạo doanh thu, email hay điểm thưởng lần thứ hai |
-| QR-01 | Check-in theo mã đơn BK hoặc QR | Check-in toàn bộ vé của đơn một lần |
-| QR-02 | Check-in lại đơn đã dùng | Bị từ chối, trạng thái vẫn là Đã check-in |
-| QR-03 | Vé quá giờ kết thúc chưa check-in | Hiện Đã hết hiệu lực |
-| ST-01 | Tạo một suất trùng phòng | Hệ thống báo lỗi trùng thời gian |
-| ST-02 | Tạo suất hàng loạt | Tạo các suất hợp lệ; tự bỏ qua suất quá giờ hoặc trùng phòng |
-| RF-01 | Khách gửi yêu cầu hoàn tiền | Đơn chuyển sang trạng thái yêu cầu hoàn tiền |
-| AU-01 | Khách truy cập đường dẫn Admin/Staff | Hệ thống từ chối theo quyền |
-| AU-02 | Staff check-in, không quản lý cấu hình | Chỉ truy cập được phần nghiệp vụ được cấp quyền |
+| BK-01 | Chọn ghế thường/VIP | Đơn có đúng ghế và phụ thu 30.000₫ cho từng ghế VIP |
+| BK-02 | Chọn ghế đôi H1–H2 | Một thao tác chọn đủ hai vị trí; giá bằng `2 × (giá cơ bản + 30.000₫) + 30.000₫` |
+| BK-03 | Một vị trí của ghế đôi đã được đặt | Cả cặp không thể chọn/đặt |
+| BK-04 | Hai khách chọn cùng ghế | Khách thứ hai bị từ chối bởi transaction/khóa ghế |
+| BK-05 | Chọn ghế trước đăng nhập | Đăng nhập/đăng ký xong quay lại suất chiếu và giữ lựa chọn trên trình duyệt |
+| BK-06 | Đơn hết hạn hoặc hủy | Ticket tạm bị xóa, ghế mở lại, điểm đã giữ được hoàn |
+| VC-01 | Voucher và điểm | Voucher tính trước; 1 điểm giảm 1.000₫ trên số tiền còn lại |
+| PM-01 | Thanh toán SePay đúng số tiền | Webhook đổi payment/booking thành công và phát hành vé |
+| PM-02 | Webhook sai khóa, sai mã đơn hoặc sai số tiền | Bị từ chối, không đổi trạng thái đơn |
+| PM-03 | Webhook lặp | Không cộng điểm và gửi email lần hai |
+| EM-01 | Email sau thanh toán | Email có QR PNG hiển thị trong nội dung; không có file QR SVG |
+| QR-01 | Quét QR đơn | Check-in toàn bộ ghế hợp lệ của một đơn đúng một lần |
+| QR-02 | Quét lại QR đơn | Bị từ chối, ticket vẫn ở trạng thái Đã check-in |
+| QR-03 | Suất đã kết thúc | Ticket chưa check-in không được check-in |
+| ST-01 | Tạo suất trùng phòng | Bị từ chối hoặc bỏ qua khi tạo hàng loạt |
+| RF-01 | Khách yêu cầu hoàn tiền | Admin duyệt/từ chối đúng trạng thái |
+| AU-01 | Truy cập Admin/Staff sai quyền | Bị từ chối |
 
-## Quy trình kiểm thử thủ công trước bảo vệ
+## Quy trình kiểm thử thủ công
 
-1. Chạy migrate và seed trên database thử nghiệm, sau đó đăng nhập bằng tài khoản Admin, Staff và Customer.
-2. Admin tạo phim, rạp, phòng; thử tạo suất đơn lẻ và lịch hàng loạt có giờ trùng.
-3. Customer chọn ghế, áp voucher và dùng điểm; xác nhận số tiền trước khi thanh toán.
-4. Mở cùng một suất bằng tài khoản thứ hai để xác minh ghế đã giữ/mua không thể chọn lại.
-5. Hoàn tất thanh toán; kiểm tra email xác nhận, mã đơn BK, QR và điểm được cộng.
-6. Admin hoặc Staff nhập mã BK/quét QR để check-in; thử check-in lần thứ hai.
-7. Kiểm tra một vé đã qua giờ phim nhưng chưa check-in có trạng thái Đã hết hiệu lực.
-8. Tạo yêu cầu hoàn tiền và xác minh Admin có thể duyệt/từ chối đúng trạng thái.
-9. Thử thay đổi booking ID trên URL bằng tài khoản khác; hệ thống phải từ chối.
-10. Thử gửi giá tiền không hợp lệ từ trình duyệt; server phải tự tính lại giá.
-
-## Kiểm thử MoMo/VNPAY sandbox
-
-- Dùng URL HTTPS công khai trong APP_URL và khai báo đúng return/IPN URL.
-- Kiểm tra thanh toán thành công, người dùng hủy, sai chữ ký, sai số tiền và callback lặp.
-- Đối chiếu mã giao dịch trong bảng payments với dashboard sandbox của cổng thanh toán.
+1. Chạy migrate trên database thử nghiệm và tạo dữ liệu cần thiết.
+2. Kiểm tra hàng E–G màu VIP, hàng H màu hồng và từng cặp ghế đôi.
+3. Mở cùng suất chiếu ở hai tài khoản để kiểm tra giữ ghế/chống trùng.
+4. Thử khách chọn ghế khi chưa đăng nhập, sau đó đăng nhập và tiếp tục thanh toán.
+5. Thanh toán SePay bằng khoản nhỏ, kiểm tra trạng thái đơn, email và điểm.
+6. Đăng nhập Staff trên điện thoại, quét QR của đơn và kiểm tra toàn bộ ghế được check-in.
+7. Thử quét lại QR, quét đơn chưa thanh toán và đơn đã quá giờ.
+8. Kiểm tra voucher, hoàn tiền, lịch chiếu hàng loạt và xuất báo cáo.
