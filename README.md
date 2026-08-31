@@ -1,37 +1,41 @@
 # CinemaStar – Hệ thống quản lý và đặt vé rạp chiếu phim
 
-CinemaStar là đồ án tốt nghiệp xây dựng bằng **Laravel 11, MySQL và Blade/Bootstrap**. Hệ thống hỗ trợ quy trình vận hành rạp chiếu phim: quản lý nội dung, lập lịch chiếu, đặt ghế, thanh toán, phát hành vé QR, check-in, ưu đãi thành viên, hoàn tiền và báo cáo.
+CinemaStar là hệ thống Laravel 11 phục vụ quản lý rạp, lịch chiếu, đặt vé trực tuyến, thanh toán và check-in QR. Ứng dụng dùng MySQL, Blade/Bootstrap và giao diện tiếng Việt.
 
 ## Chức năng chính
 
 ### Khách hàng
 
-- Đăng ký, đăng nhập, cập nhật hồ sơ.
-- Xem phim, rạp, phòng chiếu và suất chiếu còn hiệu lực.
-- Chọn ghế trực quan, giữ ghế trong thời gian cấu hình và chống đặt trùng.
-- Áp dụng voucher; dùng điểm thành viên để giảm giá (**1 điểm = 1.000đ**).
-- Thanh toán qua SePay, MoMo hoặc VNPAY khi đã cấu hình.
-- Nhận email xác nhận thanh toán kèm thông tin vé, mã đơn và QR.
-- Xem lịch sử đơn/vé; gửi yêu cầu hủy hoặc hoàn tiền theo điều kiện của hệ thống.
-- Theo dõi trạng thái vé: **Sẵn sàng vào rạp**, **Đã check-in** hoặc **Đã hết hiệu lực**.
+- Đăng ký, đăng nhập, cập nhật hồ sơ và xem lịch sử đơn vé.
+- Xem phim, rạp, suất chiếu; chọn ghế trực quan và giữ ghế trong thời gian cấu hình.
+- Nếu chưa đăng nhập, lựa chọn ghế và mã giảm giá được giữ lại trên cùng trình duyệt; đăng nhập hoặc đăng ký xong sẽ trở lại đúng trang chọn ghế.
+- Dùng voucher và điểm thành viên; 1 điểm tương đương 1.000₫.
+- Thanh toán QR SePay; hỗ trợ tích hợp MoMo và VNPAY khi có tài khoản merchant.
+- Nhận email xác nhận với QR PNG hiển thị trong nội dung thư; PHP GD phải được bật để tạo QR PNG.
+- Một đơn có một QR duy nhất cho toàn bộ ghế; QR này dùng để check-in cả đơn.
+
+### Sơ đồ ghế
+
+- Ghế thường: hàng A–D.
+- Ghế VIP: hàng E, F, G; phụ thu 30.000₫ mỗi ghế.
+- Ghế đôi màu hồng: hàng H, được chọn theo cặp H1–H2, H3–H4…
+- Giá một ghế đôi: `2 × (giá ghế cơ bản + 30.000₫) + 30.000₫`.
+- Server tự giữ cả hai vị trí của ghế đôi và chặn đặt trùng.
 
 ### Quản trị viên và nhân viên
 
-- Dashboard doanh thu, đơn vé, tài khoản và hoạt động gần đây.
-- Quản lý phim, rạp, phòng, ghế, suất chiếu và người dùng.
-- Tạo một suất hoặc **tạo suất chiếu hàng loạt** theo khoảng ngày và nhiều khung giờ.
-- Tự tính giờ kết thúc theo thời lượng phim + 15 phút chuẩn bị phòng; tự bỏ qua lịch trùng phòng.
-- Quản lý voucher, điểm thành viên, đơn vé và yêu cầu hoàn tiền.
-- Admin/Staff check-in bằng mã đơn `BK...` hoặc QR; một đơn chỉ check-in một lần.
-- Xuất báo cáo doanh thu CSV, Excel và PDF.
+- Quản lý phim, rạp, phòng, banner trang chủ, suất chiếu, người dùng và voucher.
+- Tạo suất chiếu đơn lẻ hoặc hàng loạt; tự tính giờ kết thúc và chặn trùng phòng.
+- Theo dõi dashboard, đơn vé, hoàn tiền và xuất báo cáo CSV/Excel/PDF.
+- Admin/Staff quét QR bằng camera điện thoại hoặc tra cứu mã BK để check-in; một lần quét check-in toàn bộ ghế trong đơn.
 
 ## Công nghệ
 
-- PHP 8.2+, Laravel 11
-- MySQL 8+/MariaDB 10.6+
+- PHP 8.2+, Laravel 11, MySQL 8+/MariaDB 10.6+
 - Blade, Bootstrap, Vite
 - Endroid QR Code
-- SePay, MoMo/VNPAY
+- SePay, MoMo, VNPAY
+- Docker/Render cho triển khai cloud
 
 ## Cài đặt trên XAMPP
 
@@ -43,12 +47,12 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-Tạo database trong phpMyAdmin, ví dụ `cinema_db`, sau đó chỉnh file `.env`:
+Tạo database `cinema_db` trong phpMyAdmin, rồi chỉnh `.env`:
 
 ```env
 APP_NAME=CinemaStar
 APP_URL=http://127.0.0.1:8000
-APP_TIMEZONE=Asia/Ha_Noi
+APP_TIMEZONE=Asia/Ho_Chi_Minh
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -58,51 +62,75 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Khởi tạo dữ liệu và chạy ứng dụng:
+Khởi tạo ứng dụng:
 
 ```powershell
 php artisan migrate --seed
 npm install
 npm run build
+php artisan storage:link
 php artisan serve
 ```
 
-Mở: http://127.0.0.1:8000
+Mở http://127.0.0.1:8000.
+
+### Bật QR PNG trong email
+
+Mở `C:\xampp\php\php.ini`, bỏ dấu `;` trước dòng sau, sau đó khởi động lại Apache:
+
+```ini
+extension=gd
+```
+
+Kiểm tra:
+
+```powershell
+php -m | findstr /I gd
+```
 
 ## Cấu hình email
 
-CinemaStar gửi email sau khi thanh toán thành công. Cấu hình SMTP trong `.env`, sau đó xóa cache cấu hình:
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=emailcuaban@gmail.com
+MAIL_PASSWORD="mat_khau_ung_dung_gmail"
+MAIL_FROM_ADDRESS=emailcuaban@gmail.com
+MAIL_FROM_NAME=CinemaStar
+```
+
+Sau khi đổi `.env`:
 
 ```powershell
 php artisan optimize:clear
 ```
 
-Khi dùng Gmail, nên dùng App Password thay cho mật khẩu đăng nhập Gmail thông thường.
+## Cấu hình SePay
 
-## Cấu hình thanh toán
-
-Khi chạy trên XAMPP:
+Không đưa API key vào GitHub. Chỉ điền trong `.env` hoặc Environment của Render:
 
 ```env
-PAYMENT_MODE=simulate
+SEPAY_API_KEY=
+SEPAY_BANK_CODE=MBBank
+SEPAY_ACCOUNT_NUMBER=
+SEPAY_ACCOUNT_NAME="TEN_CHU_TAI_KHOAN"
+SEPAY_QR_URL=https://qr.sepay.vn/img
 ```
 
-Để kết nối MoMo/VNPAY sandbox, nhập thông tin do cổng thanh toán cung cấp trong `.env` và đặt:
+Webhook SePay khi có URL HTTPS công khai:
 
-```env
-PAYMENT_MODE=sandbox
-APP_URL=https://ten-mien-cong-khai.example
+```text
+https://ten-mien-cua-ban/payments/sepay/webhook
 ```
 
-Return URL/IPN chỉ hoạt động ổn định khi `APP_URL` là địa chỉ HTTPS công khai.
-
-## Tác vụ theo thời gian
-
-Chạy lệnh sau trong một cửa sổ PowerShell riêng để xử lý các tác vụ đã lập lịch, như giải phóng ghế giữ quá hạn:
+## Tác vụ định kỳ
 
 ```powershell
 php artisan schedule:work
 ```
+
+Scheduler giải phóng ghế của đơn chưa thanh toán đã hết hạn.
 
 ## Kiểm thử
 
@@ -110,8 +138,6 @@ php artisan schedule:work
 php artisan test
 ```
 
-Tài liệu chi tiết:
-
 - [Kiến trúc hệ thống](docs/ARCHITECTURE.md)
 - [Kế hoạch kiểm thử](docs/TEST_PLAN.md)
-- [Hướng dẫn triển khai](docs/DEPLOYMENT.md)
+- [Hướng dẫn triển khai Render](docs/DEPLOYMENT.md)
