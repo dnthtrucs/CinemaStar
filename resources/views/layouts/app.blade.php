@@ -63,6 +63,7 @@
                     <a class="btn btn-outline-light btn-sm" href="{{ route('profile.edit') }}" title="Hồ sơ"><i class="bi bi-gear"></i></a>
                     <form action="{{ route('logout') }}" method="POST">@csrf<button class="btn btn-danger btn-sm" type="submit">Đăng xuất</button></form>
                 @else
+                    <a class="btn btn-outline-light btn-sm" href="{{ route('support.index') }}"><i class="bi bi-question-circle me-1"></i>Hỗ trợ</a>
                     <a class="btn btn-outline-light btn-sm" href="{{ route('login') }}">Đăng nhập</a>
                     <a class="btn btn-primary btn-sm" href="{{ route('register') }}">Đăng ký</a>
                 @endauth
