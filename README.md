@@ -7,6 +7,7 @@ CinemaStar là hệ thống Laravel 11 phục vụ quản lý rạp, lịch chi�
 ### Khách hàng
 
 - Đăng ký, đăng nhập, cập nhật hồ sơ và xem lịch sử đơn vé.
+- Trang Hỗ trợ khách hàng với tìm kiếm FAQ, hướng dẫn thanh toán/QR và liên hệ CSKH.
 - Xem phim, rạp, suất chiếu; chọn ghế trực quan và giữ ghế trong thời gian cấu hình.
 - Nếu chưa đăng nhập, lựa chọn ghế và mã giảm giá được giữ lại trên cùng trình duyệt; đăng nhập hoặc đăng ký xong sẽ trở lại đúng trang chọn ghế.
 - Dùng voucher và điểm thành viên; 1 điểm tương đương 1.000₫.
