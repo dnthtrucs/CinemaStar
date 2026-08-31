@@ -1,79 +1,111 @@
-# Hướng dẫn triển khai CinemaStar
+# Triển khai CinemaStar trên Render
 
-## 1. Yêu cầu máy chủ
+CinemaStar có `Dockerfile` và `.dockerignore` ở thư mục gốc. Render dùng Docker để cài PHP, Composer, Node/Vite và PHP GD.
 
-- PHP 8.2 trở lên, Composer 2
-- MySQL 8 hoặc MariaDB 10.6 trở lên
-- Node.js 20 trở lên
-- Web server Apache/Nginx trỏ document root vào thư mục public
-- HTTPS công khai nếu sử dụng MoMo/VNPAY sandbox hoặc production
+## 1. Chuẩn bị
 
-## 2. Cấu hình production
+- Repository GitHub: `dnthtrucs/CinemaStar`.
+- Một MySQL công khai. Render không cung cấp MySQL tích hợp; có thể dùng Aiven, Railway hoặc MySQL hosting riêng.
+- Gói Render hoạt động liên tục nếu nhận thanh toán thật. Service ngủ có thể làm callback bị chậm hoặc thất bại.
 
-Sao chép .env.example thành .env và cấu hình riêng trên máy chủ:
+## 2. Tạo Web Service
 
-~~~env
+Trong Render chọn **New → Web Service**, kết nối repository, chọn branch `main` và đặt:
+
+| Trường | Giá trị |
+|---|---|
+| Runtime | Docker |
+| Root Directory | Để trống |
+| Build Command | Để trống |
+| Start Command | Để trống |
+| Region | Singapore |
+
+Render tự dùng `Dockerfile`. Sau deploy sẽ có URL HTTPS dạng `https://ten-service.onrender.com`.
+
+## 3. Environment
+
+Tạo `APP_KEY` trên máy phát triển:
+
+```powershell
+php artisan key:generate --show
+```
+
+Thêm vào Render Environment. Không commit các giá trị bí mật:
+
+```env
 APP_NAME=CinemaStar
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://your-domain.example
+APP_URL=https://ten-service.onrender.com
 APP_TIMEZONE=Asia/Ho_Chi_Minh
+APP_KEY=base64:...
 
 DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_DATABASE=cinema_db
-DB_USERNAME=your_database_user
-DB_PASSWORD=your_database_password
+DB_HOST=...
+DB_PORT=3306
+DB_DATABASE=...
+DB_USERNAME=...
+DB_PASSWORD=...
 
-PAYMENT_MODE=sandbox
-SESSION_SECURE_COOKIE=true
-~~~
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
 
-Không commit file .env, khóa SMTP, khóa MoMo/VNPAY hoặc mật khẩu database lên GitHub.
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=...
+MAIL_PASSWORD=...
+MAIL_FROM_ADDRESS=...
+MAIL_FROM_NAME=CinemaStar
 
-## 3. Lệnh triển khai
+PAYMENT_MODE=production
+SEPAY_API_KEY=...
+SEPAY_BANK_CODE=MBBank
+SEPAY_ACCOUNT_NUMBER=...
+SEPAY_ACCOUNT_NAME="TEN_CHU_TAI_KHOAN"
+SEPAY_QR_URL=https://qr.sepay.vn/img
+```
 
-~~~bash
-composer install --no-dev --optimize-autoloader
-npm ci
-npm run build
+Thêm biến MoMo/VNPAY chỉ sau khi có mã merchant production do từng cổng cấp.
+
+## 4. Khởi tạo database
+
+Khi Web Service đã live, mở Render Shell:
+
+```bash
 php artisan migrate --force
-php artisan storage:link
-php artisan optimize
-~~~
+php artisan storage:link --force
+php artisan optimize:clear
+```
 
-Đặt quyền ghi cho hai thư mục:
+Chỉ với database mới muốn có dữ liệu mẫu:
 
-~~~bash
-chmod -R ug+rwx storage bootstrap/cache
-~~~
+```bash
+php artisan db:seed --force
+```
 
-## 4. Scheduler
+## 5. Webhook và scheduler
 
-Scheduler xử lý các công việc theo thời gian, bao gồm giải phóng ghế giữ quá hạn. Thiết lập cron trên Linux:
+Cấu hình webhook SePay:
 
-~~~cron
-* * * * * cd /var/www/cinemastar && php artisan schedule:run >> /dev/null 2>&1
-~~~
+```text
+https://ten-service.onrender.com/payments/sepay/webhook
+```
 
-Khi chạy trên Windows/XAMPP, mở một cửa sổ PowerShell riêng:
+Tạo Render Cron Job từ cùng repository, dùng lịch và lệnh:
 
-~~~powershell
-php artisan schedule:work
-~~~
+```text
+* * * * *
+php artisan schedule:run
+```
 
-## 5. Thanh toán và email
+Copy Environment cần thiết từ Web Service sang Cron Job.
 
-- APP_URL phải là HTTPS công khai để nhận return URL/IPN từ MoMo và VNPAY.
-- Cấu hình đúng callback URL, mã đối tác và secret trong .env.
-- Dùng SMTP/App Password phù hợp cho email xác nhận vé.
-- Sau khi đổi .env, chạy: php artisan optimize:clear.
+## 6. Kiểm tra sau triển khai
 
-## 6. Checklist trước khi bàn giao
-
-- APP_DEBUG=false và HTTPS hợp lệ.
-- Đã đổi mật khẩu tài khoản Admin mặc định.
-- Đã kiểm tra đặt vé, voucher, đổi điểm, thanh toán, email QR và check-in.
-- Đã kiểm tra tạo lịch chiếu hàng loạt không sinh lịch trùng phòng.
-- Đã chạy backup database và thử khôi phục trên môi trường thử nghiệm.
-- Log, file .env và khóa bí mật không xuất hiện trong GitHub.
+- Đăng ký/đăng nhập, chọn ghế, ghế VIP và ghế đôi.
+- Thanh toán SePay với giá trị nhỏ; kiểm tra webhook đổi đơn sang Đã thanh toán.
+- Kiểm tra email QR PNG và scan QR đơn bằng tài khoản Staff.
+- Kiểm tra banner đã tải. Lưu trữ file trên Render là tạm thời; dùng Cloudinary/S3 cho banner lâu dài.
+- Giữ `APP_DEBUG=false`; không công khai `.env`, Gmail App Password, API key hoặc mật khẩu database.
