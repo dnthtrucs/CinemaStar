@@ -20,6 +20,7 @@ use App\Http\Controllers\MovieController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShowtimeController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TicketVerificationController;
 use App\Http\Controllers\MovieReviewController;
 use App\Http\Controllers\RefundController;
@@ -32,6 +33,7 @@ Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 Route::get('/movies/{movie}', [MovieController::class, 'show'])->name('movies.show');
 Route::get('/cinemas', [CinemaController::class, 'index'])->name('cinemas.index');
 Route::get('/cinemas/{cinema}', [CinemaController::class, 'show'])->name('cinemas.show');
+Route::get('/ho-tro', [SupportController::class, 'index'])->name('support.index');
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
 Route::get('/tickets/verify/{qrToken}', [TicketVerificationController::class, 'show'])
     ->where('qrToken', '[A-Fa-f0-9]{64}')
