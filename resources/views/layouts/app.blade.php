@@ -17,7 +17,8 @@
         a:hover { color:var(--brand-dark); }
         .navbar.bg-dark { background:linear-gradient(100deg,#061a33 0%,#12365b 55%,#07192f 100%)!important; border-bottom:2px solid rgba(243,201,105,.6); }
         .navbar-brand { font-weight:800; letter-spacing:-1px; color:#fffdf3!important; }
-        .navbar-logo { width:54px; height:54px; object-fit:contain; }
+        .navbar-logo { width:48px; height:48px; object-fit:contain; }
+        .navbar-wordmark { color:var(--gold); font-size:1.15rem; letter-spacing:.05em; text-shadow:0 1px 8px rgba(243,201,105,.18); }
         .brand-mark { width:34px; height:34px; display:inline-grid; place-items:center; border-radius:10px; background:linear-gradient(135deg,var(--gold),#d89c2e); color:#08213e; box-shadow:0 3px 10px rgba(0,0,0,.25); }
         .btn-primary { --bs-btn-bg:var(--brand); --bs-btn-border-color:var(--brand); --bs-btn-hover-bg:var(--brand-dark); --bs-btn-hover-border-color:var(--brand-dark); --bs-btn-active-bg:var(--brand-dark); --bs-btn-active-border-color:var(--brand-dark); }
         .btn-outline-light:hover { color:#08213e; background:var(--gold); border-color:var(--gold); }
@@ -50,7 +51,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('home') }}">
-            <img class="navbar-logo" src="{{ asset('images/cinemastar-logo.svg') }}" alt="CinemaStar">
+            <img class="navbar-logo" src="{{ asset('images/cinemastar-logo.svg') }}" alt=""><span class="navbar-wordmark">CINEMASTAR</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="mainNav">
