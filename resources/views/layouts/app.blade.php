@@ -17,7 +17,7 @@
         a:hover { color:var(--brand-dark); }
         .navbar.bg-dark { background:linear-gradient(100deg,#061a33 0%,#12365b 55%,#07192f 100%)!important; border-bottom:2px solid rgba(243,201,105,.6); }
         .navbar-brand { font-weight:800; letter-spacing:-1px; color:#fffdf3!important; }
-        .navbar-logo { width:151px; height:46px; object-fit:contain; object-position:left center; }
+        .navbar-logo { width:54px; height:54px; object-fit:contain; }
         .brand-mark { width:34px; height:34px; display:inline-grid; place-items:center; border-radius:10px; background:linear-gradient(135deg,var(--gold),#d89c2e); color:#08213e; box-shadow:0 3px 10px rgba(0,0,0,.25); }
         .btn-primary { --bs-btn-bg:var(--brand); --bs-btn-border-color:var(--brand); --bs-btn-hover-bg:var(--brand-dark); --bs-btn-hover-border-color:var(--brand-dark); --bs-btn-active-bg:var(--brand-dark); --bs-btn-active-border-color:var(--brand-dark); }
         .btn-outline-light:hover { color:#08213e; background:var(--gold); border-color:var(--gold); }
