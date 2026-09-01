@@ -18,7 +18,7 @@
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 px-4">
             <div>
                 <a href="/" class="block">
-                    <img src="{{ asset('images/cinemastar-logo.svg') }}" alt="CinemaStar" class="w-60 h-auto">
+                    <img src="{{ asset('images/cinemastar-logo.svg') }}" alt="CinemaStar" style="width:150px;height:150px;object-fit:contain">
                 </a>
             </div>
 
