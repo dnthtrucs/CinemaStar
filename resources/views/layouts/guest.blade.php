@@ -17,8 +17,8 @@
     <body class="font-sans text-gray-900 antialiased" style="font-family:'Be Vietnam Pro',sans-serif; background:linear-gradient(135deg,#07182c 0%,#12365b 55%,#1d4f80 100%);">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 px-4">
             <div>
-                <a href="/" class="flex items-center gap-3 text-yellow-100 font-extrabold tracking-wide">
-                    <span class="inline-grid place-items-center w-11 h-11 rounded-xl bg-amber-300 text-slate-950 shadow-lg">★</span> CINEMASTAR
+                <a href="/" class="block">
+                    <img src="{{ asset('images/cinemastar-logo.svg') }}" alt="CinemaStar" class="w-60 h-auto">
                 </a>
             </div>
 
