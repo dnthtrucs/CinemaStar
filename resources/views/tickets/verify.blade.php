@@ -20,7 +20,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-7">
             <div class="text-center mb-4">
-                <div class="brand-mark mx-auto mb-3"><i class="bi bi-qr-code-scan"></i></div>
+                <img src="{{ asset('images/cinemastar-logo.svg') }}" alt="CinemaStar" style="width:76px;height:76px;object-fit:contain" class="d-block mx-auto mb-3">
                 <div class="text-brand fw-semibold">CINEMASTAR</div>
                 <h1 class="section-title">Xác thực vé điện tử</h1>
             </div>
