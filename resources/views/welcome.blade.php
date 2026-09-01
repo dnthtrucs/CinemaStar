@@ -41,7 +41,7 @@
 
 @push('styles')
 <style>
-.home-hero { background:radial-gradient(circle at 78% 22%,rgba(243,201,105,.22),transparent 25rem),linear-gradient(115deg,#210b12 0%,#600f24 100%); border-bottom:3px solid rgba(243,201,105,.72); }
+.home-hero { background:radial-gradient(circle at 78% 22%,rgba(243,201,105,.25),transparent 25rem),linear-gradient(115deg,#071a33 0%,#12365b 100%); border-bottom:3px solid rgba(243,201,105,.72); }
 .home-banner .carousel-item { height:clamp(280px,42vw,560px); background:#171717; }
 .home-banner .carousel-item img { height:100%; object-fit:cover; }
 .home-banner .banner-link { display:block; height:100%; cursor:pointer; }
