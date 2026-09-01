@@ -26,11 +26,11 @@
     </div>
 </section>
 @else
-<section class="bg-dark text-white py-5 mb-5">
+<section class="home-hero text-white py-5 mb-5">
     <div class="container py-lg-5">
         <div class="row align-items-center g-5"><div class="col-lg-7">
             <span class="badge rounded-pill bg-brand px-3 py-2 mb-3">TRẢI NGHIỆM ĐIỆN ẢNH</span>
-            <h1 class="display-4 fw-bold mb-3">Chọn phim hay.<br><span class="text-danger">Đặt ghế trong vài giây.</span></h1>
+            <h1 class="display-4 fw-bold mb-3">Chọn phim hay.<br><span class="text-gold">Đặt ghế trong vài giây.</span></h1>
             <p class="lead text-white-50 mb-4">Lịch chiếu cập nhật theo thời gian thực, chọn đúng ghế yêu thích và thanh toán an toàn qua MoMo hoặc VNPAY.</p>
             <a href="#lich-chieu" class="btn btn-primary btn-lg px-4">Đặt vé ngay <i class="bi bi-arrow-right ms-2"></i></a>
             <a href="{{ route('movies.index') }}" class="btn btn-outline-light btn-lg px-4 ms-2">Xem tất cả phim</a>
@@ -41,6 +41,7 @@
 
 @push('styles')
 <style>
+.home-hero { background:radial-gradient(circle at 78% 22%,rgba(243,201,105,.22),transparent 25rem),linear-gradient(115deg,#210b12 0%,#600f24 100%); border-bottom:3px solid rgba(243,201,105,.72); }
 .home-banner .carousel-item { height:clamp(280px,42vw,560px); background:#171717; }
 .home-banner .carousel-item img { height:100%; object-fit:cover; }
 .home-banner .banner-link { display:block; height:100%; cursor:pointer; }
