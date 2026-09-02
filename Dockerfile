@@ -42,6 +42,6 @@ RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/fra
 
 EXPOSE 10000
 
-# Render injects PORT automatically. Migrations are run manually from Render Shell
-# after environment variables and the database have been configured.
-CMD ["sh", "-c", "php artisan storage:link --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
+# Render injects PORT automatically. The database schema is migrated on startup.
+# Sample data is seeded only when the users table is still empty.
+CMD ["sh", "-c", "set -e; php artisan migrate --force; if ! php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap(); exit(Illuminate\\Support\\Facades\\DB::table("users")->exists() ? 0 : 1);'; then php artisan db:seed --force; fi; php artisan storage:link --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
