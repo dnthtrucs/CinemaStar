@@ -35,6 +35,9 @@ RUN { \
         echo 'opcache.max_accelerated_files=20000'; \
         echo 'opcache.validate_timestamps=0'; \
         echo 'opcache.revalidate_freq=0'; \
+        echo 'upload_max_filesize=6M'; \
+        echo 'post_max_size=7M'; \
+        echo 'max_file_uploads=10'; \
     } > /usr/local/etc/php/conf.d/zz-cinemastar-opcache.ini
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
