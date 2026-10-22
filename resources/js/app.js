@@ -1,7 +1,2 @@
-import './bootstrap';
-
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-
-Alpine.start();
+// Điểm vào JavaScript của giao diện, được Vite build vào public/build.
+import './ticket-qr';
