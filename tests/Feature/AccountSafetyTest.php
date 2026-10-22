@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Payment;
 use App\Models\RefundRequest;
 use App\Models\User;
+use App\Services\BookingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\CreatesCinemaBookings;
 use Tests\TestCase;
@@ -41,5 +43,27 @@ class AccountSafetyTest extends TestCase
         $this->actingAs($user)->delete(route('profile.destroy'), ['password' => 'password'])
             ->assertRedirect(route('profile.edit'))->assertSessionHasErrorsIn('userDeletion', 'password');
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_user_with_money_waiting_for_manual_refund_cannot_delete_their_account(): void
+    {
+        config(['cinema.sepay.api_key' => 'key', 'cinema.sepay.account_number' => '123', 'cinema.sepay.bank_code' => 'MBBank']);
+        $user = User::factory()->create(['password' => 'password']);
+        $booking = $this->bookingFor($user);
+        $this->actingAs($user)->post(route('payments.store', $booking), ['provider' => 'sepay'])->assertRedirect();
+        $payment = Payment::firstOrFail();
+        $booking->update(['expires_at' => now()->subMinute()]);
+        app(BookingService::class)->expirePendingBookings();
+        $this->postJson(route('payments.sepay.webhook'), [
+            'accountNumber' => '123', 'transferType' => 'in', 'transferAmount' => (int) $payment->amount,
+            'content' => $payment->request_id, 'referenceCode' => 'LATE',
+        ], ['Authorization' => 'Apikey key'])->assertUnprocessable();
+        $this->assertSame('PAID_AFTER_EXPIRY', $payment->fresh()->response_code);
+
+        $this->delete(route('profile.destroy'), ['password' => 'password'])
+            ->assertRedirect(route('profile.edit'))->assertSessionHasErrorsIn('userDeletion', 'password');
+        $this->assertNotNull($user->fresh());
+        $this->assertNotNull($payment->fresh());
+        $this->assertAuthenticatedAs($user);
     }
 }
