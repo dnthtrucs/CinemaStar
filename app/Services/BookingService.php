@@ -160,15 +160,29 @@ class BookingService
             $query->where('showtime_id', $showtimeId);
         }
 
-        $expired = $query->with('tickets')->get();
+        $expiredCount = 0;
+        foreach ($query->pluck('id') as $bookingId) {
+            $expiredCount += (int) $this->expirePendingBooking($bookingId);
+        }
 
-        foreach ($expired as $booking) {
+        return $expiredCount;
+    }
+
+    public function expirePendingBooking(int $bookingId): bool
+    {
+        return DB::transaction(function () use ($bookingId) {
+            $booking = Booking::query()->lockForUpdate()->find($bookingId);
+            if (! $booking || $booking->status !== 'pending' || $booking->payment_status !== 'unpaid'
+                || ! $booking->expires_at || $booking->expires_at->isFuture()) {
+                return false;
+            }
+
             $this->refundReservedPoints($booking);
             $booking->tickets()->delete();
             $booking->update(['status' => 'expired']);
-        }
 
-        return $expired->count();
+            return true;
+        });
     }
 
     private function uniqueCode(string $prefix, string $model): string

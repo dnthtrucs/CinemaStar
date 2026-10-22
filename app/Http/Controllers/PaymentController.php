@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use App\Notifications\PaymentReceiptNotification;
+use App\Services\BookingService;
 use App\Services\PaymentGatewayService;
 use Endroid\QrCode\Color\Color;
 use Endroid\QrCode\Encoding\Encoding;
@@ -18,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class PaymentController extends Controller
@@ -73,7 +76,7 @@ class PaymentController extends Controller
                 $amountAfterVoucher = max(0, (int) $lockedBooking->subtotal - (int) $lockedBooking->discount);
                 $maxRedeemable = min((int) $user->loyalty_points, (int) floor($amountAfterVoucher / 1000));
                 if ($pointsToUse > $maxRedeemable) {
-                    abort(422, "Bạn chỉ có thể dùng tối đa {$maxRedeemable} điểm cho đơn này.");
+                    throw ValidationException::withMessages(['points_to_use' => "Bạn chỉ có thể dùng tối đa {$maxRedeemable} điểm cho đơn này."]);
                 }
                 $discount = $pointsToUse * 1000;
                 $lockedBooking->update([
@@ -167,8 +170,10 @@ class PaymentController extends Controller
         $content = strtoupper(trim(implode(' ', array_filter([
             $payload['content'] ?? null, $payload['description'] ?? null, $payload['code'] ?? null,
         ]))));
-        $payment = Payment::query()->where('provider', 'sepay')->whereIn('status', ['initiated', 'pending', 'success'])
-            ->latest('id')->get()->first(fn (Payment $item) => str_contains($content, strtoupper($item->request_id)));
+        preg_match('/PAY\d{12}[A-Z0-9]{6}/', $content, $matches);
+        $payment = isset($matches[0])
+            ? Payment::query()->where('provider', 'sepay')->where('request_id', $matches[0])->first()
+            : null;
 
         if (! $payment) {
             return response()->json(['message' => 'Payment not found'], 404);
@@ -207,6 +212,7 @@ class PaymentController extends Controller
                 && in_array($payment->provider, ['momo', 'vnpay'], true),
             404,
         );
+        abort_unless(in_array($payment->status, ['initiated', 'pending'], true), 422, 'Giao dịch đã kết thúc.');
 
         $validated = $request->validate([
             'result' => ['required', 'in:success,cancelled'],
@@ -386,17 +392,28 @@ class PaymentController extends Controller
             if ($payment->status === 'success') {
                 return true;
             }
+            if (! in_array($payment->status, ['initiated', 'pending'], true)) {
+                return false;
+            }
 
             $booking = $payment->booking()->lockForUpdate()->firstOrFail();
+            // Giữ số tiền phải trả trước khi hoàn điểm của đơn hết hạn.
             $amountMatches = (int) $payment->amount === (int) $booking->total_price;
+            app(BookingService::class)->expirePendingBooking($booking->id);
+            $booking->refresh();
             $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
-            if ($booking->status !== 'pending' || ! $amountMatches || ! $ticketsAreHeld) {
+            if (! $booking->isPayable() || ! $amountMatches || ! $ticketsAreHeld) {
+                // Callback đã kiểm tra số tiền theo payment; đơn hủy có thể đã được hoàn điểm.
+                $paidAfterExpiry = ! $booking->isPayable();
                 $payment->update([
                     'transaction_id' => $transactionId,
                     'status' => 'failed',
-                    'response_code' => 'ORDER_INVALID',
+                    'response_code' => $paidAfterExpiry ? 'PAID_AFTER_EXPIRY' : 'ORDER_INVALID',
                     'payload' => $payload,
                 ]);
+                if ($paidAfterExpiry) {
+                    ActivityLog::record('payment.paid_after_expiry', "Tiền đến khi đơn {$booking->code} không còn hiệu lực; cần xử lý hoàn tiền.", $payment, ['booking_id' => $booking->id, 'transaction_id' => $transactionId, 'amount' => $payment->amount]);
+                }
 
                 return false;
             }
@@ -468,7 +485,7 @@ class PaymentController extends Controller
         DB::transaction(function () use ($payment, $responseCode, $payload) {
             $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
-            if ($payment->status !== 'success') {
+            if (in_array($payment->status, ['initiated', 'pending'], true)) {
                 $payment->update([
                     'status' => 'failed',
                     'response_code' => $responseCode,

@@ -31,6 +31,9 @@ class DashboardController extends Controller
             ->groupBy(fn (Payment $payment) => $payment->paid_at->format('m/Y'))
             ->map->sum('amount');
 
-        return view('admin.dashboard', compact('stats', 'recentBookings', 'monthlyRevenue'));
+        $latePayments = Payment::with('booking.user')->where('response_code', 'PAID_AFTER_EXPIRY')
+            ->latest()->paginate(10, ['*'], 'late_payments_page');
+
+        return view('admin.dashboard', compact('stats', 'recentBookings', 'monthlyRevenue', 'latePayments'));
     }
 }

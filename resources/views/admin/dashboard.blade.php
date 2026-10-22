@@ -3,6 +3,29 @@
 @section('content')
 <div class="container py-4">
     @include('admin.partials.nav')
+    @if($latePayments->isNotEmpty())
+        <section class="card border-warning p-4 mb-4">
+            <h2 class="h5">Cần xử lý hoàn tiền</h2>
+            <p>Tiền đến khi đơn không còn hiệu lực. Kiểm tra giao dịch và liên hệ khách để hoàn tiền thủ công.</p>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Giao dịch</th><th>Đơn</th><th>Khách</th><th>Số tiền</th><th>Mã ngân hàng</th></tr></thead>
+                    <tbody>
+                        @foreach($latePayments as $payment)
+                            <tr>
+                                <td>{{ $payment->request_id }}</td>
+                                <td><a href="{{ route('admin.bookings.show', $payment->booking) }}">{{ $payment->booking->code }}</a></td>
+                                <td>{{ $payment->booking->user->name }}</td>
+                                <td>{{ number_format($payment->amount, 0, ',', '.') }}₫</td>
+                                <td>{{ $payment->transaction_id }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            {{ $latePayments->links() }}
+        </section>
+    @endif
     <div class="d-flex justify-content-between align-items-end mb-4"><div><div class="text-brand fw-semibold">QUẢN TRỊ HỆ THỐNG</div><h1 class="section-title mb-0">Tổng quan kinh doanh</h1></div><div class="text-muted small">Cập nhật {{ now()->format('H:i d/m/Y') }}</div></div>
     <div class="row g-3 mb-4">
         @foreach([['Doanh thu',number_format($stats['revenue'],0,',','.').'₫','bi-cash-stack','success'],['Doanh thu hôm nay',number_format($stats['today_revenue'],0,',','.').'₫','bi-graph-up-arrow','primary'],['Đơn đặt vé',$stats['bookings'],'bi-ticket-perforated','warning'],['Khách hàng',$stats['customers'],'bi-people','info']] as $item)<div class="col-md-6 col-xl-3"><div class="card shadow-soft p-4 h-100"><div class="d-flex justify-content-between"><div><div class="text-muted small">{{ $item[0] }}</div><div class="fs-3 fw-bold">{{ $item[1] }}</div></div><div class="fs-2 text-{{ $item[3] }}"><i class="bi {{ $item[2] }}"></i></div></div></div></div>@endforeach
