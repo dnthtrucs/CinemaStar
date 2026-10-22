@@ -48,6 +48,15 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if ($user->bookings()->where(fn ($query) => $query->whereIn('payment_status', ['paid', 'refunded'])
+            ->orWhereNotNull('paid_at')->orWhereHas('payments', fn ($payments) => $payments->where('status', 'success')))->exists()
+            || \App\Models\RefundRequest::where('requested_by', $user->id)->exists()
+            || $user->bookings()->whereHas('refundRequest')->exists()) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => 'Không thể xóa tài khoản đã có đơn thanh toán hoặc yêu cầu hoàn tiền.',
+            ], 'userDeletion');
+        }
+
         Auth::logout();
 
         $user->delete();
