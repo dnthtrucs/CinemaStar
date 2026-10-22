@@ -6,7 +6,7 @@
         @if($latePayments->isNotEmpty())
             <section class="card border-warning p-4 mb-4">
                 <h2 class="h5">Cần xử lý hoàn tiền</h2>
-                <p>Tiền đến khi đơn không còn hiệu lực. Kiểm tra giao dịch và liên hệ khách để hoàn tiền thủ công.</p>
+                <p>Tiền đã đến nhưng đơn không thể xác nhận. Kiểm tra giao dịch và liên hệ khách để hoàn tiền thủ công.</p>
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
@@ -16,6 +16,7 @@
                                 <th>Khách</th>
                                 <th>Số tiền</th>
                                 <th>Mã ngân hàng</th>
+                                <th>Lý do</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -28,6 +29,7 @@
                                     <td>{{ $payment->booking->user->name }}</td>
                                     <td>{{ number_format($payment->amount, 0, ',', '.') }}₫</td>
                                     <td>{{ $payment->transaction_id }}</td>
+                                    <td>{{ match($payment->response_code) {'SHOWTIME_CANCELLED' => 'Suất chiếu đã hủy', 'VOUCHER_UNAVAILABLE' => 'Voucher hết lượt', default => 'Đơn đã hết hạn'} }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

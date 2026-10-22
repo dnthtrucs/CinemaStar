@@ -407,15 +407,18 @@ class PaymentController extends Controller
             $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
             if (! $booking->isPayable() || ! $amountMatches || ! $ticketsAreHeld) {
                 // Callback đã kiểm tra số tiền theo payment; đơn hủy có thể đã được hoàn điểm.
-                $paidAfterExpiry = ! $booking->isPayable();
-                $payment->update([
-                    'transaction_id' => $transactionId,
-                    'status' => 'failed',
-                    'response_code' => $paidAfterExpiry ? 'PAID_AFTER_EXPIRY' : 'ORDER_INVALID',
-                    'payload' => $payload,
-                ]);
-                if ($paidAfterExpiry) {
-                    ActivityLog::record('payment.paid_after_expiry', "Tiền đến khi đơn {$booking->code} không còn hiệu lực; cần xử lý hoàn tiền.", $payment, ['booking_id' => $booking->id, 'transaction_id' => $transactionId, 'amount' => $payment->amount]);
+                if ($booking->isPayable()) {
+                    $payment->update(['transaction_id' => $transactionId, 'status' => 'failed', 'response_code' => 'ORDER_INVALID', 'payload' => $payload]);
+                } else {
+                    $showtimeCancelled = $booking->showtime->status !== 'scheduled';
+                    $this->flagForManualRefund(
+                        $payment, $booking, $transactionId, $payload,
+                        $showtimeCancelled ? 'SHOWTIME_CANCELLED' : 'PAID_AFTER_EXPIRY',
+                        $showtimeCancelled ? 'payment.paid_for_cancelled_showtime' : 'payment.paid_after_expiry',
+                        $showtimeCancelled
+                            ? "Tiền đến cho đơn {$booking->code} của suất chiếu đã hủy; cần xử lý hoàn tiền."
+                            : "Tiền đến khi đơn {$booking->code} không còn hiệu lực; cần xử lý hoàn tiền.",
+                    );
                 }
 
                 return false;
@@ -424,7 +427,10 @@ class PaymentController extends Controller
             if ($voucher) {
                 if ($voucher->usages()->where('user_id', $booking->user_id)->lockForUpdate()->first()
                     || ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit)) {
-                    $payment->update(['status' => 'failed', 'response_code' => 'ORDER_INVALID', 'transaction_id' => $transactionId, 'payload' => $payload]);
+                    $this->flagForManualRefund(
+                        $payment, $booking, $transactionId, $payload, 'VOUCHER_UNAVAILABLE', 'payment.voucher_unavailable',
+                        "Tiền đến cho đơn {$booking->code} nhưng voucher {$voucher->code} không còn lượt; cần xử lý hoàn tiền.",
+                    );
 
                     return false;
                 }
@@ -480,6 +486,17 @@ class PaymentController extends Controller
 
             return true;
         });
+    }
+
+    private function flagForManualRefund(Payment $payment, Booking $booking, string $transactionId, array $payload, string $responseCode, string $action, string $description): void
+    {
+        $payment->update([
+            'transaction_id' => $transactionId,
+            'status' => 'failed',
+            'response_code' => $responseCode,
+            'payload' => $payload,
+        ]);
+        ActivityLog::record($action, $description, $payment, ['booking_id' => $booking->id, 'transaction_id' => $transactionId, 'amount' => $payment->amount]);
     }
 
     private function markFailed(Payment $payment, string $responseCode, array $payload): void

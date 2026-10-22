@@ -162,6 +162,11 @@ class ShowtimeController extends Controller
 
             $wasCancelled = $showtime->status === 'cancelled';
             $showtime->update($data);
+            if (! $wasCancelled && $showtime->status === 'cancelled') {
+                // Trả ghế và điểm của các đơn đang giữ chỗ để khách không thanh toán cho suất đã hủy.
+                $showtime->bookings()->where('status', 'pending')->where('payment_status', 'unpaid')
+                    ->get()->each(fn ($booking) => $bookingService->cancel($booking));
+            }
             $response = redirect()->route('admin.showtimes.index')->with('success', 'Đã cập nhật suất chiếu.');
             if (! $wasCancelled && $showtime->status === 'cancelled' && $paidCount > 0) {
                 $response->with('error', "Suất chiếu đã hủy ảnh hưởng {$paidCount} đơn đã thanh toán. Vui lòng xử lý hoàn tiền cho khách.");

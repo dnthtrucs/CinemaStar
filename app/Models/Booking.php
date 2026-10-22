@@ -115,7 +115,9 @@ class Booking extends Model
 
     public function isPayable(): bool
     {
-        return $this->status === 'pending' && $this->payment_status === 'unpaid' && (! $this->expires_at || $this->expires_at->isFuture());
+        return $this->status === 'pending' && $this->payment_status === 'unpaid'
+            && (! $this->expires_at || $this->expires_at->isFuture())
+            && $this->showtime?->status === 'scheduled';
     }
 
     public function isCancellable(): bool

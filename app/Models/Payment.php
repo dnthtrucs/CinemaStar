@@ -9,6 +9,9 @@ class Payment extends Model
 {
     use HasFactory;
 
+    /** Tiền đã đến nhưng đơn không thể xác nhận; admin phải hoàn tiền thủ công. */
+    public const MANUAL_REFUND_CODES = ['PAID_AFTER_EXPIRY', 'SHOWTIME_CANCELLED', 'VOUCHER_UNAVAILABLE'];
+
     protected $fillable = [
         'booking_id', 'provider', 'request_id', 'transaction_id', 'amount',
         'status', 'response_code', 'payload', 'paid_at',
