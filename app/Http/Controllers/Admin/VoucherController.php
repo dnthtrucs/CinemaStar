@@ -18,7 +18,8 @@ class VoucherController extends Controller
         $d = $r->validate(['code' => 'required|string|max:40|unique:vouchers,code', 'name' => 'required|string|max:120', 'type' => 'required|in:fixed,percent', 'value' => 'required|integer|min:1', 'min_order' => 'nullable|integer|min:0', 'usage_limit' => 'nullable|integer|min:1', 'starts_at' => 'nullable|date', 'ends_at' => ['nullable', 'date', ...($r->filled('starts_at') ? ['after_or_equal:starts_at'] : [])]]);
         if ($d['type'] === 'percent' && $d['value'] > 100) {
             return back()->withErrors(['value' => 'Phần trăm không vượt quá 100.'])->withInput();
-        } $d['min_order'] = (int) ($d['min_order'] ?? 0);
+        }
+        $d['min_order'] = (int) ($d['min_order'] ?? 0);
         $d['code'] = strtoupper($d['code']);
         Voucher::create($d);
 

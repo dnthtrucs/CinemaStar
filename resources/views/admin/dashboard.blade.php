@@ -1,35 +1,121 @@
 @extends('layouts.app')
 @section('title', 'Quản trị')
 @section('content')
-<div class="container py-4">
-    @include('admin.partials.nav')
-    @if($latePayments->isNotEmpty())
-        <section class="card border-warning p-4 mb-4">
-            <h2 class="h5">Cần xử lý hoàn tiền</h2>
-            <p>Tiền đến khi đơn không còn hiệu lực. Kiểm tra giao dịch và liên hệ khách để hoàn tiền thủ công.</p>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead><tr><th>Giao dịch</th><th>Đơn</th><th>Khách</th><th>Số tiền</th><th>Mã ngân hàng</th></tr></thead>
-                    <tbody>
-                        @foreach($latePayments as $payment)
+    <div class="container py-4">
+        @include('admin.partials.nav')
+        @if($latePayments->isNotEmpty())
+            <section class="card border-warning p-4 mb-4">
+                <h2 class="h5">Cần xử lý hoàn tiền</h2>
+                <p>Tiền đến khi đơn không còn hiệu lực. Kiểm tra giao dịch và liên hệ khách để hoàn tiền thủ công.</p>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>{{ $payment->request_id }}</td>
-                                <td><a href="{{ route('admin.bookings.show', $payment->booking) }}">{{ $payment->booking->code }}</a></td>
-                                <td>{{ $payment->booking->user->name }}</td>
-                                <td>{{ number_format($payment->amount, 0, ',', '.') }}₫</td>
-                                <td>{{ $payment->transaction_id }}</td>
+                                <th>Giao dịch</th>
+                                <th>Đơn</th>
+                                <th>Khách</th>
+                                <th>Số tiền</th>
+                                <th>Mã ngân hàng</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach($latePayments as $payment)
+                                <tr>
+                                    <td>{{ $payment->request_id }}</td>
+                                    <td>
+                                        <a href="{{ route('admin.bookings.show', $payment->booking) }}">{{ $payment->booking->code }}</a>
+                                    </td>
+                                    <td>{{ $payment->booking->user->name }}</td>
+                                    <td>{{ number_format($payment->amount, 0, ',', '.') }}₫</td>
+                                    <td>{{ $payment->transaction_id }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                {{ $latePayments->links() }}
+            </section>
+        @endif
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <div class="text-brand fw-semibold">QUẢN TRỊ HỆ THỐNG</div>
+                <h1 class="section-title mb-0">Tổng quan kinh doanh</h1>
             </div>
-            {{ $latePayments->links() }}
-        </section>
-    @endif
-    <div class="d-flex justify-content-between align-items-end mb-4"><div><div class="text-brand fw-semibold">QUẢN TRỊ HỆ THỐNG</div><h1 class="section-title mb-0">Tổng quan kinh doanh</h1></div><div class="text-muted small">Cập nhật {{ now()->format('H:i d/m/Y') }}</div></div>
-    <div class="row g-3 mb-4">
-        @foreach([['Doanh thu',number_format($stats['revenue'],0,',','.').'₫','bi-cash-stack','success'],['Doanh thu hôm nay',number_format($stats['today_revenue'],0,',','.').'₫','bi-graph-up-arrow','primary'],['Đơn đặt vé',$stats['bookings'],'bi-ticket-perforated','warning'],['Khách hàng',$stats['customers'],'bi-people','info']] as $item)<div class="col-md-6 col-xl-3"><div class="card shadow-soft p-4 h-100"><div class="d-flex justify-content-between"><div><div class="text-muted small">{{ $item[0] }}</div><div class="fs-3 fw-bold">{{ $item[1] }}</div></div><div class="fs-2 text-{{ $item[3] }}"><i class="bi {{ $item[2] }}"></i></div></div></div></div>@endforeach
+            <div class="text-muted small">Cập nhật {{ now()->format('H:i d/m/Y') }}</div>
+        </div>
+        <div class="row g-3 mb-4">
+            @foreach([['Doanh thu',number_format($stats['revenue'],0,',','.').'₫','bi-cash-stack','success'],['Doanh thu hôm nay',number_format($stats['today_revenue'],0,',','.').'₫','bi-graph-up-arrow','primary'],['Đơn đặt vé',$stats['bookings'],'bi-ticket-perforated','warning'],['Khách hàng',$stats['customers'],'bi-people','info']] as $item)
+                <div class="col-md-6 col-xl-3">
+                    <div class="card shadow-soft p-4 h-100">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="text-muted small">{{ $item[0] }}</div>
+                                <div class="fs-3 fw-bold">{{ $item[1] }}</div>
+                            </div>
+                            <div class="fs-2 text-{{ $item[3] }}">
+                                <i class="bi {{ $item[2] }}"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card shadow-soft p-4">
+                    <h5 class="fw-bold">Đơn gần đây</h5>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Mã</th>
+                                    <th>Khách hàng</th>
+                                    <th>Phim</th>
+                                    <th>Trạng thái</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($recentBookings as $booking)
+                                    <tr>
+                                        <td class="fw-semibold">{{ $booking->code }}</td>
+                                        <td>{{ $booking->user->name }}</td>
+                                        <td>{{ $booking->showtime->movie->title }}</td>
+                                        <td>
+                                            <span class="badge text-bg-{{ $booking->status==='confirmed'?'success':($booking->status==='pending'?'warning':'secondary') }}">{{ match($booking->status) {'pending' => 'Chờ thanh toán', 'confirmed' => 'Đã thanh toán', 'cancelled' => 'Đã hủy', 'expired' => 'Đã hết hạn', default => $booking->status} }}</span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ route('admin.bookings.show',$booking) }}">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card shadow-soft p-4">
+                    <h5 class="fw-bold">Biểu đồ doanh thu 6 tháng</h5>
+                    @php($max=max(1,$monthlyRevenue->max() ?: 1))
+                    <div class="d-flex align-items-end gap-2" style="height:180px">
+                        @forelse($monthlyRevenue as $month=>$amount)
+                            <div class="flex-fill text-center h-100 d-flex flex-column justify-content-end">
+                                <div class="bg-danger rounded-top" style="height:{{ max(5,($amount/$max)*100) }}%" title="{{ number_format($amount,0,',','.') }}₫"></div>
+                                <small class="mt-2">{{ $month }}</small>
+                            </div>
+                        @empty
+                            <div class="text-muted py-4">Chưa có giao dịch.</div>
+                        @endforelse
+                    </div>
+                    <a href="{{ route('admin.reports.revenue') }}" class="btn btn-outline-dark btn-sm mt-4">
+                        <i class="bi bi-download me-1"></i>
+                        Tải báo cáo CSV
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="row g-4"><div class="col-lg-7"><div class="card shadow-soft p-4"><h5 class="fw-bold">Đơn gần đây</h5><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Mã</th><th>Khách hàng</th><th>Phim</th><th>Trạng thái</th><th></th></tr></thead><tbody>@foreach($recentBookings as $booking)<tr><td class="fw-semibold">{{ $booking->code }}</td><td>{{ $booking->user->name }}</td><td>{{ $booking->showtime->movie->title }}</td><td><span class="badge text-bg-{{ $booking->status==='confirmed'?'success':($booking->status==='pending'?'warning':'secondary') }}">{{ match($booking->status) {'pending' => 'Chờ thanh toán', 'confirmed' => 'Đã thanh toán', 'cancelled' => 'Đã hủy', 'expired' => 'Đã hết hạn', default => $booking->status} }}</span></td><td><a href="{{ route('admin.bookings.show',$booking) }}"><i class="bi bi-chevron-right"></i></a></td></tr>@endforeach</tbody></table></div></div></div><div class="col-lg-5"><div class="card shadow-soft p-4"><h5 class="fw-bold">Biểu đồ doanh thu 6 tháng</h5>@php($max=max(1,$monthlyRevenue->max() ?: 1))<div class="d-flex align-items-end gap-2" style="height:180px">@forelse($monthlyRevenue as $month=>$amount)<div class="flex-fill text-center h-100 d-flex flex-column justify-content-end"><div class="bg-danger rounded-top" style="height:{{ max(5,($amount/$max)*100) }}%" title="{{ number_format($amount,0,',','.') }}₫"></div><small class="mt-2">{{ $month }}</small></div>@empty<div class="text-muted py-4">Chưa có giao dịch.</div>@endforelse</div><a href="{{ route('admin.reports.revenue') }}" class="btn btn-outline-dark btn-sm mt-4"><i class="bi bi-download me-1"></i>Tải báo cáo CSV</a></div></div></div>
-</div>
 @endsection

@@ -26,7 +26,8 @@ class ReportController extends Controller
             fputcsv($o, ['Mã đơn', 'Phim', 'Phương thức', 'Số tiền', 'Thanh toán']);
             foreach ($rows as $p) {
                 fputcsv($o, [$p->booking->code, $p->booking->showtime->movie->title, strtoupper($p->provider), $p->amount, $p->paid_at]);
-            }fclose($o);
+            }
+            fclose($o);
         }, 'doanh-thu.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
