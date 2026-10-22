@@ -119,11 +119,7 @@ class TicketController extends Controller
             return null;
         }
 
-        $expectedSignature = hash_hmac(
-            'sha256',
-            $booking->id.'|'.$booking->code,
-            (string) config('app.key'),
-        );
+        $expectedSignature = $booking->verificationSignature();
 
         return hash_equals($expectedSignature, (string) $query['signature']) ? $booking : null;
     }

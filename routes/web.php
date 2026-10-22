@@ -5,27 +5,27 @@ use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CinemaController as AdminCinemaController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\MovieController as AdminMovieController;
+use App\Http\Controllers\Admin\RefundController as AdminRefundController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RoomController as AdminRoomController;
 use App\Http\Controllers\Admin\ShowtimeController as AdminShowtimeController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
-use App\Http\Controllers\Admin\ReportController as AdminReportController;
-use App\Http\Controllers\BookingTicketController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingTicketController;
 use App\Http\Controllers\CinemaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MovieController;
+use App\Http\Controllers\MovieReviewController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RefundController;
 use App\Http\Controllers\ShowtimeController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TicketVerificationController;
-use App\Http\Controllers\MovieReviewController;
-use App\Http\Controllers\RefundController;
-use App\Http\Controllers\Admin\RefundController as AdminRefundController;
-use App\Http\Controllers\Admin\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -35,6 +35,7 @@ Route::get('/cinemas', [CinemaController::class, 'index'])->name('cinemas.index'
 Route::get('/cinemas/{cinema}', [CinemaController::class, 'show'])->name('cinemas.show');
 Route::get('/ho-tro', [SupportController::class, 'index'])->name('support.index');
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
+Route::get('/verify-ticket/{booking}', [BookingTicketController::class, 'verify'])->name('bookings.verify');
 Route::get('/tickets/verify/{qrToken}', [TicketVerificationController::class, 'show'])
     ->where('qrToken', '[A-Fa-f0-9]{64}')
     ->name('tickets.verify');
@@ -56,7 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/payments/{payment}/sepay/status', [PaymentController::class, 'sepayStatus'])->name('payments.sepay.status');
     Route::get('/payments/{payment}/simulate', [PaymentController::class, 'simulate'])->name('payments.simulate');
     Route::post('/payments/{payment}/simulate', [PaymentController::class, 'completeSimulation'])->name('payments.simulate.complete');
-    Route::get('/verify-ticket/{booking}', [BookingTicketController::class, 'verify'])->name('bookings.verify');
+    Route::get('/bookings/{booking}/print', [BookingTicketController::class, 'print'])->name('bookings.print');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

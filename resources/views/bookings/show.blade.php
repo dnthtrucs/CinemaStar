@@ -87,6 +87,7 @@
                             </form>
                         </div>
                     @elseif($booking->status === 'confirmed')
+                        <a href="{{ route('bookings.print', $booking) }}" class="btn btn-outline-dark mb-3" target="_blank">In vé</a>
                         <div class="alert alert-success">
                             <i class="bi bi-check-circle-fill me-2"></i>
                             Vé đã sẵn sàng. Một mã QR dùng để check-in toàn bộ ghế trong đơn.

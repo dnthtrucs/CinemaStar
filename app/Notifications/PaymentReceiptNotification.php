@@ -14,9 +14,7 @@ use Illuminate\Notifications\Notification;
 
 class PaymentReceiptNotification extends Notification
 {
-    public function __construct(public Booking $booking)
-    {
-    }
+    public function __construct(public Booking $booking) {}
 
     public function via(object $notifiable): array
     {
@@ -31,10 +29,7 @@ class PaymentReceiptNotification extends Notification
         $showtime = $booking->showtime;
         $seatLabels = $booking->tickets->pluck('seat.label')->filter()->join(', ');
 
-        $verificationUrl = route('bookings.verify', [
-            'booking' => $booking->id,
-            'signature' => $this->bookingSignature(),
-        ]);
+        $verificationUrl = $booking->verificationUrl();
 
         $qrPng = $this->makeQrPng($verificationUrl);
 
@@ -51,15 +46,6 @@ class PaymentReceiptNotification extends Notification
         return $message;
     }
 
-    private function bookingSignature(): string
-    {
-        return hash_hmac(
-            'sha256',
-            $this->booking->id.'|'.$this->booking->code,
-            (string) config('app.key'),
-        );
-    }
-
     private function makeQrPng(string $verificationUrl): string
     {
         $qrCode = new QrCode(
@@ -73,6 +59,6 @@ class PaymentReceiptNotification extends Notification
             backgroundColor: new Color(255, 255, 255),
         );
 
-        return (new PngWriter())->write($qrCode)->getString();
+        return (new PngWriter)->write($qrCode)->getString();
     }
 }

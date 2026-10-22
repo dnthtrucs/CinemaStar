@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService)
-    {
-    }
+    public function __construct(private readonly BookingService $bookingService) {}
 
     public function index()
     {
@@ -44,10 +42,7 @@ class BookingController extends Controller
     {
         $this->authorizeOwner($booking);
         $booking->load(['showtime.movie', 'showtime.room.cinema', 'tickets.seat', 'payments']);
-        $bookingQrUrl = route('bookings.verify', [
-            'booking' => $booking->id,
-            'signature' => $this->bookingSignature($booking),
-        ]);
+        $bookingQrUrl = $booking->verificationUrl();
 
         return view('bookings.show', compact('booking', 'bookingQrUrl'));
     }
@@ -63,14 +58,5 @@ class BookingController extends Controller
     private function authorizeOwner(Booking $booking): void
     {
         abort_unless($booking->user_id === auth()->id() || auth()->user()->isAdmin(), 403);
-    }
-
-    private function bookingSignature(Booking $booking): string
-    {
-        return hash_hmac(
-            'sha256',
-            $booking->id.'|'.$booking->code,
-            (string) config('app.key'),
-        );
     }
 }

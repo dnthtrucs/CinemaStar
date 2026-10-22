@@ -46,6 +46,16 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function verificationSignature(): string
+    {
+        return hash_hmac('sha256', $this->id.'|'.$this->code, (string) config('app.key'));
+    }
+
+    public function verificationUrl(): string
+    {
+        return route('bookings.verify', ['booking' => $this->id, 'signature' => $this->verificationSignature()]);
+    }
+
     /* One booking is checked in as a whole. This status is calculated live,
        so an unscanned ticket automatically becomes expired after the show ends. */
     public function getTicketStatusAttribute(): string

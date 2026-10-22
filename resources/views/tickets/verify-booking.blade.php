@@ -8,7 +8,9 @@
 </head>
 <body>
     <main class="card">
-        <p class="ok">✓ Vé hợp lệ — một QR cho toàn bộ đơn</p>
+        <p class="status-{{ $booking->ticket_status_badge }}">
+            {{ $booking->ticket_status === 'valid' ? '✓ Vé hợp lệ' : $booking->ticket_status_label }}
+        </p>
         <h1>{{ $booking->showtime->movie->title }}</h1>
         <div class="row"><div class="label">Mã đơn</div><div class="value">{{ $booking->code }}</div></div>
         <div class="row"><div class="label">Rạp / phòng</div><div class="value">{{ $booking->showtime->room->cinema->name }} - {{ $booking->showtime->room->name }}</div></div>
