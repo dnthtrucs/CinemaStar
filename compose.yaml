@@ -1,0 +1,37 @@
+# Môi trường phát triển: PHP 8.3 + MySQL 8, không cần cài PHP/MySQL trên máy.
+#   docker compose up -d                       # chạy web tại http://127.0.0.1:8000
+#   docker compose exec app php artisan test   # chạy test trên cinema_test
+services:
+  app:
+    build: docker/php
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+    ports:
+      - "8000:8000"
+    # Không dùng `artisan serve`: lệnh này bỏ các biến trùng với .env (như DB_HOST) khỏi tiến trình con.
+    command: sh -c "cd public && exec php -S 0.0.0.0:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "${FORWARD_DB_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      retries: 20
+
+volumes:
+  mysql-data:
