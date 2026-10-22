@@ -12,17 +12,19 @@ class CinemaController extends Controller
     public function index()
     {
         $cinemas = Cinema::withCount('rooms')->latest()->paginate(15);
+
         return view('admin.cinemas.index', compact('cinemas'));
     }
 
     public function create()
     {
-        return view('admin.cinemas.form', ['cinema' => new Cinema()]);
+        return view('admin.cinemas.form', ['cinema' => new Cinema]);
     }
 
     public function store(CinemaRequest $request)
     {
         Cinema::create($this->data($request));
+
         return redirect()->route('admin.cinemas.index')->with('success', 'Đã thêm rạp.');
     }
 
@@ -34,6 +36,7 @@ class CinemaController extends Controller
     public function update(CinemaRequest $request, Cinema $cinema)
     {
         $cinema->update($this->data($request));
+
         return redirect()->route('admin.cinemas.index')->with('success', 'Đã cập nhật rạp.');
     }
 
@@ -43,6 +46,7 @@ class CinemaController extends Controller
             return back()->with('error', 'Không thể xóa rạp đã có lịch chiếu.');
         }
         $cinema->delete();
+
         return back()->with('success', 'Đã xóa rạp.');
     }
 
@@ -51,6 +55,7 @@ class CinemaController extends Controller
         $data = $request->validated();
         $data['slug'] = ($data['slug'] ?? null) ?: Str::slug($data['name']).'-'.Str::lower(Str::random(4));
         $data['is_active'] = $request->boolean('is_active');
+
         return $data;
     }
 }

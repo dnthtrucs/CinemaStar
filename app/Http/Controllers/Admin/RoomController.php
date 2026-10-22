@@ -14,12 +14,13 @@ class RoomController extends Controller
     public function index()
     {
         $rooms = Room::with('cinema')->withCount('seats')->latest()->paginate(15);
+
         return view('admin.rooms.index', compact('rooms'));
     }
 
     public function create()
     {
-        return view('admin.rooms.form', ['room' => new Room(), 'cinemas' => Cinema::where('is_active', true)->get()]);
+        return view('admin.rooms.form', ['room' => new Room, 'cinemas' => Cinema::where('is_active', true)->get()]);
     }
 
     public function store(RoomRequest $request)
@@ -29,6 +30,7 @@ class RoomController extends Controller
             $room = Room::create($data);
             $this->generateSeats($room);
         });
+
         return redirect()->route('admin.rooms.index')->with('success', 'Đã tạo phòng và sơ đồ ghế.');
     }
 
@@ -51,6 +53,7 @@ class RoomController extends Controller
                 $this->generateSeats($room);
             }
         });
+
         return redirect()->route('admin.rooms.index')->with('success', 'Đã cập nhật phòng.');
     }
 
@@ -60,6 +63,7 @@ class RoomController extends Controller
             return back()->with('error', 'Không thể xóa phòng đã có suất chiếu.');
         }
         $room->delete();
+
         return back()->with('success', 'Đã xóa phòng.');
     }
 
@@ -68,6 +72,7 @@ class RoomController extends Controller
         $data = $request->validated();
         $data['total_seats'] = $request->integer('rows') * $request->integer('seats_per_row');
         $data['is_active'] = $request->boolean('is_active');
+
         return $data;
     }
 
