@@ -35,8 +35,21 @@
                             <input class="form-control" type="number" name="min_order" value="0">
                         </div>
                         <div class="mt-3">
-                            <label class="form-label">Ngày hết hạn</label>
-                            <input class="form-control" type="datetime-local" name="ends_at">
+                            <label class="form-label">Giới hạn lượt dùng</label>
+                            <input class="form-control" type="number" name="usage_limit" min="1" value="{{ old('usage_limit') }}" placeholder="Để trống nếu không giới hạn">
+                            @error('usage_limit')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-6">
+                                <label class="form-label">Ngày bắt đầu</label>
+                                <input class="form-control" type="datetime-local" name="starts_at" value="{{ old('starts_at') }}">
+                                @error('starts_at')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Ngày hết hạn</label>
+                                <input class="form-control" type="datetime-local" name="ends_at" value="{{ old('ends_at') }}">
+                                @error('ends_at')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                            </div>
                         </div>
                         <button class="btn btn-primary w-100 mt-4">Tạo mã</button>
                     </form>
