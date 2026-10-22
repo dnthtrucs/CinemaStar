@@ -93,7 +93,9 @@ class BookingService
             $voucher = null;
             if ($voucherCode) {
                 $voucher = Voucher::query()->where('code', strtoupper(trim($voucherCode)))->lockForUpdate()->first();
-                if (! $voucher || ! $voucher->isUsableFor((int) $subtotal)) throw ValidationException::withMessages(['voucher_code' => 'Mã giảm giá không hợp lệ hoặc không áp dụng cho đơn này.']);
+                if (! $voucher || ! $voucher->isUsableFor((int) $subtotal, $user)) {
+                    throw ValidationException::withMessages(['voucher_code' => 'Mã giảm giá không hợp lệ hoặc không áp dụng cho đơn này.']);
+                }
             }
             $discount = $voucher ? $voucher->discountFor((int) $subtotal) : 0;
 
@@ -110,7 +112,6 @@ class BookingService
                 'payment_status' => 'unpaid',
                 'expires_at' => now()->addMinutes(config('cinema.booking_hold_minutes', 10)),
             ]);
-            if ($voucher) $voucher->increment('used_count');
 
             foreach ($seats as $seat) {
                 Ticket::create([
@@ -162,8 +163,8 @@ class BookingService
         $expired = $query->with('tickets')->get();
 
         foreach ($expired as $booking) {
-                $this->refundReservedPoints($booking);
-                $booking->tickets()->delete();
+            $this->refundReservedPoints($booking);
+            $booking->tickets()->delete();
             $booking->update(['status' => 'expired']);
         }
 

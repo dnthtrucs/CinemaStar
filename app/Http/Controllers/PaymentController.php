@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Voucher;
+use App\Models\VoucherUsage;
 use App\Notifications\PaymentReceiptNotification;
 use App\Services\PaymentGatewayService;
 use Endroid\QrCode\Color\Color;
@@ -20,9 +22,7 @@ use Throwable;
 
 class PaymentController extends Controller
 {
-    public function __construct(private readonly PaymentGatewayService $gateway)
-    {
-    }
+    public function __construct(private readonly PaymentGatewayService $gateway) {}
 
     public function show(Booking $booking)
     {
@@ -72,7 +72,9 @@ class PaymentController extends Controller
                 // Điểm chỉ được đổi trên số tiền còn lại sau voucher.
                 $amountAfterVoucher = max(0, (int) $lockedBooking->subtotal - (int) $lockedBooking->discount);
                 $maxRedeemable = min((int) $user->loyalty_points, (int) floor($amountAfterVoucher / 1000));
-                if ($pointsToUse > $maxRedeemable) abort(422, "Bạn chỉ có thể dùng tối đa {$maxRedeemable} điểm cho đơn này.");
+                if ($pointsToUse > $maxRedeemable) {
+                    abort(422, "Bạn chỉ có thể dùng tối đa {$maxRedeemable} điểm cho đơn này.");
+                }
                 $discount = $pointsToUse * 1000;
                 $lockedBooking->update([
                     'points_used' => $pointsToUse,
@@ -100,6 +102,7 @@ class PaymentController extends Controller
 
         if ((int) $payment->amount === 0) {
             $successful = $this->markSuccessful($payment, 'POINTS-'.$payment->id, ['result' => 'points_redemption', 'points_only' => true]);
+
             return redirect()->route('bookings.show', $payment->booking_id)->with($successful ? 'success' : 'error', $successful ? 'Đơn hàng đã được thanh toán hoàn toàn bằng điểm thành viên.' : 'Không thể xác nhận đơn hàng.');
         }
 
@@ -371,7 +374,7 @@ class PaymentController extends Controller
         );
 
         return 'data:image/svg+xml;base64,'.base64_encode(
-            (new SvgWriter())->write($qrCode)->getString(),
+            (new SvgWriter)->write($qrCode)->getString(),
         );
     }
 
@@ -396,6 +399,22 @@ class PaymentController extends Controller
                 ]);
 
                 return false;
+            }
+
+            if ($booking->voucher_id) {
+                $voucher = Voucher::query()->lockForUpdate()->findOrFail($booking->voucher_id);
+                if ($voucher->usages()->where('user_id', $booking->user_id)->exists()
+                    || ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit)) {
+                    $payment->update(['status' => 'failed', 'response_code' => 'ORDER_INVALID', 'transaction_id' => $transactionId, 'payload' => $payload]);
+
+                    return false;
+                }
+
+                VoucherUsage::create([
+                    'voucher_id' => $voucher->id, 'booking_id' => $booking->id,
+                    'user_id' => $booking->user_id, 'discount_amount' => $booking->discount,
+                ]);
+                $voucher->increment('used_count');
             }
 
             $paidAt = now();
