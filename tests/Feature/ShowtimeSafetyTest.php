@@ -89,7 +89,7 @@ class ShowtimeSafetyTest extends TestCase
 
         $this->assertSame('SHOWTIME_CANCELLED', $payment->fresh()->response_code);
         $this->assertSame('pending', $booking->fresh()->status);
-        $this->assertDatabaseHas('activity_logs', ['action' => 'payment.paid_for_cancelled_showtime', 'subject_id' => $payment->id]);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'payment.showtime_cancelled', 'subject_id' => $payment->id]);
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('admin.dashboard'))
             ->assertOk()->assertSee($payment->request_id)->assertSee('Suất chiếu đã hủy');
     }

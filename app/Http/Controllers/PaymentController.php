@@ -392,7 +392,13 @@ class PaymentController extends Controller
             if ($payment->status === 'success') {
                 return true;
             }
-            if (! in_array($payment->status, ['initiated', 'pending'], true)) {
+            // Đã nằm trong danh sách hoàn thủ công: callback lặp lại không ghi nhận thêm lần nữa.
+            if ($payment->needsManualRefund()) {
+                return false;
+            }
+            // Payment 'failed' (timeout lúc tạo, cổng báo lỗi trước đó) vẫn được xử lý khi có callback
+            // thành công đã xác thực chữ ký; luồng giả lập đã chặn trạng thái này ở completeSimulation.
+            if (! in_array($payment->status, ['initiated', 'pending', 'failed'], true)) {
                 return false;
             }
 
@@ -406,19 +412,17 @@ class PaymentController extends Controller
             $booking->refresh();
             $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
             if (! $booking->isPayable() || ! $amountMatches || ! $ticketsAreHeld) {
-                // Callback đã kiểm tra số tiền theo payment; đơn hủy có thể đã được hoàn điểm.
-                if ($booking->isPayable()) {
+                // Callback đã kiểm tra số tiền theo payment, nên tiền thật đã đến: không được để mất dấu.
+                // Đơn hủy/hết hạn có thể đã được hoàn điểm.
+                if ((int) $payment->amount === 0) {
                     $payment->update(['transaction_id' => $transactionId, 'status' => 'failed', 'response_code' => 'ORDER_INVALID', 'payload' => $payload]);
                 } else {
-                    $showtimeCancelled = $booking->showtime->status !== 'scheduled';
-                    $this->flagForManualRefund(
-                        $payment, $booking, $transactionId, $payload,
-                        $showtimeCancelled ? 'SHOWTIME_CANCELLED' : 'PAID_AFTER_EXPIRY',
-                        $showtimeCancelled ? 'payment.paid_for_cancelled_showtime' : 'payment.paid_after_expiry',
-                        $showtimeCancelled
-                            ? "Tiền đến cho đơn {$booking->code} của suất chiếu đã hủy; cần xử lý hoàn tiền."
-                            : "Tiền đến khi đơn {$booking->code} không còn hiệu lực; cần xử lý hoàn tiền.",
-                    );
+                    $this->flagForManualRefund($payment, $booking, $transactionId, $payload, match (true) {
+                        in_array($booking->payment_status, ['paid', 'refunded'], true) => 'ALREADY_PAID',
+                        $booking->showtime->status !== 'scheduled' => 'SHOWTIME_CANCELLED',
+                        ! $booking->isPayable() => 'PAID_AFTER_EXPIRY',
+                        default => 'ORDER_CHANGED',
+                    });
                 }
 
                 return false;
@@ -427,10 +431,7 @@ class PaymentController extends Controller
             if ($voucher) {
                 if ($voucher->usages()->where('user_id', $booking->user_id)->lockForUpdate()->first()
                     || ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit)) {
-                    $this->flagForManualRefund(
-                        $payment, $booking, $transactionId, $payload, 'VOUCHER_UNAVAILABLE', 'payment.voucher_unavailable',
-                        "Tiền đến cho đơn {$booking->code} nhưng voucher {$voucher->code} không còn lượt; cần xử lý hoàn tiền.",
-                    );
+                    $this->flagForManualRefund($payment, $booking, $transactionId, $payload, 'VOUCHER_UNAVAILABLE');
 
                     return false;
                 }
@@ -488,7 +489,7 @@ class PaymentController extends Controller
         });
     }
 
-    private function flagForManualRefund(Payment $payment, Booking $booking, string $transactionId, array $payload, string $responseCode, string $action, string $description): void
+    private function flagForManualRefund(Payment $payment, Booking $booking, string $transactionId, array $payload, string $responseCode): void
     {
         $payment->update([
             'transaction_id' => $transactionId,
@@ -496,7 +497,13 @@ class PaymentController extends Controller
             'response_code' => $responseCode,
             'payload' => $payload,
         ]);
-        ActivityLog::record($action, $description, $payment, ['booking_id' => $booking->id, 'transaction_id' => $transactionId, 'amount' => $payment->amount]);
+        $reason = Payment::MANUAL_REFUND_REASONS[$responseCode];
+        ActivityLog::record(
+            'payment.'.strtolower($responseCode),
+            "Tiền đến cho đơn {$booking->code} nhưng không thể xác nhận ({$reason}); cần xử lý hoàn tiền.",
+            $payment,
+            ['booking_id' => $booking->id, 'transaction_id' => $transactionId, 'amount' => $payment->amount],
+        );
     }
 
     private function markFailed(Payment $payment, string $responseCode, array $payload): void

@@ -29,7 +29,7 @@
                                     <td>{{ $payment->booking->user->name }}</td>
                                     <td>{{ number_format($payment->amount, 0, ',', '.') }}₫</td>
                                     <td>{{ $payment->transaction_id }}</td>
-                                    <td>{{ match($payment->response_code) {'SHOWTIME_CANCELLED' => 'Suất chiếu đã hủy', 'VOUCHER_UNAVAILABLE' => 'Voucher hết lượt', default => 'Đơn đã hết hạn'} }}</td>
+                                    <td>{{ \App\Models\Payment::MANUAL_REFUND_REASONS[$payment->response_code] }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
