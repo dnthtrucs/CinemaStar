@@ -68,6 +68,12 @@
 
                     <hr class="my-4">
 
+                    @if($booking->refundRequest)
+                        <div class="alert alert-info">Yêu cầu hoàn tiền: {{ match($booking->refundRequest->status) {'requested' => 'Chờ xử lý', 'approved' => 'Đã duyệt', 'refunded' => 'Đã hoàn tiền', 'rejected' => 'Đã từ chối'} }}</div>
+                    @elseif($booking->canRequestRefund())
+                        <a href="{{ route('refunds.create', $booking) }}" class="btn btn-outline-danger mb-3">Yêu cầu hoàn tiền</a>
+                    @endif
+
                     @if($booking->payment_status === 'paid' && $booking->points_earned > 0)
                         <div class="alert alert-light border mb-3"><i class="bi bi-stars text-warning me-2"></i>Bạn nhận được <strong>{{ number_format($booking->points_earned) }} điểm</strong> từ đơn này.</div>
                     @endif

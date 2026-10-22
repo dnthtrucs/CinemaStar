@@ -32,4 +32,9 @@ class Movie extends Model
     {
         return 'slug';
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(MovieReview::class);
+    }
 }
