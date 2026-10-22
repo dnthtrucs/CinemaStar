@@ -7,6 +7,7 @@ use App\Http\Requests\ShowtimeRequest;
 use App\Models\Movie;
 use App\Models\Room;
 use App\Models\Showtime;
+use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,13 +18,14 @@ class ShowtimeController extends Controller
     public function index()
     {
         $showtimes = Showtime::with(['movie', 'room.cinema'])->orderByDesc('starts_at')->paginate(20);
+
         return view('admin.showtimes.index', compact('showtimes'));
     }
 
     public function create()
     {
         return view('admin.showtimes.form', [
-            'showtime' => new Showtime(),
+            'showtime' => new Showtime,
             'movies' => Movie::whereIn('status', ['now_showing', 'upcoming'])->orderBy('title')->get(),
             'rooms' => Room::where('is_active', true)->with('cinema')->get(),
         ]);
@@ -32,6 +34,7 @@ class ShowtimeController extends Controller
     public function store(ShowtimeRequest $request)
     {
         Showtime::create($this->data($request));
+
         return redirect()->route('admin.showtimes.index')->with('success', 'Đã thêm suất chiếu.');
     }
 
@@ -72,7 +75,7 @@ class ShowtimeController extends Controller
             ->values();
 
         foreach ($times as $time) {
-            if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) {
+            if (! preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) {
                 throw ValidationException::withMessages(['times' => "Giờ chiếu “{$time}” không đúng. Nhập theo dạng 09:00, 12:30, 19:45."]);
             }
         }
@@ -93,6 +96,7 @@ class ShowtimeController extends Controller
 
                     if ($startsAt->lte(now())) {
                         $past++;
+
                         continue;
                     }
 
@@ -106,6 +110,7 @@ class ShowtimeController extends Controller
 
                     if ($conflict) {
                         $conflicts[] = $startsAt->format('H:i d/m/Y');
+
                         continue;
                     }
 
@@ -122,8 +127,12 @@ class ShowtimeController extends Controller
         });
 
         $message = "Đã tạo {$created} suất chiếu.";
-        if ($conflicts) $message .= ' Bỏ qua '.count($conflicts).' suất trùng phòng: '.implode(', ', array_slice($conflicts, 0, 5)).(count($conflicts) > 5 ? '...' : '');
-        if ($past) $message .= " Bỏ qua {$past} suất đã qua giờ hiện tại.";
+        if ($conflicts) {
+            $message .= ' Bỏ qua '.count($conflicts).' suất trùng phòng: '.implode(', ', array_slice($conflicts, 0, 5)).(count($conflicts) > 5 ? '...' : '');
+        }
+        if ($past) {
+            $message .= " Bỏ qua {$past} suất đã qua giờ hiện tại.";
+        }
 
         return redirect()->route('admin.showtimes.index')->with('success', $message);
     }
@@ -133,17 +142,42 @@ class ShowtimeController extends Controller
         return view('admin.showtimes.form', ['showtime' => $showtime, 'movies' => Movie::orderBy('title')->get(), 'rooms' => Room::with('cinema')->get()]);
     }
 
-    public function update(ShowtimeRequest $request, Showtime $showtime)
+    public function update(ShowtimeRequest $request, Showtime $showtime, BookingService $bookingService)
     {
-        if ($showtime->bookings()->where('payment_status', 'paid')->exists()) return back()->with('error', 'Không thể sửa suất chiếu đã có khách thanh toán.');
-        $showtime->update($this->data($request, $showtime));
-        return redirect()->route('admin.showtimes.index')->with('success', 'Đã cập nhật suất chiếu.');
+        return DB::transaction(function () use ($request, $showtime, $bookingService) {
+            $showtime = Showtime::query()->lockForUpdate()->findOrFail($showtime->id);
+            $bookingService->expirePendingBookings($showtime->id);
+            $data = $this->data($request, $showtime);
+            $changesSchedule = (int) $data['room_id'] !== $showtime->room_id
+                || ! Carbon::parse($data['starts_at'])->equalTo($showtime->starts_at)
+                || (int) $data['movie_id'] !== $showtime->movie_id;
+            $paidCount = $showtime->bookings()->where('payment_status', 'paid')->count();
+            $hasHeldSeats = $showtime->bookings()->where('status', 'pending')->where('payment_status', 'unpaid')
+                ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->whereHas('tickets')->exists();
+
+            if ($changesSchedule && ($paidCount > 0 || $hasHeldSeats)) {
+                return back()->with('error', 'Không thể đổi phim, phòng hoặc giờ khi suất chiếu có đơn đã thanh toán hoặc đang giữ ghế.');
+            }
+
+            $wasCancelled = $showtime->status === 'cancelled';
+            $showtime->update($data);
+            $response = redirect()->route('admin.showtimes.index')->with('success', 'Đã cập nhật suất chiếu.');
+            if (! $wasCancelled && $showtime->status === 'cancelled' && $paidCount > 0) {
+                $response->with('error', "Suất chiếu đã hủy ảnh hưởng {$paidCount} đơn đã thanh toán. Vui lòng xử lý hoàn tiền cho khách.");
+            }
+
+            return $response;
+        });
     }
 
     public function destroy(Showtime $showtime)
     {
-        if ($showtime->bookings()->exists()) return back()->with('error', 'Không thể xóa suất chiếu đã phát sinh đơn. Hãy chuyển sang trạng thái hủy.');
+        if ($showtime->bookings()->exists()) {
+            return back()->with('error', 'Không thể xóa suất chiếu đã phát sinh đơn. Hãy chuyển sang trạng thái hủy.');
+        }
         $showtime->delete();
+
         return back()->with('success', 'Đã xóa suất chiếu.');
     }
 
@@ -154,8 +188,11 @@ class ShowtimeController extends Controller
         $startsAt = Carbon::parse($data['starts_at']);
         $endsAt = $startsAt->copy()->addMinutes($movie->duration + 15);
         $conflict = Showtime::query()->where('room_id', $data['room_id'])->where('status', '!=', 'cancelled')->when($showtime, fn ($query) => $query->where('id', '!=', $showtime->id))->where('starts_at', '<', $endsAt)->where('ends_at', '>', $startsAt)->exists();
-        if ($conflict) throw ValidationException::withMessages(['starts_at' => 'Phòng đã có suất chiếu trùng thời gian.']);
+        if ($conflict) {
+            throw ValidationException::withMessages(['starts_at' => 'Phòng đã có suất chiếu trùng thời gian.']);
+        }
         $data['ends_at'] = $endsAt;
+
         return $data;
     }
 }
