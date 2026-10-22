@@ -16,6 +16,7 @@ use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -286,9 +287,7 @@ class PaymentController extends Controller
             return response()->json(['RspCode' => '04', 'Message' => 'Invalid amount']);
         }
 
-        if ($payment->status === 'success') {
-            return response()->json(['RspCode' => '02', 'Message' => 'Order already confirmed']);
-        }
+        $alreadySuccessful = $payment->status === 'success';
 
         if ($request->input('vnp_ResponseCode') === '00'
             && $request->input('vnp_TransactionStatus') === '00') {
@@ -297,7 +296,7 @@ class PaymentController extends Controller
                 (string) $request->input('vnp_TransactionNo'),
                 $request->query(),
             );
-        } else {
+        } elseif (! $alreadySuccessful) {
             $this->markFailed(
                 $payment,
                 (string) $request->input('vnp_ResponseCode'),
@@ -305,7 +304,9 @@ class PaymentController extends Controller
             );
         }
 
-        return response()->json(['RspCode' => '00', 'Message' => 'Confirm success']);
+        return response()->json($alreadySuccessful
+            ? ['RspCode' => '02', 'Message' => 'Order already confirmed']
+            : ['RspCode' => '00', 'Message' => 'Confirm success']);
     }
 
     public function momoReturn(Request $request)
@@ -386,107 +387,131 @@ class PaymentController extends Controller
 
     private function markSuccessful(Payment $payment, string $transactionId, array $payload): bool
     {
-        return DB::transaction(function () use ($payment, $transactionId, $payload) {
-            $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+        try {
+            return DB::transaction(function () use ($payment, $transactionId, $payload) {
+                $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
-            if ($payment->status === 'success') {
-                return true;
-            }
-            // Đã nằm trong danh sách hoàn thủ công: callback lặp lại không ghi nhận thêm lần nữa.
-            if ($payment->needsManualRefund()) {
-                return false;
-            }
-            // Payment 'failed' (timeout lúc tạo, cổng báo lỗi trước đó) vẫn được xử lý khi có callback
-            // thành công đã xác thực chữ ký; luồng giả lập đã chặn trạng thái này ở completeSimulation.
-            if (! in_array($payment->status, ['initiated', 'pending', 'failed'], true)) {
-                return false;
-            }
+                if ($payment->transaction_id === $transactionId) {
+                    return $payment->status === 'success';
+                }
+                $receipt = Payment::query()->where('provider', $payment->provider)->where('transaction_id', $transactionId)->first();
+                if ($receipt) {
+                    return $receipt->status === 'success';
+                }
+                // Mỗi mã ngân hàng khác nhau là một khoản tiền mới, kể cả khi dùng lại QR cũ.
+                if ($payment->status === 'success' || $payment->needsManualRefund()) {
+                    $receipt = Payment::create([
+                        'booking_id' => $payment->booking_id,
+                        'provider' => $payment->provider,
+                        'request_id' => $payment->request_id.'-'.sha1($transactionId),
+                        'transaction_id' => $transactionId,
+                        'amount' => $payment->amount,
+                        'status' => 'failed',
+                    ]);
+                    $this->flagForManualRefund($receipt, $payment->booking, $transactionId, $payload, 'DUPLICATE_TRANSFER');
 
-            // Cùng thứ tự khóa với giữ lượt voucher: voucher trước, booking sau.
-            $voucherId = $payment->booking()->value('voucher_id');
-            $voucher = $voucherId ? Voucher::query()->lockForUpdate()->findOrFail($voucherId) : null;
-            $booking = $payment->booking()->lockForUpdate()->firstOrFail();
-            // Giữ số tiền phải trả trước khi hoàn điểm của đơn hết hạn.
-            $amountMatches = (int) $payment->amount === (int) $booking->total_price;
-            app(BookingService::class)->expirePendingBooking($booking->id);
-            $booking->refresh();
-            $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
-            if (! $booking->isPayable() || ! $amountMatches || ! $ticketsAreHeld) {
-                // Callback đã kiểm tra số tiền theo payment, nên tiền thật đã đến: không được để mất dấu.
-                // Đơn hủy/hết hạn có thể đã được hoàn điểm.
-                if ((int) $payment->amount === 0) {
-                    $payment->update(['transaction_id' => $transactionId, 'status' => 'failed', 'response_code' => 'ORDER_INVALID', 'payload' => $payload]);
-                } else {
-                    $this->flagForManualRefund($payment, $booking, $transactionId, $payload, match (true) {
-                        in_array($booking->payment_status, ['paid', 'refunded'], true) => 'ALREADY_PAID',
-                        $booking->showtime->status !== 'scheduled' => 'SHOWTIME_CANCELLED',
-                        ! $booking->isPayable() => 'PAID_AFTER_EXPIRY',
-                        default => 'ORDER_CHANGED',
-                    });
+                    return false;
+                }
+                // Payment 'failed' (timeout lúc tạo, cổng báo lỗi trước đó) vẫn được xử lý khi có callback
+                // thành công đã xác thực chữ ký; luồng giả lập đã chặn trạng thái này ở completeSimulation.
+                if (! in_array($payment->status, ['initiated', 'pending', 'failed'], true)) {
+                    return false;
                 }
 
-                return false;
-            }
-
-            if ($voucher) {
-                if ($voucher->usages()->where('user_id', $booking->user_id)->lockForUpdate()->first()
-                    || ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit)) {
-                    $this->flagForManualRefund($payment, $booking, $transactionId, $payload, 'VOUCHER_UNAVAILABLE');
+                // Cùng thứ tự khóa với giữ lượt voucher: voucher trước, booking sau.
+                $voucherId = $payment->booking()->value('voucher_id');
+                $voucher = $voucherId ? Voucher::query()->lockForUpdate()->findOrFail($voucherId) : null;
+                $booking = $payment->booking()->lockForUpdate()->firstOrFail();
+                // Giữ số tiền phải trả trước khi hoàn điểm của đơn hết hạn.
+                $amountMatches = (int) $payment->amount === (int) $booking->total_price;
+                app(BookingService::class)->expirePendingBooking($booking->id);
+                $booking->refresh();
+                $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
+                if (! $booking->isPayable() || ! $amountMatches || ! $ticketsAreHeld) {
+                    // Callback đã kiểm tra số tiền theo payment, nên tiền thật đã đến: không được để mất dấu.
+                    // Đơn hủy/hết hạn có thể đã được hoàn điểm.
+                    if ((int) $payment->amount === 0) {
+                        $payment->update(['transaction_id' => $transactionId, 'status' => 'failed', 'response_code' => 'ORDER_INVALID', 'payload' => $payload]);
+                    } else {
+                        $this->flagForManualRefund($payment, $booking, $transactionId, $payload, match (true) {
+                            in_array($booking->payment_status, ['paid', 'refunded'], true) => 'ALREADY_PAID',
+                            $booking->showtime->status !== 'scheduled' => 'SHOWTIME_CANCELLED',
+                            ! $booking->isPayable() => 'PAID_AFTER_EXPIRY',
+                            default => 'ORDER_CHANGED',
+                        });
+                    }
 
                     return false;
                 }
 
-                VoucherUsage::create([
-                    'voucher_id' => $voucher->id, 'booking_id' => $booking->id,
-                    'user_id' => $booking->user_id, 'discount_amount' => $booking->discount,
-                ]);
-                $voucher->increment('used_count');
-            }
+                if ($voucher) {
+                    if ($voucher->usages()->where('user_id', $booking->user_id)->lockForUpdate()->first()
+                        || ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit)) {
+                        $this->flagForManualRefund($payment, $booking, $transactionId, $payload, 'VOUCHER_UNAVAILABLE');
 
-            $paidAt = now();
-            $payment->update([
-                'transaction_id' => $transactionId,
-                'status' => 'success',
-                'response_code' => '00',
-                'payload' => $payload,
-                'paid_at' => $paidAt,
-            ]);
+                        return false;
+                    }
 
-            $booking->update([
-                'status' => 'confirmed',
-                'payment_status' => 'paid',
-                'payment_method' => $payment->provider,
-                'paid_at' => $paidAt,
-                'expires_at' => null,
-            ]);
-            if ((int) $booking->points_earned === 0) {
-                $earnedPoints = (int) floor((float) $booking->total_price / 10000);
-                if ($earnedPoints > 0) {
-                    $booking->user()->lockForUpdate()->firstOrFail()->increment('loyalty_points', $earnedPoints);
-                    $booking->update(['points_earned' => $earnedPoints]);
-                }
-            }
-
-            // Gửi email chỉ sau khi giao dịch đã được lưu thành công. Áp dụng cho
-            // thanh toán trực tiếp và callback IPN từ cổng thanh toán.
-            DB::afterCommit(function () use ($booking) {
-                try {
-                    $booking->loadMissing([
-                        'user',
-                        'showtime.movie',
-                        'showtime.room.cinema',
-                        'tickets.seat',
+                    VoucherUsage::create([
+                        'voucher_id' => $voucher->id, 'booking_id' => $booking->id,
+                        'user_id' => $booking->user_id, 'discount_amount' => $booking->discount,
                     ]);
-
-                    $booking->user->notify(new PaymentReceiptNotification($booking));
-                } catch (Throwable $exception) {
-                    // Không để lỗi SMTP làm mất trạng thái thanh toán thành công.
-                    report($exception);
+                    $voucher->increment('used_count');
                 }
-            });
 
-            return true;
-        });
+                $paidAt = now();
+                $payment->update([
+                    'transaction_id' => $transactionId,
+                    'status' => 'success',
+                    'response_code' => '00',
+                    'payload' => $payload,
+                    'paid_at' => $paidAt,
+                ]);
+
+                $booking->update([
+                    'status' => 'confirmed',
+                    'payment_status' => 'paid',
+                    'payment_method' => $payment->provider,
+                    'paid_at' => $paidAt,
+                    'expires_at' => null,
+                ]);
+                if ((int) $booking->points_earned === 0) {
+                    $earnedPoints = (int) floor((float) $booking->total_price / 10000);
+                    if ($earnedPoints > 0) {
+                        $booking->user()->lockForUpdate()->firstOrFail()->increment('loyalty_points', $earnedPoints);
+                        $booking->update(['points_earned' => $earnedPoints]);
+                    }
+                }
+
+                // Gửi email chỉ sau khi giao dịch đã được lưu thành công. Áp dụng cho
+                // thanh toán trực tiếp và callback IPN từ cổng thanh toán.
+                DB::afterCommit(function () use ($booking) {
+                    try {
+                        $booking->loadMissing([
+                            'user',
+                            'showtime.movie',
+                            'showtime.room.cinema',
+                            'tickets.seat',
+                        ]);
+
+                        $booking->user->notify(new PaymentReceiptNotification($booking));
+                    } catch (Throwable $exception) {
+                        // Không để lỗi SMTP làm mất trạng thái thanh toán thành công.
+                        report($exception);
+                    }
+                });
+
+                return true;
+            });
+        } catch (UniqueConstraintViolationException $exception) {
+            // Transaction đã rollback: đọc biên lai thắng cuộc từ callback đồng thời.
+            $receipt = Payment::query()->where('provider', $payment->provider)->where('transaction_id', $transactionId)->first();
+            if (! $receipt) {
+                throw $exception;
+            }
+
+            return $receipt->status === 'success';
+        }
     }
 
     private function flagForManualRefund(Payment $payment, Booking $booking, string $transactionId, array $payload, string $responseCode): void

@@ -16,6 +16,7 @@ class Payment extends Model
         'VOUCHER_UNAVAILABLE' => 'Voucher hết lượt',
         'ALREADY_PAID' => 'Đơn đã thanh toán bằng giao dịch khác',
         'ORDER_CHANGED' => 'Số tiền đơn đã thay đổi',
+        'DUPLICATE_TRANSFER' => 'Chuyển khoản trùng QR',
     ];
 
     public static function manualRefundCodes(): array

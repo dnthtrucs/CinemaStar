@@ -18,6 +18,9 @@ php artisan test
 | `RefundTest` | Yêu cầu trùng trả lỗi thân thiện; chặn đơn đã check-in/đã bắt đầu; chuyển trạng thái đúng thứ tự; hoàn tiền giải phóng ghế, chỉnh điểm, ghi notification; chặn check-in và hoàn lặp; loại doanh thu đã hoàn |
 | `VoucherTest` | Đơn tối thiểu trống lưu 0; hủy/hết hạn không tiêu lượt; thanh toán ghi lịch sử; chặn dùng lại; tính cả lượt đang giữ |
 | `PaymentSafetyTest` | Chặn xác nhận giao dịch đã hủy; lỗi nhập điểm gắn vào form; expiry khóa và kiểm tra lại đơn, không xóa vé đã trả tiền; webhook đến muộn ghi log và cảnh báo đúng một lần, kể cả đơn đã hoàn điểm |
+| `ManualRefundTest` | Hai mã ngân hàng khác nhau dùng cùng QR được ghi đủ tiền cần hoàn; retry không ghi thêm; không cộng lại điểm/lượt voucher; VNPAY giữ phản hồi 02 cho đơn đã xác nhận |
+| `PaymentTransactionRaceTest` | Hai PHP process xử lý cùng mã ngân hàng trên hai payment khác nhau: unique index chỉ cho một biên lai thành công, callback còn lại trả kết quả gửi lại, không lỗi 500 |
+| `PaymentMigrationTest` | Nâng cấp FK/index trên bảng có dữ liệu; dừng rõ ràng nếu trùng mã ngân hàng, giữ nguyên dữ liệu; cho phép nhiều NULL và cùng mã ở hai provider |
 | `AccountSafetyTest` | Tài khoản khóa bị đăng xuất khỏi session cũ; chặn xóa tài khoản có lịch sử thanh toán/hoàn tiền |
 | `AccountDeletionRaceTest` | Hai PHP process thật xác nhận callback và xóa tài khoản đồng thời; không deadlock, biên lai và điểm thưởng được giữ |
 | `ShowtimeSafetyTest` | Chặn đổi lịch khi đang giữ ghế; vẫn đổi giá được; giải phóng đơn hết hạn trước khi đổi lịch; hủy suất có khách trả tiền hiện cảnh báo |
@@ -25,6 +28,10 @@ php artisan test
 Các test điểm, QR, hoàn tiền, voucher và thanh toán đã được chạy trước sửa để tái hiện lỗi, sau đó chạy lại để xác nhận pass. Helper `showtimeWithSeats()` dùng chung tại `tests/Concerns/CreatesCinemaBookings.php`.
 
 `AccountSafetyTest` kiểm tra thêm mọi trạng thái payment (initiated/pending/failed) đều chặn xóa tài khoản; đơn hủy/hết hạn không có payment vẫn được xóa; FK từ payments chặn xóa trực tiếp booking đã phát sinh giao dịch.
+
+Chống trùng callback dựa trên `(provider, transaction_id)`. Khoản tiền mới chuyển lại QR đã xử lý tạo biên lai `DUPLICATE_TRANSFER` và một log để admin hoàn thủ công. Migration unique index không tự sửa/xóa biên lai trùng: cần đối soát dữ liệu rồi chạy lại migration.
+
+Hai test chạy nhiều process dùng MySQL `cinema_test` và Symfony Process có sẵn, không cần `pcntl`. Không chạy nhiều suite dùng chung database này đồng thời.
 
 ## Test case nghiệp vụ chính
 
