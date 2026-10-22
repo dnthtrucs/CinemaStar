@@ -60,7 +60,7 @@ class Booking extends Model
        so an unscanned ticket automatically becomes expired after the show ends. */
     public function getTicketStatusAttribute(): string
     {
-        if ($this->status === 'cancelled') {
+        if ($this->status === 'cancelled' || $this->payment_status === 'refunded') {
             return 'cancelled';
         }
         if ($this->payment_status !== 'paid' || $this->status !== 'confirmed') {
@@ -96,6 +96,21 @@ class Booking extends Model
     public function voucher()
     {
         return $this->belongsTo(Voucher::class);
+    }
+
+    public function refundRequest()
+    {
+        return $this->hasOne(RefundRequest::class);
+    }
+
+    public function canRequestRefund(): bool
+    {
+        return $this->status === 'confirmed'
+            && $this->payment_status === 'paid'
+            && ! $this->refundRequest()->exists()
+            && ! $this->tickets()->whereNotNull('checked_in_at')->exists()
+            && ! $this->tickets()->where('status', 'used')->exists()
+            && $this->showtime->starts_at->isFuture();
     }
 
     public function isPayable(): bool

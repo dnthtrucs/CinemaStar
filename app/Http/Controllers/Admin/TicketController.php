@@ -59,12 +59,13 @@ class TicketController extends Controller
     private function checkInTicket(Ticket $ticket): void
     {
         DB::transaction(function () use ($ticket) {
+            $booking = Booking::query()->lockForUpdate()->findOrFail($ticket->booking_id);
             $ticket = Ticket::query()
                 ->with(['booking.showtime', 'showtime'])
                 ->lockForUpdate()
                 ->findOrFail($ticket->id);
 
-            abort_unless($ticket->booking->payment_status === 'paid', 422, 'Vé chưa được thanh toán.');
+            abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Vé chưa được thanh toán.');
             abort_if($ticket->showtime?->ends_at?->isPast(), 422, 'Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.');
             abort_unless($ticket->status === 'valid', 422, 'Vé này đã check-in hoặc không còn hiệu lực.');
 
@@ -92,7 +93,7 @@ class TicketController extends Controller
                 ->lockForUpdate()
                 ->findOrFail($booking->id);
 
-            abort_unless($booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
+            abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
             abort_if($booking->showtime?->ends_at?->isPast(), 422, 'Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.');
 
             $validTickets = $booking->tickets->where('status', 'valid');
