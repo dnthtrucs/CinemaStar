@@ -31,6 +31,26 @@ class TicketCheckinTest extends TestCase
         ]))->assertOk()->assertDontSee('Vé hợp lệ')->assertSee('Chưa thanh toán');
     }
 
+    public function test_paid_booking_for_cancelled_showtime_cannot_be_checked_in(): void
+    {
+        $booking = $this->bookingFor();
+        $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
+        $showtime = $booking->showtime;
+        $data = $showtime->only(['movie_id', 'room_id', 'base_price', 'format', 'language']);
+        $data += ['starts_at' => $showtime->starts_at->toDateTimeString(), 'status' => 'cancelled'];
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)->put(route('admin.showtimes.update', $showtime), $data)->assertRedirect();
+
+        $this->get($booking->verificationUrl())->assertOk()->assertDontSee('Vé hợp lệ')->assertSee('Đã hủy');
+        $ticket = $booking->tickets()->firstOrFail();
+        $this->get(route('tickets.verify', ['qrToken' => $ticket->qr_token]))->assertOk()->assertSee('Suất chiếu đã bị hủy');
+
+        $this->actingAs($admin)->patch(route('admin.tickets.update', $booking))->assertUnprocessable();
+        $this->post(route('admin.tickets.scan'), ['ticket_token' => $ticket->qr_token])->assertUnprocessable();
+        $this->assertSame('valid', $ticket->fresh()->status);
+        $this->assertSame('paid', $booking->fresh()->payment_status);
+    }
+
     public function test_each_ticket_status_has_a_styled_banner(): void
     {
         $booking = $this->bookingFor();

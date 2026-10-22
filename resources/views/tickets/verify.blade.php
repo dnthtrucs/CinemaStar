@@ -5,11 +5,13 @@
 @php
     $isPaid = $ticket->booking->payment_status === 'paid';
     $isConfirmed = $ticket->booking->status === 'confirmed';
-    $isValid = $isPaid && $isConfirmed && $ticket->status === 'valid';
+    $isShowtimeCancelled = $ticket->showtime->status !== 'scheduled';
+    $isValid = $isPaid && $isConfirmed && $ticket->status === 'valid' && ! $isShowtimeCancelled;
     $isUsed = $ticket->status === 'used';
 
     [$statusLabel, $statusClass, $statusIcon] = match (true) {
         $isUsed => ['Vé đã được sử dụng', 'warning', 'bi-exclamation-circle-fill'],
+        $isShowtimeCancelled => ['Suất chiếu đã bị hủy', 'danger', 'bi-x-circle-fill'],
         $isValid => ['Vé hợp lệ', 'success', 'bi-patch-check-fill'],
         default => ['Vé chưa có hiệu lực', 'secondary', 'bi-hourglass-split'],
     };

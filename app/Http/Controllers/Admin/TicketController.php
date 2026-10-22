@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
 {
+    private const CANCELLED_SHOWTIME_MESSAGE = 'Suất chiếu đã bị hủy nên vé không còn hiệu lực. Hướng dẫn khách gửi yêu cầu hoàn tiền.';
+
     public function index(Request $request)
     {
         $booking = $request->filled('code')
@@ -66,6 +68,7 @@ class TicketController extends Controller
                 ->findOrFail($ticket->id);
 
             abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Vé chưa được thanh toán.');
+            abort_unless($ticket->showtime?->status === 'scheduled', 422, self::CANCELLED_SHOWTIME_MESSAGE);
             abort_if($ticket->showtime?->ends_at?->isPast(), 422, 'Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.');
             abort_unless($ticket->status === 'valid', 422, 'Vé này đã check-in hoặc không còn hiệu lực.');
 
@@ -94,6 +97,7 @@ class TicketController extends Controller
                 ->findOrFail($booking->id);
 
             abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
+            abort_unless($booking->showtime?->status === 'scheduled', 422, self::CANCELLED_SHOWTIME_MESSAGE);
             abort_if($booking->showtime?->ends_at?->isPast(), 422, 'Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.');
 
             $validTickets = $booking->tickets->where('status', 'valid');

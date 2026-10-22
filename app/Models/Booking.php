@@ -73,6 +73,9 @@ class Booking extends Model
         }
 
         $showtime = $this->relationLoaded('showtime') ? $this->showtime : $this->showtime()->first();
+        if ($showtime && $showtime->status !== 'scheduled') {
+            return 'cancelled';
+        }
 
         return $showtime?->ends_at?->isPast() ? 'expired' : 'valid';
     }
