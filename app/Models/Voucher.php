@@ -31,12 +31,14 @@ class Voucher extends Model
             return false;
         }
 
+        // Đọc hiện trạng sau khóa voucher, kể cả khi transaction đã có snapshot cũ.
         $pending = Booking::query()->where('voucher_id', $this->id)
             ->where('status', 'pending')->where('payment_status', 'unpaid')
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->lockForUpdate()->get(['id', 'user_id']);
 
-        if ($user && ($this->usages()->where('user_id', $user->id)->exists()
-            || (clone $pending)->where('user_id', $user->id)->exists())) {
+        if ($user && ($this->usages()->where('user_id', $user->id)->lockForUpdate()->first()
+            || $pending->contains('user_id', $user->id))) {
             return false;
         }
 

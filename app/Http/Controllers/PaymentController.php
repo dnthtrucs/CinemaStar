@@ -396,6 +396,9 @@ class PaymentController extends Controller
                 return false;
             }
 
+            // Cùng thứ tự khóa với giữ lượt voucher: voucher trước, booking sau.
+            $voucherId = $payment->booking()->value('voucher_id');
+            $voucher = $voucherId ? Voucher::query()->lockForUpdate()->findOrFail($voucherId) : null;
             $booking = $payment->booking()->lockForUpdate()->firstOrFail();
             // Giữ số tiền phải trả trước khi hoàn điểm của đơn hết hạn.
             $amountMatches = (int) $payment->amount === (int) $booking->total_price;
@@ -418,9 +421,8 @@ class PaymentController extends Controller
                 return false;
             }
 
-            if ($booking->voucher_id) {
-                $voucher = Voucher::query()->lockForUpdate()->findOrFail($booking->voucher_id);
-                if ($voucher->usages()->where('user_id', $booking->user_id)->exists()
+            if ($voucher) {
+                if ($voucher->usages()->where('user_id', $booking->user_id)->lockForUpdate()->first()
                     || ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit)) {
                     $payment->update(['status' => 'failed', 'response_code' => 'ORDER_INVALID', 'transaction_id' => $transactionId, 'payload' => $payload]);
 

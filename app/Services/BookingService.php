@@ -16,6 +16,8 @@ class BookingService
 {
     public function create(User $user, Showtime $showtime, array $seatIds, ?string $voucherCode = null): Booking
     {
+        $this->expirePendingBookings($showtime->id);
+
         return DB::transaction(function () use ($user, $showtime, $seatIds, $voucherCode) {
             $showtime = Showtime::query()->lockForUpdate()->findOrFail($showtime->id);
 
@@ -24,8 +26,6 @@ class BookingService
                     'seats' => 'Suất chiếu đã bắt đầu hoặc không còn nhận đặt vé.',
                 ]);
             }
-
-            $this->expirePendingBookings($showtime->id);
 
             $requestedSeatIds = array_values(array_unique($seatIds));
             $seats = Seat::query()
