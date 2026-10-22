@@ -47,7 +47,7 @@ erDiagram
 | Thực thể | Mã lưu trữ | Hiển thị |
 |---|---|---|
 | Booking | pending, confirmed, cancelled, expired | Chờ thanh toán, Đã thanh toán, Đã hủy, Đã hết hạn |
-| Payment | initiated, pending, success, failed | Khởi tạo, Chờ thanh toán, Thành công, Thất bại |
+| Payment | initiated, pending, success, failed | Khởi tạo, Chờ thanh toán, Thành công, Thất bại. Payment `failed` có `response_code` thuộc `Payment::MANUAL_REFUND_REASONS` là tiền đã nhận nhưng không xác nhận được đơn; hiện ở Dashboard để hoàn thủ công |
 | Ticket | valid, used | Sẵn sàng vào rạp, Đã check-in |
 | Showtime | scheduled, cancelled | Đang hoạt động, Đã hủy |
 
@@ -59,4 +59,6 @@ erDiagram
 - `app/Http/Controllers/Admin/TicketController.php`: quét QR/mã BK và check-in cả đơn.
 - `app/Notifications/PaymentReceiptNotification.php`: email vé và QR PNG.
 - `resources/views/showtimes/show.blade.php`: sơ đồ ghế, VIP, ghế đôi và lưu lựa chọn trước đăng nhập.
+- `resources/views/layouts/app.blade.php`: layout chung (Bootstrap 5 từ CDN); `layouts/auth.blade.php` là khung cho các trang tài khoản.
+- `resources/css/app.css`, `resources/js/app.js`: giao diện chung và vẽ QR vé trên trình duyệt (`ticket-qr.js`, thư viện `qrcode`), được Vite build vào `public/build`.
 - `database/migrations`: cấu trúc dữ liệu, cập nhật hàng E–G VIP và hàng H ghế đôi.
