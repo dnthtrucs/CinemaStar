@@ -19,9 +19,12 @@ php artisan test
 | `VoucherTest` | Đơn tối thiểu trống lưu 0; hủy/hết hạn không tiêu lượt; thanh toán ghi lịch sử; chặn dùng lại; tính cả lượt đang giữ |
 | `PaymentSafetyTest` | Chặn xác nhận giao dịch đã hủy; lỗi nhập điểm gắn vào form; expiry khóa và kiểm tra lại đơn, không xóa vé đã trả tiền; webhook đến muộn ghi log và cảnh báo đúng một lần, kể cả đơn đã hoàn điểm |
 | `AccountSafetyTest` | Tài khoản khóa bị đăng xuất khỏi session cũ; chặn xóa tài khoản có lịch sử thanh toán/hoàn tiền |
+| `AccountDeletionRaceTest` | Hai PHP process thật xác nhận callback và xóa tài khoản đồng thời; không deadlock, biên lai và điểm thưởng được giữ |
 | `ShowtimeSafetyTest` | Chặn đổi lịch khi đang giữ ghế; vẫn đổi giá được; giải phóng đơn hết hạn trước khi đổi lịch; hủy suất có khách trả tiền hiện cảnh báo |
 
 Các test điểm, QR, hoàn tiền, voucher và thanh toán đã được chạy trước sửa để tái hiện lỗi, sau đó chạy lại để xác nhận pass. Helper `showtimeWithSeats()` dùng chung tại `tests/Concerns/CreatesCinemaBookings.php`.
+
+`AccountSafetyTest` kiểm tra thêm mọi trạng thái payment (initiated/pending/failed) đều chặn xóa tài khoản; đơn hủy/hết hạn không có payment vẫn được xóa; FK từ payments chặn xóa trực tiếp booking đã phát sinh giao dịch.
 
 ## Test case nghiệp vụ chính
 
