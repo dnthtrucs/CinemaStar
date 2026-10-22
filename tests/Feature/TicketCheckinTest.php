@@ -18,7 +18,8 @@ class TicketCheckinTest extends TestCase
         $url = route('bookings.verify', ['booking' => $booking, 'signature' => hash_hmac('sha256', $booking->id.'|'.$booking->code, config('app.key'))]);
 
         $this->get($url)->assertOk()->assertSee($booking->code)->assertSee('Vé hợp lệ')
-            ->assertDontSee($booking->user->email)->assertDontSee((string) $booking->user->phone);
+            ->assertDontSee($booking->user->email)->assertDontSee((string) $booking->user->phone)
+            ->assertSee('class="status status-primary"', false);
         $this->get(route('bookings.verify', ['booking' => $booking, 'signature' => 'wrong']))->assertForbidden();
     }
 
@@ -28,5 +29,18 @@ class TicketCheckinTest extends TestCase
         $this->actingAs($booking->user)->get(route('bookings.verify', [
             'booking' => $booking, 'signature' => hash_hmac('sha256', $booking->id.'|'.$booking->code, config('app.key')),
         ]))->assertOk()->assertDontSee('Vé hợp lệ')->assertSee('Chưa thanh toán');
+    }
+
+    public function test_each_ticket_status_has_a_styled_banner(): void
+    {
+        $booking = $this->bookingFor();
+        $url = $booking->verificationUrl();
+        $html = $this->get($url)->assertOk()->getContent();
+
+        // Mỗi badge mà Booking có thể trả về phải có CSS tương ứng trong trang.
+        foreach (['primary', 'success', 'warning', 'secondary'] as $badge) {
+            $this->assertStringContainsString(".status-{$badge}{", $html);
+        }
+        $this->assertStringContainsString('class="status status-warning"', $html);
     }
 }
