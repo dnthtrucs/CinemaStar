@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\StaffMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,11 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(append: [\App\Http\Middleware\EnsureUserIsActive::class]);
+        $middleware->web(append: [EnsureUserIsActive::class]);
 
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'staff' => \App\Http\Middleware\StaffMiddleware::class,
+            'admin' => AdminMiddleware::class,
+            'staff' => StaffMiddleware::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
