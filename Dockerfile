@@ -9,7 +9,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Run Laravel with PHP 8.3, compatible with Laravel 11 and this project.
+# Run Laravel with PHP 8.3, as required by Laravel 13.
 FROM php:8.3-cli
 
 RUN apt-get update \

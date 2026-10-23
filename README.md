@@ -1,6 +1,6 @@
 # CinemaStar – Hệ thống quản lý và đặt vé rạp chiếu phim
 
-CinemaStar là hệ thống Laravel 11 phục vụ quản lý rạp, lịch chiếu, đặt vé trực tuyến, thanh toán và check-in QR. Ứng dụng dùng MySQL, Blade/Bootstrap và giao diện tiếng Việt.
+CinemaStar là hệ thống Laravel 13 phục vụ quản lý rạp, lịch chiếu, đặt vé trực tuyến, thanh toán và check-in QR. Ứng dụng dùng MySQL, Blade/Bootstrap và giao diện tiếng Việt.
 
 ## Chức năng chính
 
@@ -32,7 +32,7 @@ CinemaStar là hệ thống Laravel 11 phục vụ quản lý rạp, lịch chi�
 
 ## Công nghệ
 
-- PHP 8.2+, Laravel 11, MySQL 8+/MariaDB 10.6+
+- PHP 8.3+, Laravel 13, MySQL 8+/MariaDB 10.6+
 - Blade, Bootstrap, Vite
 - Endroid QR Code
 - SePay, MoMo, VNPAY

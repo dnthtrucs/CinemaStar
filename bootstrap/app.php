@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'staff' => StaffMiddleware::class,
         ]);
 
-        $middleware->validateCsrfTokens(except: [
+        $middleware->preventRequestForgery(except: [
             'payments/momo/ipn',
             'payments/sepay/webhook',
         ]);
