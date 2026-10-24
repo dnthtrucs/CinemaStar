@@ -77,6 +77,7 @@ erDiagram
 - `BookingService` bỏ các dòng số lượng0, kiểm tra tối đa 5 loại combo đã chọn, mỗi loại 1–10. Dòng combo được đọc theo ID với shared lock: các đơn có thể đọc đồng thời, còn thay đổi giá/tắt bán phải chờ. Đơn lưu `booking_concessions.unit_price`; sửa giá không đổi đơn cũ. Combo đã xuất hiện trong đơn không thể xóa; admin có thể tắt bán.
 - `resources/js/seat-selection.js` là entry Vite riêng cho sơ đồ ghế, combo và tổng tạm tính; lưu lựa chọn theo suất vào localStorage. Server luôn tính lại giá và kiểm tra ghế khi nhận đơn.
 - Đơn, email, bản in, vé công khai và trang check-in cùng đọc số lượng/giá combo đã lưu. Hủy hoặc hết hạn giữ lịch sử combo và trả ghế/điểm như trước.
+- Pivot `booking_concessions` lưu cả tên combo tại thời điểm đặt; mọi bản vé/email/check-in đọc tên và giá snapshot. Sửa tên hoặc giá danh mục không đổi đơn cũ. Cột name được thêm trực tiếp vào migration tạo bảng của PR #4 vì migration này chưa có trên main/chưa deploy.
 
 Callback đọc bộ đếm sau khi lấy khóa user nên thấy phần thưởng vừa commit từ callback trước, kể cả MySQL REPEATABLE READ. Không đổi isolation, không thêm kết nối hay khóa booking sau user. Thứ tự khóa voucher → booking → user và chống cộng trùng theo `points_earned` giữ nguyên.
 

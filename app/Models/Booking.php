@@ -50,7 +50,7 @@ class Booking extends Model
 
     public function concessions()
     {
-        return $this->belongsToMany(Concession::class, 'booking_concessions')->withPivot(['quantity', 'unit_price'])->withTimestamps();
+        return $this->belongsToMany(Concession::class, 'booking_concessions')->withPivot(['name', 'quantity', 'unit_price'])->withTimestamps();
     }
 
     public function verificationSignature(): string

@@ -15,6 +15,6 @@ class Concession extends Model
 
     public function bookings()
     {
-        return $this->belongsToMany(Booking::class, 'booking_concessions')->withPivot(['quantity', 'unit_price'])->withTimestamps();
+        return $this->belongsToMany(Booking::class, 'booking_concessions')->withPivot(['name', 'quantity', 'unit_price'])->withTimestamps();
     }
 }

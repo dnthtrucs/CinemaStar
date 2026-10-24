@@ -25,6 +25,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('booking_id')->constrained()->cascadeOnDelete();
             $table->foreignId('concession_id')->constrained()->restrictOnDelete();
+            $table->string('name');
             $table->unsignedTinyInteger('quantity');
             $table->unsignedInteger('unit_price');
             $table->timestamps();

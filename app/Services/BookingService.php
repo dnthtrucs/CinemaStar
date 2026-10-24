@@ -138,7 +138,7 @@ class BookingService
             ]);
 
             foreach ($items as $item) {
-                $booking->concessions()->attach($item->id, ['quantity' => $concessions[$item->id], 'unit_price' => $item->price]);
+                $booking->concessions()->attach($item->id, ['name' => $item->name, 'quantity' => $concessions[$item->id], 'unit_price' => $item->price]);
             }
 
             foreach ($seats as $seat) {
