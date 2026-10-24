@@ -13,7 +13,7 @@
             @foreach($banners as $banner)
                 <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
                     <a href="{{ route('cinemas.index') }}" class="banner-link" aria-label="Xem danh sách rạp">
-                        <img src="{{ asset('storage/'.$banner->image_path) }}" class="d-block w-100" alt="{{ $banner->title }}">
+                        <img src="{{ asset('storage/'.$banner->image_path) }}" class="d-block w-100" alt="{{ $banner->title }}" loading="{{ $loop->first ? 'eager' : 'lazy' }}" fetchpriority="{{ $loop->first ? 'high' : 'low' }}" decoding="async">
                         <div class="banner-overlay"></div>
                     </a>
                 </div>
@@ -58,7 +58,7 @@
         @forelse($featuredMovies as $movie)
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="card movie-card p-2 shadow-soft">
-                    <a href="{{ route('movies.show', $movie) }}"><img class="movie-poster" src="{{ $movie->poster ?: 'https://placehold.co/500x750/222/fff?text=CinemaStar' }}" alt="{{ $movie->title }}"></a>
+                    <a href="{{ route('movies.show', $movie) }}"><img class="movie-poster" src="{{ $movie->poster ?: 'https://placehold.co/500x750/222/fff?text=CinemaStar' }}" alt="{{ $movie->title }}" width="500" height="750" loading="lazy" decoding="async"></a>
                     <div class="card-body px-2 pb-2">
                         <div class="d-flex gap-2 mb-2"><span class="badge text-bg-danger">{{ $movie->age_rating }}</span><span class="small text-muted">{{ $movie->duration }} phút</span></div>
                         <h5 class="fw-bold text-truncate"><a class="text-dark text-decoration-none" href="{{ route('movies.show', $movie) }}">{{ $movie->title }}</a></h5>

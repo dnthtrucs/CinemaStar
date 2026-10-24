@@ -1,5 +1,3 @@
-import { Html5Qrcode } from 'html5-qrcode';
-
 const startButton = document.getElementById('start-scanner');
 const reader = document.getElementById('qr-reader');
 const message = document.getElementById('scanner-message');
@@ -12,9 +10,11 @@ startButton?.addEventListener('click', async () => {
     reader.classList.remove('d-none');
     message.classList.remove('text-danger');
     message.textContent = 'Đang khởi động camera...';
-    scanner ??= new Html5Qrcode('qr-reader');
-
     try {
+        if (!scanner) {
+            const { Html5Qrcode } = await import('html5-qrcode');
+            scanner = new Html5Qrcode('qr-reader');
+        }
         await scanner.start(
             { facingMode: 'environment' },
             { fps: 10, qrbox: { width: 240, height: 240 } },
