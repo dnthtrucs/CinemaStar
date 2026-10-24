@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\LazyCollection;
 
 class ReportController extends Controller
 {
-    private function rows(Request $request)
+    private function query(Request $request)
     {
         $data = $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
@@ -32,7 +34,7 @@ class ReportController extends Controller
             $query->where('paid_at', '<', $this->stored($until));
         }
 
-        return $query->latest('paid_at')->get();
+        return $query->latest('paid_at')->orderByDesc('id');
     }
 
     private function stored(CarbonImmutable $date): string
@@ -40,8 +42,33 @@ class ReportController extends Controller
         return $date->setTimezone(config('app.timezone', 'UTC'))->format('Y-m-d H:i:s');
     }
 
+    private function rows(Request $request): LazyCollection
+    {
+        $query = $this->query($request);
+
+        return LazyCollection::make(function () use ($query) {
+            $last = null;
+            do {
+                $batch = (clone $query)->when($last, function (Builder $query) use ($last) {
+                    $paidAt = $last->getRawOriginal('paid_at');
+                    $query->where(fn (Builder $after) => $after->where('paid_at', '<', $paidAt)
+                        ->orWhere(fn (Builder $sameTime) => $sameTime->where('paid_at', $paidAt)->where('id', '<', $last->id)));
+                })->limit(500)->get();
+
+                foreach ($batch as $payment) {
+                    yield $payment;
+                }
+                // Composite keyset pagination preserves the existing time order
+                // when a concurrent refund removes a row from an earlier batch.
+                $last = $batch->last();
+            } while ($batch->count() === 500);
+        });
+    }
+
     public function revenueCsv(Request $r)
     {
+        // Validate before sending headers, then hydrate bounded batches only as
+        // the client consumes the stream. Eager loading also happens per batch.
         $rows = $this->rows($r);
 
         return response()->streamDownload(function () use ($rows) {

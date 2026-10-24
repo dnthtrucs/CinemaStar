@@ -13,12 +13,13 @@ class BookingController extends Controller
 
     public function index()
     {
-        $this->bookingService->expirePendingBookings();
+        $this->bookingService->expirePendingBookings(userId: auth()->id());
 
         $bookings = Booking::query()
             ->where('user_id', auth()->id())
             ->with(['showtime.movie', 'showtime.room.cinema', 'tickets.seat'])
             ->latest()
+            ->orderByDesc('id')
             ->paginate(10);
 
         return view('bookings.index', compact('bookings'));

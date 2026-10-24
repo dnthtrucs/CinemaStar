@@ -177,7 +177,7 @@ class BookingService
         });
     }
 
-    public function expirePendingBookings(?int $showtimeId = null): int
+    public function expirePendingBookings(?int $showtimeId = null, ?int $userId = null): int
     {
         $query = Booking::query()
             ->where('status', 'pending')
@@ -187,10 +187,15 @@ class BookingService
         if ($showtimeId) {
             $query->where('showtime_id', $showtimeId);
         }
+        if ($userId !== null) {
+            $query->where('user_id', $userId);
+        }
 
         $expiredCount = 0;
-        foreach ($query->pluck('id') as $bookingId) {
-            $expiredCount += (int) $this->expirePendingBooking($bookingId);
+        // Keyset pagination stays bounded even when the scheduler has a backlog.
+        // Each order is still rechecked under its own existing booking/user locks.
+        foreach ($query->select('id')->lazyById(200) as $booking) {
+            $expiredCount += (int) $this->expirePendingBooking($booking->id);
         }
 
         return $expiredCount;

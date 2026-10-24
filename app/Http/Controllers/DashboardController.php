@@ -16,6 +16,7 @@ class DashboardController extends Controller
             ->where('user_id', auth()->id())
             ->with(['showtime.movie', 'showtime.room.cinema', 'tickets.seat'])
             ->latest()
+            ->orderByDesc('id')
             ->limit(5)
             ->get();
 
