@@ -92,15 +92,16 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="card shadow-soft p-4 h-100">
-                        <h3 class="h5 fw-bold">Top 10 phim theo doanh thu</h3>
-                        @if(empty($reports['top_movies']))<p class="small text-muted">Chưa có phim phát sinh doanh thu trong kỳ.</p>@endif
-                        <div style="height:300px"><canvas id="top-movies-chart" role="img" aria-label="Top 10 phim theo doanh thu. Bảng số liệu nằm bên dưới."></canvas></div>
+                        <h3 class="h5 fw-bold">Top phim theo doanh thu vé</h3>
+                        <p class="small text-muted">Tối đa 10 phim, chỉ tính tiền vé sau ưu đãi theo cùng cách phân bổ của biểu đồ vé và combo.</p>
+                        @if(empty($reports['top_movies']))<p class="small text-muted">Chưa có phim phát sinh doanh thu vé trong kỳ.</p>@endif
+                        <div style="height:300px"><canvas id="top-movies-chart" role="img" aria-label="Top phim theo doanh thu vé. Bảng số liệu nằm bên dưới."></canvas></div>
                         <details class="mt-3">
-                            <summary class="fw-semibold">Xem bảng doanh thu theo phim</summary>
+                            <summary class="fw-semibold">Xem bảng doanh thu vé theo phim</summary>
                             <div class="table-responsive mt-2">
                                 <table class="table table-sm align-middle mb-0">
-                                    <caption class="visually-hidden">Top 10 phim theo doanh thu, đơn vị đồng Việt Nam</caption>
-                                    <thead><tr><th scope="col">Phim</th><th scope="col" class="text-end">Doanh thu</th></tr></thead>
+                                    <caption class="visually-hidden">Top phim theo doanh thu vé, đơn vị đồng Việt Nam</caption>
+                                    <thead><tr><th scope="col">Phim</th><th scope="col" class="text-end">Doanh thu vé</th></tr></thead>
                                     <tbody>
                                         @forelse($reports['top_movies'] as $movie)
                                             <tr><th scope="row" class="fw-normal">{{ $movie['title'] }}</th><td class="text-end">{{ number_format($movie['revenue'], 0, ',', '.') }}₫</td></tr>

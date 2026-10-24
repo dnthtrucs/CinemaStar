@@ -52,10 +52,10 @@ class ReportService
     {
         [$from, $to] = $this->window($at);
 
-        return $this->cash($from, $to)
-            ->join('showtimes', 'showtimes.id', '=', 'bookings.showtime_id')
+        return DB::query()->fromSub($this->allocatedCash($from, $to), 'orders')
+            ->join('showtimes', 'showtimes.id', '=', 'orders.showtime_id')
             ->join('movies', 'movies.id', '=', 'showtimes.movie_id')
-            ->select('movies.id', 'movies.title')->selectRaw('SUM(payments.amount) AS revenue')
+            ->select('movies.id', 'movies.title')->selectRaw('SUM(orders.cash - orders.concessions) AS revenue')
             ->groupBy('movies.id', 'movies.title')->orderByDesc('revenue')->orderBy('movies.id')
             ->limit(10)->get()->map(fn ($row) => [
                 'movie_id' => (int) $row->id, 'title' => $row->title, 'revenue' => (int) $row->revenue,
@@ -96,22 +96,28 @@ class ReportService
     public function revenueSplit(?CarbonInterface $at = null): array
     {
         [$from, $to] = $this->window($at);
-        $cashByBooking = $this->cash($from, $to)
-            ->select('bookings.id', 'bookings.subtotal', 'bookings.concessions_total')
-            ->selectRaw('SUM(payments.amount) AS cash')
-            ->groupBy('bookings.id', 'bookings.subtotal', 'bookings.concessions_total');
-
-        // Allocate cash after voucher and point redemption using price snapshots.
-        // Round combo share to the nearest dong once per booking (half up), then
-        // put the remainder into tickets so no dong is lost or counted twice.
-        $split = DB::query()->fromSub($cashByBooking, 'orders')
+        $split = DB::query()->fromSub($this->allocatedCash($from, $to), 'orders')
             ->selectRaw('COALESCE(SUM(cash), 0) AS total')
-            ->selectRaw('COALESCE(SUM(CASE WHEN subtotal > 0 THEN ROUND(cash * LEAST(GREATEST(concessions_total, 0), subtotal) / subtotal, 0) ELSE 0 END), 0) AS concessions')
+            ->selectRaw('COALESCE(SUM(concessions), 0) AS concessions')
             ->first();
         $total = (int) $split->total;
         $concessions = (int) $split->concessions;
 
         return ['tickets' => $total - $concessions, 'concessions' => $concessions, 'total' => $total];
+    }
+
+    private function allocatedCash(CarbonImmutable $from, CarbonImmutable $to): Builder
+    {
+        $cashByBooking = $this->cash($from, $to)
+            ->select('bookings.id', 'bookings.showtime_id', 'bookings.subtotal', 'bookings.concessions_total')
+            ->selectRaw('SUM(payments.amount) AS cash')
+            ->groupBy('bookings.id', 'bookings.showtime_id', 'bookings.subtotal', 'bookings.concessions_total');
+
+        // Both reports use the same price snapshots and round once per order.
+        // Tickets receive the remainder, so every paid dong is accounted for.
+        return DB::query()->fromSub($cashByBooking, 'orders')
+            ->select('orders.id', 'orders.showtime_id', 'orders.cash')
+            ->selectRaw('CASE WHEN subtotal > 0 THEN ROUND(cash * LEAST(GREATEST(concessions_total, 0), subtotal) / subtotal, 0) ELSE 0 END AS concessions');
     }
 
     private function cash(CarbonImmutable $from, CarbonImmutable $to): Builder

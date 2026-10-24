@@ -25,7 +25,7 @@ if (source) {
     });
     draw('top-movies-chart', {
         type: 'bar',
-        data: { labels: reports.top_movies.map((row) => row.title), datasets: [{ label: 'Doanh thu', data: reports.top_movies.map((row) => row.revenue), backgroundColor: colors[1] }] },
+        data: { labels: reports.top_movies.map((row) => row.title), datasets: [{ label: 'Doanh thu vé', data: reports.top_movies.map((row) => row.revenue), backgroundColor: colors[1] }] },
         options: cashOptions,
     });
     draw('occupancy-chart', {
