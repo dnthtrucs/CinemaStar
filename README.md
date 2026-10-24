@@ -57,6 +57,10 @@ npm run build
 
 Mở http://127.0.0.1:8000. MySQL trong container được mở ra máy ở cổng `3307` và đã có sẵn hai database `cinema_db` (dev) và `cinema_test` (test). Khi sửa giao diện, chạy `npm run dev` để Vite tự nạp lại CSS/JS.
 
+Docker tự cài dependency theo `composer.lock` vào volume Linux `vendor-data` ở lần chạy đầu; các lần khởi động sau dùng lại volume, chỉ cài lại khi `composer.json` hoặc lock thay đổi. Cache Blade và package cũng ở volume Linux để tránh đọc hàng trăm file qua ổ Windows khi chuyển trang. OPcache chỉ bật cho web, vẫn kiểm tra code sửa ở mỗi request; CLI/test không bị cache bytecode. Chạy Composer/Artisan trong container khi dùng Docker. Không xóa volume MySQL để làm mới thư viện; sau khi lấy thay đổi Docker, chạy `docker compose up -d --build app`.
+
+Xem [đo hiệu năng và cách kiểm tra](docs/PERFORMANCE.md). Database dev và test được giữ riêng; việc nâng schema dev cần được thực hiện riêng, không nằm trong bước khởi động web.
+
 ## Cài đặt trên XAMPP
 
 ```powershell

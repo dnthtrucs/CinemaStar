@@ -7,13 +7,22 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      # Thousands of dependency reads stay on Linux instead of crossing the Windows bind mount.
+      - vendor-data:/app/vendor
+      - runtime-data:/var/cache/cinemastar
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
+      VIEW_COMPILED_PATH: /var/cache/cinemastar/views
+      APP_SERVICES_CACHE: /var/cache/cinemastar/bootstrap/services.php
+      APP_PACKAGES_CACHE: /var/cache/cinemastar/bootstrap/packages.php
+      APP_CONFIG_CACHE: /var/cache/cinemastar/bootstrap/config.php
+      APP_ROUTES_CACHE: /var/cache/cinemastar/bootstrap/routes.php
+      APP_EVENTS_CACHE: /var/cache/cinemastar/bootstrap/events.php
     ports:
       - "8000:8000"
     # Không dùng `artisan serve`: lệnh này bỏ các biến trùng với .env (như DB_HOST) khỏi tiến trình con.
-    command: sh -c "cd public && exec php -S 0.0.0.0:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"
+    command: ["sh", "/usr/local/bin/cinema-dev"]
     depends_on:
       mysql:
         condition: service_healthy
@@ -35,3 +44,5 @@ services:
 
 volumes:
   mysql-data:
+  vendor-data:
+  runtime-data:
