@@ -29,9 +29,20 @@ class Payment extends Model
         return array_key_exists((string) $this->response_code, self::MANUAL_REFUND_REASONS);
     }
 
+    public function scopeAwaitingManualRefund($query)
+    {
+        return $query->whereIn('response_code', self::manualRefundCodes())->whereNull('refund_resolved_at');
+    }
+
+    public function refundResolver()
+    {
+        return $this->belongsTo(User::class, 'refund_resolved_by');
+    }
+
     protected $fillable = [
         'booking_id', 'provider', 'request_id', 'transaction_id', 'amount',
         'status', 'response_code', 'payload', 'paid_at',
+        'refund_resolved_at', 'refund_resolved_by', 'refund_resolution_note',
     ];
 
     protected function casts(): array
@@ -40,6 +51,7 @@ class Payment extends Model
             'amount' => 'decimal:0',
             'payload' => 'array',
             'paid_at' => 'datetime',
+            'refund_resolved_at' => 'datetime',
         ];
     }
 
