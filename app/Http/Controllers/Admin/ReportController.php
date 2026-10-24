@@ -4,16 +4,40 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
     private function rows(Request $request)
     {
-        $from = $request->date('from')?->startOfDay() ?: now()->subMonth()->startOfDay();
-        $to = $request->date('to')?->endOfDay() ?: now()->endOfDay();
+        $data = $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('from') ? ['after_or_equal:from'] : [])],
+        ]);
+        $now = CarbonImmutable::instance(now())->setTimezone('Asia/Ho_Chi_Minh');
+        $from = isset($data['from'])
+            ? CarbonImmutable::parse($data['from'], 'Asia/Ho_Chi_Minh')->startOfDay()
+            : $now->subMonth()->startOfDay();
+        $until = (isset($data['to'])
+            ? CarbonImmutable::parse($data['to'], 'Asia/Ho_Chi_Minh')
+            : $now)->startOfDay()->addDay();
 
-        return Payment::with('booking.showtime.movie')->where('status', 'success')->whereHas('booking', fn ($query) => $query->where('payment_status', 'paid'))->whereBetween('paid_at', [$from, $to])->latest('paid_at')->get();
+        $query = Payment::with('booking.showtime.movie')->where('status', 'success')
+            ->whereHas('booking', fn ($query) => $query->where('payment_status', 'paid'))
+            ->where('paid_at', '>=', $this->stored($from));
+        if ($until->greaterThan($now)) {
+            $query->where('paid_at', '<=', $this->stored($now));
+        } else {
+            $query->where('paid_at', '<', $this->stored($until));
+        }
+
+        return $query->latest('paid_at')->get();
+    }
+
+    private function stored(CarbonImmutable $date): string
+    {
+        return $date->setTimezone(config('app.timezone', 'UTC'))->format('Y-m-d H:i:s');
     }
 
     public function revenueCsv(Request $r)

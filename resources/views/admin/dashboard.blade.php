@@ -64,7 +64,7 @@
                     <h2 id="reports-heading" class="h4 fw-bold mb-1">Doanh thu 30 ngày</h2>
                     <p class="text-muted small mb-0">{{ \Carbon\CarbonImmutable::parse($reports['period']['from'], 'Asia/Ho_Chi_Minh')->format('d/m/Y') }} — {{ \Carbon\CarbonImmutable::parse($reports['period']['to'], 'Asia/Ho_Chi_Minh')->format('d/m/Y') }} · Giờ Việt Nam, tính đến hiện tại.</p>
                 </div>
-                <a href="{{ route('admin.reports.revenue') }}" class="btn btn-outline-dark btn-sm align-self-start align-self-md-auto"><i class="bi bi-download me-1" aria-hidden="true"></i>Tải báo cáo CSV</a>
+                <a href="{{ route('admin.reports.revenue', ['from' => $reports['period']['from'], 'to' => $reports['period']['to']]) }}" class="btn btn-outline-dark btn-sm align-self-start align-self-md-auto"><i class="bi bi-download me-1" aria-hidden="true"></i>Tải báo cáo CSV</a>
             </div>
             <p class="small text-muted">Chỉ tính giao dịch thành công của đơn đã thanh toán; không tính đơn đã hoàn tiền. Mở bảng số liệu dưới mỗi biểu đồ để xem số chính xác, kể cả khi trình duyệt không bật JavaScript.</p>
             <div class="row g-4">
