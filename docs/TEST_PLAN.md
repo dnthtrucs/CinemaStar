@@ -42,6 +42,8 @@ php artisan test
 | `ConcessionEmailStyleTest` | Dòng email Bắp nước/Concessions có tên snapshot, số lượng, đơn giá/thành tiền và style inline; không phụ thuộc class Bootstrap |
 | `ConcessionImageUrlTest` | URL ảnh theo cấu hình public disk dùng thống nhất ở chọn ghế và form admin; combo không ảnh trả null |
 | `ConcessionMigrationTest` | Nâng cấp/rollback trên booking có sẵn không đổi dữ liệu, giá combo mặc định 0 cho đơn cũ; seed lặp không đè giá admin |
+| `ReportServiceTest` | 30 ngày Việt Nam/UTC, hai biên kỳ, ngày 0; top10 không nhân theo vé/payment; công suất mỗi suất một lần; loại refunded/unpaid/failed; net vé/combo làm tròn khớp tiền; dashboard trống200 |
+| `ActivityLogTest` | Admin/role/guest, readonly405, nhóm+actor+ngày, prefix chính xác, phân trang30/thứ tự, link subject/biên lai, loại cũ/đã xóa và escape nội dung, validation422 |
 | `Unit/VoucherDiscountTest` | Tính giảm giá voucher cố định/phần trăm, nhãn ghế (không cần database) |
 
 Các test điểm, QR, hoàn tiền, voucher và thanh toán đã được chạy trước sửa để tái hiện lỗi, sau đó chạy lại để xác nhận pass. Helper `showtimeWithSeats()` dùng chung tại `tests/Concerns/CreatesCinemaBookings.php`.
@@ -92,3 +94,5 @@ Hai test chạy nhiều process dùng MySQL `cinema_test` và Symfony Process c�
 14. Mở Bản in (HTML), kiểm tra hộp thoại in, tiêu đề và bảng doanh thu khi in/Lưu PDF.
 15. Chọn ghế và combo 0–10 phần, tải lại và đăng nhập: lựa chọn được giữ, tạm tính gồm cả hai. Trên 5 loại không tiếp tục được. Sau đặt, đổi giá/tắt combo trong admin rồi kiểm tra đơn cũ và các bản vé vẫn giữ đơn giá lúc đặt.
 16. Kiểm tra huy hiệu hạng, điểm tích lũy và điểm còn lại tại hồ sơ/dashboard; đổi điểm không tụt hạng, hoàn một đơn làm giảm điểm tích lũy và trừ đúng điểm đã cộng.
+17. Dashboard quản trị: đối chiếu 4 biểu đồ với các bảng số liệu; xác nhận ngày không bán bằng0, đơn hoàn không vào doanh thu, combo+vé bằng tổng tiền thu. Lấp đầy chỉ xét suất đã kết thúc.
+18. Nhật ký: lọc nhóm thanh toán/hoàn/check-in, tìm tên hoặc email, chọn khoảng ngày; chuyển trang vẫn giữ lọc và link liên quan mở đúng đơn/biên lai. Trang không có thao tác sửa/xóa log.

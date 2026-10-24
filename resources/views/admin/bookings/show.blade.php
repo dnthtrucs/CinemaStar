@@ -29,7 +29,7 @@
                 <div class="card shadow-soft p-4">
                     <h5 class="fw-bold">Lịch sử thanh toán</h5>
                     @forelse($booking->payments as $payment)
-                        <div class="border-bottom py-3">
+                        <div id="payment-{{ $payment->id }}" class="border-bottom py-3">
                             <div class="d-flex justify-content-between">
                                 <strong>{{ strtoupper($payment->provider) }}</strong>
                                 <span class="badge text-bg-{{ $payment->status==='success'?'success':($payment->status==='failed'?'danger':'secondary') }}">{{ match($payment->status) {'initiated' => 'Khởi tạo', 'pending' => 'Chờ thanh toán', 'success' => 'Thành công', 'failed' => 'Thất bại', 'cancelled' => 'Đã hủy', default => $payment->status} }}</span>
