@@ -31,6 +31,7 @@ php artisan test
 | `Unit/SchedulerSupervisorTest` | Scheduler thoát mã42 được khởi động lại sau5giây, có log/web còn chạy; PATH chỉ có fixture, cleanup dùng kill builtin và xác nhận không còn supervisor, không cần DB |
 | `FileStorageSecurityTest` | Trang chủ đọc lại model từ cache file với allow-list; session JSON file giữ lỗi/old input/flash/đăng nhập qua các request |
 | `MembershipTest`, `Unit/MembershipTierTest` | Ngưỡng 0/300/1000; đổi điểm giữ hạng; đơn hoàn không tính; hệ số trước đơn, callback lặp và thu hồi đúng điểm khi hoàn |
+| `Unit/MembershipFloorTest` | Config được sắp theo ngưỡng; hạng thấp nhất là sàn kể cả dưới ngưỡng đầu, đúng biên/vượt hạng cao nhất, config một hạng và rỗng |
 | `MembershipConcurrencyTest` | Hai callback độc lập cùng khách 299 điểm: đơn đầu cộng 8, đơn sau đọc commit mới và cộng 9; retry không cộng trùng, isolation mặc định không bị đổi |
 | `LifetimePointsTest`, `LifetimePointsMigrationTest` | Backfill chỉ tính paid, giữ dữ liệu cũ/down/up; cộng/trừ cả2bộ đếm đúng một lần, không âm; đổi/hủy điểm giữ nguyên tích lũy; hai callback vẫn đúng với REPEATABLE READ |
 | `LifetimePointsQueryTest` | DB::listen xác nhận hồ sơ và danh sách tài khoản không còn SUM trên bookings |
