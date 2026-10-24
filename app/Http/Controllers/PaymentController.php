@@ -141,6 +141,11 @@ class PaymentController extends Controller
         abort_unless($payment->provider === 'sepay', 404);
         abort_unless(in_array($payment->status, ['initiated', 'pending'], true), 422, 'Giao dịch đã kết thúc.');
 
+        if (! $this->gateway->isSepayConfigured()) {
+            return redirect()->route('payments.show', $payment->booking_id)
+                ->with('error', 'Cổng SePay chưa được cấu hình. Vui lòng chọn phương thức thanh toán khác.');
+        }
+
         $payment->update(['status' => 'pending']);
         $paymentQrUrl = $this->gateway->sepayQrUrl($payment);
 
@@ -484,6 +489,14 @@ class PaymentController extends Controller
                         $booking->update(['points_earned' => $earnedPoints]);
                     }
                 }
+
+                // Recorded in the same transaction as the receipt. Duplicate
+                // callbacks return above, so one successful payment has one log.
+                ActivityLog::record('payment.success', "Thanh toán thành công đơn {$booking->code}", $payment, [
+                    'booking_id' => $booking->id,
+                    'provider' => $payment->provider,
+                    'amount' => (int) $payment->amount,
+                ]);
 
                 // Gửi email chỉ sau khi giao dịch đã được lưu thành công. Áp dụng cho
                 // thanh toán trực tiếp và callback IPN từ cổng thanh toán.

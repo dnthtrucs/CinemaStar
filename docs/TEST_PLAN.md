@@ -13,6 +13,12 @@ php artisan test
 
 | File | Nội dung |
 |---|---|
+| `ApplicationPagesTest` | Smoke trang công khai, khách hàng, thanh toán, quản trị index/create/edit, staff, báo cáo với quan hệ có dữ liệu; staff vẫn bị chặn admin |
+| `ScopedExpiryTest` | Vé của tôi chỉ dọn đơn hết hạn của chính khách; scheduler vẫn dọn phần còn lại, trả ghế/điểm đúng một lần |
+| `StreamingRevenueTest` | CSV chưa hydrate trước stream; hơn500 biên lai qua nhiều batch, không sót dòng khi một đơn được hoàn giữa các batch |
+| `QueryIndexesTest` | EXPLAIN lịch sử khách dùng composite index; rollback chỉ mục giữ đơn/vé và khôi phục index khóa ngoại cần thiết |
+| `PaymentAuditTest` | Thanh toán mô phỏng/webhook có đúng một log success, callback lặp không trùng; amount sai không ghi; nhật ký trỏ đúng biên lai |
+| `PaymentConfigurationTest` | Link SePay cũ khi mất cấu hình quay lại checkout có thông báo, không lỗi500 hoặc đổi trạng thái |
 | `LoyaltyPointsTest` | Lưu điểm đã dùng, không trừ lặp, hủy hoàn đủ điểm, lưu voucher, cộng điểm thưởng đúng một lần |
 | `TicketCheckinTest` | URL QR công khai giữ định dạng cũ, chữ ký đúng/sai, không công bố thông tin liên hệ, đơn unpaid không hiện hợp lệ |
 | `RefundTest` | Yêu cầu trùng trả lỗi thân thiện; chặn đơn đã check-in/đã bắt đầu; chuyển trạng thái đúng thứ tự; hoàn tiền giải phóng ghế, chỉnh điểm, ghi notification; chặn check-in và hoàn lặp; loại doanh thu đã hoàn |

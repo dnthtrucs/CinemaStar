@@ -11,7 +11,7 @@
         <section class="card shadow-soft p-4 mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="brand-mark"><i class="bi bi-qr-code-scan"></i></span>
-                <div><h2 class="h5 fw-bold mb-1">Quét mã QR bằng camera</h2><p class="small text-muted mb-0">Mỗi mã QR là một vé; hệ thống chặn check-in lặp lại.</p></div>
+                <div><h2 class="h5 fw-bold mb-1">Quét mã QR bằng camera</h2><p class="small text-muted mb-0">Một mã QR dùng cho toàn bộ ghế trong đơn; hệ thống chặn check-in lặp lại.</p></div>
             </div>
             <div id="qr-reader" class="rounded overflow-hidden d-none"></div>
             <div id="scanner-message" class="small text-muted mb-3">Bấm nút để bật camera sau của điện thoại.</div>
