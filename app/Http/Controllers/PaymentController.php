@@ -388,12 +388,6 @@ class PaymentController extends Controller
     private function markSuccessful(Payment $payment, string $transactionId, array $payload): bool
     {
         try {
-            // Refresh the tier SUM after waiting for the user lock. This setting
-            // applies only to the next transaction, leaving the session default intact.
-            if (DB::transactionLevel() === 0) {
-                DB::statement('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
-            }
-
             return DB::transaction(function () use ($payment, $transactionId, $payload) {
                 $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
@@ -482,11 +476,11 @@ class PaymentController extends Controller
                     'expires_at' => null,
                 ]);
                 if ((int) $booking->points_earned === 0) {
-                    // Serialize awards per user; the current booking still has zero earned points.
+                    // Read both counters after the user lock; this serializes tier changes too.
                     $user = $booking->user()->lockForUpdate()->firstOrFail();
                     $earnedPoints = (int) floor((float) $booking->total_price / 10000 * $user->earnMultiplier());
                     if ($earnedPoints > 0) {
-                        $user->increment('loyalty_points', $earnedPoints);
+                        $user->incrementEach(['loyalty_points' => $earnedPoints, 'lifetime_points' => $earnedPoints]);
                         $booking->update(['points_earned' => $earnedPoints]);
                     }
                 }

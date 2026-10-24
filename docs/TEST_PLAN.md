@@ -32,6 +32,7 @@ php artisan test
 | `FileStorageSecurityTest` | Trang chủ đọc lại model từ cache file với allow-list; session JSON file giữ lỗi/old input/flash/đăng nhập qua các request |
 | `MembershipTest`, `Unit/MembershipTierTest` | Ngưỡng 0/300/1000; đổi điểm giữ hạng; đơn hoàn không tính; hệ số trước đơn, callback lặp và thu hồi đúng điểm khi hoàn |
 | `MembershipConcurrencyTest` | Hai callback độc lập cùng khách 299 điểm: đơn đầu cộng 8, đơn sau đọc commit mới và cộng 9; retry không cộng trùng, isolation mặc định không bị đổi |
+| `LifetimePointsTest`, `LifetimePointsMigrationTest` | Backfill chỉ tính paid, giữ dữ liệu cũ/down/up; cộng/trừ cả2bộ đếm đúng một lần, không âm; đổi/hủy điểm giữ nguyên tích lũy; hai callback vẫn đúng với REPEATABLE READ |
 | `ConcessionTest` | VIP/ghế đôi + combo, voucher/min_order toàn đơn, combo không hợp lệ, giá snapshot, CRUD/ảnh/quyền, tiền hoàn/điểm, hủy/hết hạn, mọi màn hình vé, cặp H3–H4 vẫn chọn được |
 | `ConcessionZeroQuantityTest` | HTTP/service nhận dòng số lượng0 và bỏ trước kiểm tra khả dụng/giới hạn; 6 dòng chỉ5loại dương hợp lệ, 6loại dương bị từ chối |
 | `ConcessionMigrationTest` | Nâng cấp/rollback trên booking có sẵn không đổi dữ liệu, giá combo mặc định 0 cho đơn cũ; seed lặp không đè giá admin |

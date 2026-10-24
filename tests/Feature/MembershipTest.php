@@ -18,7 +18,7 @@ class MembershipTest extends TestCase
     private function memberBookings(int $points): array
     {
         config(['cinema.sepay.api_key' => 'key', 'cinema.sepay.account_number' => '123', 'cinema.sepay.bank_code' => 'MBBank']);
-        $user = User::factory()->create(['loyalty_points' => $points]);
+        $user = User::factory()->create(['loyalty_points' => $points, 'lifetime_points' => $points]);
         $history = $this->bookingFor($user);
         $history->update(['status' => 'confirmed', 'payment_status' => 'paid', 'points_earned' => $points]);
         $seat = $history->showtime->room->seats->last();
@@ -35,7 +35,10 @@ class MembershipTest extends TestCase
         $this->assertSame(290, (int) $user->fresh()->loyalty_points);
         $this->assertSame(300, $user->fresh()->lifetimePoints());
         $this->assertSame('silver', $user->fresh()->membershipTier()['key']);
-        $history->update(['payment_status' => 'refunded']);
+        $refund = RefundRequest::create(['booking_id' => $history->id, 'requested_by' => $user->id,
+            'reason' => 'Đổi lịch', 'amount' => 80000, 'status' => 'approved']);
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->patch(route('admin.refunds.update', $refund), ['status' => 'refunded'])->assertRedirect();
         $this->assertSame(0, $user->fresh()->lifetimePoints());
         $this->assertSame('bronze', $user->fresh()->membershipTier()['key']);
     }

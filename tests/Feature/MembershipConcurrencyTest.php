@@ -16,7 +16,7 @@ class MembershipConcurrencyTest extends TestCase
 
     public function test_callbacks_crossing_a_tier_boundary_read_the_preceding_committed_award(): void
     {
-        $user = User::factory()->create(['loyalty_points' => 299]);
+        $user = User::factory()->create(['loyalty_points' => 299, 'lifetime_points' => 299]);
         $history = $this->bookingFor($user);
         $history->update(['status' => 'confirmed', 'payment_status' => 'paid', 'points_earned' => 299]);
         $showtime = $history->showtime->replicate();

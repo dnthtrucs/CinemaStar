@@ -27,6 +27,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'loyalty_points',
+        'lifetime_points',
     ];
 
     /**
@@ -50,6 +51,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'lifetime_points' => 'integer',
         ];
     }
 
@@ -65,9 +67,7 @@ class User extends Authenticatable
 
     public function lifetimePoints(): int
     {
-        return array_key_exists('lifetime_points', $this->attributes)
-            ? (int) $this->attributes['lifetime_points']
-            : (int) $this->bookings()->where('payment_status', 'paid')->sum('points_earned');
+        return (int) $this->lifetime_points;
     }
 
     public function membershipTier(): array
