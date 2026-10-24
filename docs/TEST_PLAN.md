@@ -28,6 +28,7 @@ php artisan test
 | `HomePageTest` | Trang chủ hiển thị được |
 | `ManualRefundResolutionTest` | Admin xử lý hoàn tay đúng một lần, giữ biên lai, có ghi chú/log; lọc và phân trang; staff/khách bị chặn |
 | `LocalAssetsTest` | Trang chủ, đăng nhập, check-in không còn host CDN |
+| `Unit/SchedulerSupervisorTest` | Scheduler thoát mã42 được khởi động lại sau5giây, có log/web còn chạy; PATH chỉ có fixture, cleanup dùng kill builtin và xác nhận không còn supervisor, không cần DB |
 | `FileStorageSecurityTest` | Trang chủ đọc lại model từ cache file với allow-list; session JSON file giữ lỗi/old input/flash/đăng nhập qua các request |
 | `Unit/VoucherDiscountTest` | Tính giảm giá voucher cố định/phần trăm, nhãn ghế (không cần database) |
 

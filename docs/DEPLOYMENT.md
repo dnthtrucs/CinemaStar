@@ -104,7 +104,7 @@ Copy Environment cần thiết từ Web Service sang Cron Job.
 
 ### Không có Render Cron Job
 
-Đặt `RUN_SCHEDULER=true` trong Environment của Web Service. Script `deploy/start.sh` giữ các bước migrate, seed khi bảng users trống, tạo storage link và dựng cache; sau đó chạy `schedule:work` nền, log chung với web, trước khi mở HTTP server. Mặc định là `false`.
+Đặt `RUN_SCHEDULER=true` trong Environment của Web Service. Script `deploy/start.sh` giữ các bước migrate, seed khi bảng users trống, tạo storage link và dựng cache; sau đó chạy `schedule:work` nền, log chung với web, trước khi mở HTTP server. Khi scheduler thoát, vòng giám sát ghi mã thoát, đợi 5 giây rồi khởi động lại. Web vẫn dùng `exec php artisan serve` làm tiến trình chính. Mặc định là `false`.
 
 Chỉ dùng **một** trong hai cách: Cron Job bên ngoài hoặc `RUN_SCHEDULER=true`; không bật cả hai cùng lúc. Scheduler trong web chỉ chạy khi container còn hoạt động; service ngủ sẽ không chạy tác vụ trong thời gian ngủ.
 

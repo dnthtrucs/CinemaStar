@@ -14,7 +14,14 @@ php artisan view:cache
 
 if [ "${RUN_SCHEDULER:-false}" = "true" ]; then
     echo 'Scheduler enabled: starting schedule:work inside the web container.'
-    php artisan schedule:work --no-interaction &
+    (
+        while true; do
+            scheduler_status=0
+            php artisan schedule:work --no-interaction || scheduler_status=$?
+            echo "Scheduler exited with status ${scheduler_status}; restarting in 5 seconds."
+            sleep 5
+        done
+    ) &
 fi
 
 exec php artisan serve --host=0.0.0.0 --port="${PORT:-10000}"
