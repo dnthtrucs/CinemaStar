@@ -24,7 +24,7 @@
                                 @foreach($concessions as $concession)
                                     <div class="col-md-6">
                                         <div class="border rounded-3 p-3 h-100">
-                                            @if($concession->image_path)<img src="{{ Storage::disk('public')->url($concession->image_path) }}" alt="{{ $concession->name }}" class="rounded mb-2 w-100" style="height:130px;object-fit:cover" loading="lazy">@endif
+                                            @if($concession->imageUrl())<img src="{{ $concession->imageUrl() }}" alt="{{ $concession->name }}" class="rounded mb-2 w-100" style="height:130px;object-fit:cover" loading="lazy">@endif
                                             <h5 class="h6 fw-bold">{{ $concession->name }}</h5>
                                             @if($concession->description)<p class="small text-muted mb-2">{{ $concession->description }}</p>@endif
                                             <div class="d-flex align-items-center justify-content-between gap-2">

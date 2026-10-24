@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Concession extends Model
 {
@@ -11,6 +12,11 @@ class Concession extends Model
     protected function casts(): array
     {
         return ['price' => 'integer', 'is_active' => 'boolean', 'sort_order' => 'integer'];
+    }
+
+    public function imageUrl(): ?string
+    {
+        return $this->image_path ? Storage::disk('public')->url($this->image_path) : null;
     }
 
     public function bookings()

@@ -40,6 +40,7 @@ php artisan test
 | `ConcessionReadConcurrencyTest` | Hai PHP process giữ đồng thời khóa đọc cùng combo ở hai suất/phòng khác nhau, vẫn lưu đúng giá và số lượng; exclusive lock bị test chặn ở barrier |
 | `ConcessionNameSnapshotTest` | Admin đổi tên và giá sau đặt: đơn/checkout/vé công khai/in/check-in/admin/email vẫn giữ tên, đơn giá, thành tiền cũ |
 | `ConcessionEmailStyleTest` | Dòng email Bắp nước/Concessions có tên snapshot, số lượng, đơn giá/thành tiền và style inline; không phụ thuộc class Bootstrap |
+| `ConcessionImageUrlTest` | URL ảnh theo cấu hình public disk dùng thống nhất ở chọn ghế và form admin; combo không ảnh trả null |
 | `ConcessionMigrationTest` | Nâng cấp/rollback trên booking có sẵn không đổi dữ liệu, giá combo mặc định 0 cho đơn cũ; seed lặp không đè giá admin |
 | `Unit/VoucherDiscountTest` | Tính giảm giá voucher cố định/phần trăm, nhãn ghế (không cần database) |
 
