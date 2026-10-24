@@ -44,12 +44,14 @@
 
                         @php
                             $availablePoints = (int) $booking->user->loyalty_points;
+                            $membership = $booking->user->membershipTier();
                             // $booking->discount là số tiền voucher giảm.
                             $amountAfterVoucher = max(0, (int) $booking->subtotal - (int) $booking->discount);
                             $maxRedeemablePoints = min($availablePoints, (int) floor($amountAfterVoucher / 1000));
                             $usedPoints = (int) old('points_to_use', $booking->points_used);
                         @endphp
                         <div class="border rounded-4 p-3 mb-4 bg-light">
+                            <p class="small fw-semibold">Hạng {{ $membership['label'] }} — tích điểm x{{ $membership['multiplier'] }}</p>
                             <div class="d-flex justify-content-between align-items-center gap-3">
                                 <div>
                                     <strong><i class="bi bi-stars text-warning me-1"></i>Điểm thành viên</strong>
@@ -139,6 +141,7 @@
                         <div class="mb-3">{{ $booking->showtime->starts_at->format('H:i · d/m/Y') }}</div>
                         <div class="small text-white-50">Rạp / Phòng</div>
                         <div class="mb-3">{{ $booking->showtime->room->cinema->name }} / {{ $booking->showtime->room->name }}</div>
+                        @include('bookings.concessions')
                         <div class="d-flex justify-content-between"><span>Tạm tính</span><span>{{ number_format($booking->subtotal, 0, ',', '.') }}₫</span></div>
                         @if($booking->voucher && $booking->discount > 0)
                             <div class="d-flex justify-content-between text-success mt-2">

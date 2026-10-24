@@ -4,6 +4,14 @@ return [
     'booking_hold_minutes' => (int) env('BOOKING_HOLD_MINUTES', 10),
     'payment_mode' => env('PAYMENT_MODE', 'simulate'),
 
+    'membership' => [
+        'tiers' => [
+            'bronze' => ['label' => 'Đồng', 'minimum_points' => 0, 'multiplier' => 1.0],
+            'silver' => ['label' => 'Bạc', 'minimum_points' => 300, 'multiplier' => 1.2],
+            'gold' => ['label' => 'Vàng', 'minimum_points' => 1000, 'multiplier' => 1.5],
+        ],
+    ],
+
     'vnpay' => [
         'url' => env('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
         'tmn_code' => env('VNPAY_TMN_CODE'),

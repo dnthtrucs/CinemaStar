@@ -37,7 +37,10 @@ class RefundController extends Controller
                 abort_if($booking->tickets()->where(fn ($q) => $q->where('status', 'used')->orWhereNotNull('checked_in_at'))->exists(), 422, 'Đơn vé đã check-in, không thể hoàn tiền.');
 
                 $user = $booking->user()->lockForUpdate()->firstOrFail();
-                $user->update(['loyalty_points' => max(0, (int) $user->loyalty_points - (int) $booking->points_earned) + (int) $booking->points_used]);
+                $user->update([
+                    'loyalty_points' => max(0, (int) $user->loyalty_points - (int) $booking->points_earned) + (int) $booking->points_used,
+                    'lifetime_points' => max(0, $user->lifetimePoints() - (int) $booking->points_earned),
+                ]);
                 $booking->tickets()->delete();
                 $booking->update([
                     'status' => 'cancelled', 'payment_status' => 'refunded',

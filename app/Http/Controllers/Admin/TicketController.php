@@ -17,7 +17,7 @@ class TicketController extends Controller
     public function index(Request $request)
     {
         $booking = $request->filled('code')
-            ? Booking::with(['user', 'showtime.movie', 'showtime.room.cinema', 'tickets.seat'])
+            ? Booking::with(['user', 'showtime.movie', 'showtime.room.cinema', 'tickets.seat', 'concessions'])
                 ->where('code', strtoupper(trim($request->string('code')->toString())))->first()
             : null;
 

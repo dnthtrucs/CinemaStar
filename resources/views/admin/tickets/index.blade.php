@@ -28,6 +28,7 @@
             @if($booking)
                 <div class="card shadow-soft p-4"><div class="d-flex justify-content-between align-items-start"><div><div class="small text-muted">MÃ ĐƠN / MÃ CHECK-IN</div><h3 class="fw-bold">{{ $booking->code }}</h3></div><span class="badge h-100 text-bg-{{ $booking->ticket_status_badge }}">{{ $booking->ticket_status_label }}</span></div><hr>
                 <p><strong>Khách:</strong> {{ $booking->user->name }}</p><p><strong>Phim:</strong> {{ $booking->showtime->movie->title }}</p><p><strong>Suất:</strong> {{ $booking->showtime->starts_at->format('H:i d/m/Y') }}</p><p><strong>Ghế:</strong> {{ $booking->tickets->pluck('seat.label')->filter()->join(', ') }}</p>
+                @include('bookings.concessions')
                 @if($booking->ticket_status === 'valid')<form method="POST" action="{{ auth()->user()->isAdmin() ? route('admin.tickets.update', $booking) : route('staff.tickets.update', $booking) }}">@csrf @method('PATCH')<button class="btn btn-primary btn-lg w-100">Xác nhận check-in toàn bộ ghế</button></form>
                 @elseif($booking->ticket_status === 'checked_in')<div class="alert alert-success mb-0">Đơn đã check-in lúc {{ $booking->tickets->first()?->checked_in_at?->format('H:i · d/m/Y') }}.</div>
                 @elseif($booking->ticket_status === 'expired')<div class="alert alert-secondary mb-0">Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.</div>

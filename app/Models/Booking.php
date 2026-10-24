@@ -14,12 +14,14 @@ class Booking extends Model
         'total_price', 'status', 'payment_status', 'payment_method', 'expires_at',
         'paid_at', 'cancelled_at', 'notes', 'voucher_id', 'points_used', 'points_earned',
         'refund_status', 'refund_reason', 'refund_requested_at', 'refunded_at',
+        'concessions_total',
     ];
 
     protected function casts(): array
     {
         return [
             'subtotal' => 'decimal:0', 'discount' => 'decimal:0', 'total_price' => 'decimal:0',
+            'concessions_total' => 'decimal:0',
             'expires_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime',
             'points_used' => 'integer', 'points_earned' => 'integer',
             'refund_requested_at' => 'datetime', 'refunded_at' => 'datetime',
@@ -44,6 +46,11 @@ class Booking extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function concessions()
+    {
+        return $this->belongsToMany(Concession::class, 'booking_concessions')->withPivot(['name', 'quantity', 'unit_price'])->withTimestamps();
     }
 
     public function verificationSignature(): string

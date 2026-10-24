@@ -3,22 +3,37 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\Concession;
 use App\Models\Seat;
 use App\Models\Showtime;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public function create(User $user, Showtime $showtime, array $seatIds, ?string $voucherCode = null): Booking
+    public function create(User $user, Showtime $showtime, array $seatIds, ?string $voucherCode = null, array $concessions = []): Booking
     {
         $this->expirePendingBookings($showtime->id);
 
-        return DB::transaction(function () use ($user, $showtime, $seatIds, $voucherCode) {
+        Validator::make(['concessions' => $concessions], [
+            'concessions' => ['array'], 'concessions.*' => ['integer', 'min:0', 'max:10'],
+        ], ['concessions.*' => 'Mỗi combo được chọn từ 0 đến 10 phần, tối đa 5 loại.'])->validate();
+        $concessions = array_filter($concessions, fn ($quantity) => (int) $quantity > 0);
+        Validator::make(['concessions' => $concessions], [
+            'concessions' => ['max:5'],
+        ], ['concessions.max' => 'Mỗi đơn được chọn tối đa 5 loại combo.'])->validate();
+        foreach (array_keys($concessions) as $id) {
+            if (! ctype_digit((string) $id) || (int) $id < 1 || (string) (int) $id !== (string) $id) {
+                throw ValidationException::withMessages(['concessions' => 'Mã combo không hợp lệ.']);
+            }
+        }
+
+        return DB::transaction(function () use ($user, $showtime, $seatIds, $voucherCode, $concessions) {
             $showtime = Showtime::query()->lockForUpdate()->findOrFail($showtime->id);
 
             if ($showtime->status !== 'scheduled' || $showtime->starts_at->isPast()) {
@@ -89,7 +104,15 @@ class BookingService
                 ]);
             }
 
-            $subtotal = $seats->sum(fn (Seat $seat) => (float) $showtime->base_price + (float) $seat->price_surcharge);
+            // Price snapshots go into the pivot; shared locks allow parallel
+            // bookings while preventing catalogue edits until this read commits.
+            $items = Concession::query()->whereIn('id', array_keys($concessions))->where('is_active', true)
+                ->orderBy('id')->sharedLock()->get();
+            if ($items->count() !== count($concessions)) {
+                throw ValidationException::withMessages(['concessions' => 'Combo đã ngừng bán hoặc không tồn tại. Vui lòng chọn lại.']);
+            }
+            $concessionsTotal = $items->sum(fn (Concession $item) => $item->price * $concessions[$item->id]);
+            $subtotal = $seats->sum(fn (Seat $seat) => (float) $showtime->base_price + (float) $seat->price_surcharge) + $concessionsTotal;
             $voucher = null;
             if ($voucherCode) {
                 $voucher = Voucher::query()->where('code', strtoupper(trim($voucherCode)))->lockForUpdate()->first();
@@ -105,6 +128,7 @@ class BookingService
                 'code' => $this->uniqueCode('BK', Booking::class),
                 'quantity' => $seats->count(),
                 'subtotal' => $subtotal,
+                'concessions_total' => $concessionsTotal,
                 'voucher_id' => $voucher?->id,
                 'discount' => $discount,
                 'total_price' => $subtotal - $discount,
@@ -112,6 +136,10 @@ class BookingService
                 'payment_status' => 'unpaid',
                 'expires_at' => now()->addMinutes(config('cinema.booking_hold_minutes', 10)),
             ]);
+
+            foreach ($items as $item) {
+                $booking->concessions()->attach($item->id, ['name' => $item->name, 'quantity' => $concessions[$item->id], 'unit_price' => $item->price]);
+            }
 
             foreach ($seats as $seat) {
                 Ticket::create([
@@ -125,7 +153,7 @@ class BookingService
                 ]);
             }
 
-            return $booking->load('tickets.seat', 'showtime.movie', 'showtime.room.cinema');
+            return $booking->load('tickets.seat', 'showtime.movie', 'showtime.room.cinema', 'concessions');
         });
     }
 

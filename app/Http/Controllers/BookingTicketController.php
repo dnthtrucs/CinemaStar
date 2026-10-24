@@ -48,6 +48,7 @@ class BookingTicketController extends Controller
             'showtime.movie',
             'showtime.room.cinema',
             'tickets.seat',
+            'concessions',
         ]);
     }
 

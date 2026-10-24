@@ -28,6 +28,7 @@
           <tr><td style="padding:12px 0;border-bottom:1px dashed #cbd5e1;color:#52647a">Suất chiếu<br><i style="font-size:11px">Session</i></td><td align="right" style="padding:12px 0;border-bottom:1px dashed #cbd5e1;font-weight:700">{{ $showtime->starts_at->format('d/m/Y H:i') }}</td></tr>
           <tr><td style="padding:12px 0;border-bottom:1px dashed #cbd5e1;color:#52647a">Phòng chiếu<br><i style="font-size:11px">Hall</i></td><td align="right" style="padding:12px 0;border-bottom:1px dashed #cbd5e1;font-weight:700">{{ $showtime->room->name }}</td></tr>
           <tr><td style="padding:12px 0;border-bottom:1px dashed #cbd5e1;color:#52647a">Ghế<br><i style="font-size:11px">Seat</i></td><td align="right" style="padding:12px 0;border-bottom:1px dashed #cbd5e1;font-weight:700">{{ $seatLabels }}</td></tr>
+          @include('emails.partials.concessions')
           <tr><td style="padding:12px 0;color:#52647a">Tổng thanh toán<br><i style="font-size:11px">Payment amount</i></td><td align="right" style="padding:12px 0;font-size:16px;font-weight:700;color:#d71920">{{ number_format((int) $booking->total_price, 0, ',', '.') }} VNĐ</td></tr>
         </table>
       </td></tr>

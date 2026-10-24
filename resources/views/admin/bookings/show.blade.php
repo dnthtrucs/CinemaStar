@@ -22,6 +22,7 @@
                         <dt class="col-sm-4">Tổng tiền</dt>
                         <dd class="col-sm-8 fw-bold text-brand">{{ number_format($booking->total_price,0,',','.') }}₫</dd>
                     </dl>
+                    @include('bookings.concessions')
                 </div>
             </div>
             <div class="col-lg-5">

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Services\MembershipService;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,6 +27,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'loyalty_points',
+        'lifetime_points',
     ];
 
     /**
@@ -49,6 +51,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'lifetime_points' => 'integer',
         ];
     }
 
@@ -62,13 +65,19 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
-    public function membershipTier(): string
+    public function lifetimePoints(): int
     {
-        return match (true) {
-            $this->loyalty_points >= 1000 => 'Vàng',
-            $this->loyalty_points >= 300 => 'Bạc',
-            default => 'Đồng',
-        };
+        return (int) $this->lifetime_points;
+    }
+
+    public function membershipTier(): array
+    {
+        return MembershipService::tierFor($this->lifetimePoints(), config('cinema.membership.tiers'));
+    }
+
+    public function earnMultiplier(): float
+    {
+        return (float) $this->membershipTier()['multiplier'];
     }
 
     public function isStaff(): bool

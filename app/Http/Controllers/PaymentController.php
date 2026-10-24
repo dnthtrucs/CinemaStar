@@ -33,7 +33,7 @@ class PaymentController extends Controller
         $this->authorizeBooking($booking);
         abort_unless($booking->isPayable(), 422, 'Đơn hàng không còn hiệu lực thanh toán.');
 
-        $booking->loadMissing(['showtime.movie', 'showtime.room.cinema', 'user', 'voucher']);
+        $booking->loadMissing(['showtime.movie', 'showtime.room.cinema', 'user', 'voucher', 'concessions']);
         $paymentMode = $this->gateway->mode();
         $providerStatus = [
             'momo' => $paymentMode === 'simulate' || $this->gateway->isConfigured('momo'),
@@ -476,9 +476,11 @@ class PaymentController extends Controller
                     'expires_at' => null,
                 ]);
                 if ((int) $booking->points_earned === 0) {
-                    $earnedPoints = (int) floor((float) $booking->total_price / 10000);
+                    // Read both counters after the user lock; this serializes tier changes too.
+                    $user = $booking->user()->lockForUpdate()->firstOrFail();
+                    $earnedPoints = (int) floor((float) $booking->total_price / 10000 * $user->earnMultiplier());
                     if ($earnedPoints > 0) {
-                        $booking->user()->lockForUpdate()->firstOrFail()->increment('loyalty_points', $earnedPoints);
+                        $user->incrementEach(['loyalty_points' => $earnedPoints, 'lifetime_points' => $earnedPoints]);
                         $booking->update(['points_earned' => $earnedPoints]);
                     }
                 }

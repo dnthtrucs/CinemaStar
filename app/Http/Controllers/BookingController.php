@@ -30,9 +30,11 @@ class BookingController extends Controller
             'seats' => ['required', 'array', 'min:1', 'max:10'],
             'seats.*' => ['required', 'integer', 'distinct', 'exists:seats,id'],
             'voucher_code' => ['nullable', 'string', 'max:40'],
+            'concessions' => ['sometimes', 'array'],
+            'concessions.*' => ['integer', 'min:0', 'max:10'],
         ]);
 
-        $booking = $this->bookingService->create($request->user(), $showtime, $validated['seats'], $validated['voucher_code'] ?? null);
+        $booking = $this->bookingService->create($request->user(), $showtime, $validated['seats'], $validated['voucher_code'] ?? null, $validated['concessions'] ?? []);
 
         return redirect()->route('bookings.show', $booking)
             ->with('success', 'Giữ ghế thành công. Vui lòng thanh toán trước khi hết thời gian.');
@@ -41,7 +43,7 @@ class BookingController extends Controller
     public function show(Booking $booking)
     {
         $this->authorizeOwner($booking);
-        $booking->load(['showtime.movie', 'showtime.room.cinema', 'tickets.seat', 'payments']);
+        $booking->load(['showtime.movie', 'showtime.room.cinema', 'tickets.seat', 'payments', 'concessions']);
         $bookingQrUrl = $booking->verificationUrl();
 
         return view('bookings.show', compact('booking', 'bookingQrUrl'));
