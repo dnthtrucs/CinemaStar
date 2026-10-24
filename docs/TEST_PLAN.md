@@ -36,6 +36,7 @@ php artisan test
 | `LifetimePointsQueryTest` | DB::listen xác nhận hồ sơ và danh sách tài khoản không còn SUM trên bookings |
 | `ConcessionTest` | VIP/ghế đôi + combo, voucher/min_order toàn đơn, combo không hợp lệ, giá snapshot, CRUD/ảnh/quyền, tiền hoàn/điểm, hủy/hết hạn, mọi màn hình vé, cặp H3–H4 vẫn chọn được |
 | `ConcessionZeroQuantityTest` | HTTP/service nhận dòng số lượng0 và bỏ trước kiểm tra khả dụng/giới hạn; 6 dòng chỉ5loại dương hợp lệ, 6loại dương bị từ chối |
+| `ConcessionReadConcurrencyTest` | Hai PHP process giữ đồng thời khóa đọc cùng combo ở hai suất/phòng khác nhau, vẫn lưu đúng giá và số lượng; exclusive lock bị test chặn ở barrier |
 | `ConcessionMigrationTest` | Nâng cấp/rollback trên booking có sẵn không đổi dữ liệu, giá combo mặc định 0 cho đơn cũ; seed lặp không đè giá admin |
 | `Unit/VoucherDiscountTest` | Tính giảm giá voucher cố định/phần trăm, nhãn ghế (không cần database) |
 

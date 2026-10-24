@@ -104,8 +104,10 @@ class BookingService
                 ]);
             }
 
+            // Price snapshots go into the pivot; shared locks allow parallel
+            // bookings while preventing catalogue edits until this read commits.
             $items = Concession::query()->whereIn('id', array_keys($concessions))->where('is_active', true)
-                ->orderBy('id')->lockForUpdate()->get();
+                ->orderBy('id')->sharedLock()->get();
             if ($items->count() !== count($concessions)) {
                 throw ValidationException::withMessages(['concessions' => 'Combo đã ngừng bán hoặc không tồn tại. Vui lòng chọn lại.']);
             }

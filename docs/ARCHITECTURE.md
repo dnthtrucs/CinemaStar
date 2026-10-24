@@ -74,7 +74,7 @@ erDiagram
 
 - Hạng Đồng/Bạc/Vàng dựa trên `users.lifetime_points`, ngưỡng 0/300/1000. Migration backfill một lần bằng tổng `points_earned` của các booking còn `payment_status=paid`. Sau đó thanh toán cộng cả điểm tích lũy và điểm có thể đổi dưới cùng khóa user; hoàn tiền trừ đúng điểm đã cộng, không để âm. Đổi điểm chỉ thay `loyalty_points`, không giảm hạng. Hệ số 1/1.2/1.5 của hạng trước đơn hiện tại được áp khi cộng điểm, làm tròn xuống, đúng một lần.
 - `bookings.subtotal` gồm tiền ghế và combo; `concessions_total` là tiền combo trước ưu đãi. Voucher và đơn tối thiểu xét toàn bộ subtotal, sau đó mới đổi điểm. Tiền thực trả, điểm thưởng và tiền hoàn vẫn theo `total_price`.
-- `BookingService` kiểm tra tối đa 5 loại combo, mỗi loại 1–10; khóa combo đang bán để đọc giá và lưu `booking_concessions.unit_price`. Sửa giá không đổi các đơn cũ. Combo đã xuất hiện trong đơn không thể xóa; admin có thể tắt bán.
+- `BookingService` bỏ các dòng số lượng0, kiểm tra tối đa 5 loại combo đã chọn, mỗi loại 1–10. Dòng combo được đọc theo ID với shared lock: các đơn có thể đọc đồng thời, còn thay đổi giá/tắt bán phải chờ. Đơn lưu `booking_concessions.unit_price`; sửa giá không đổi đơn cũ. Combo đã xuất hiện trong đơn không thể xóa; admin có thể tắt bán.
 - `resources/js/seat-selection.js` là entry Vite riêng cho sơ đồ ghế, combo và tổng tạm tính; lưu lựa chọn theo suất vào localStorage. Server luôn tính lại giá và kiểm tra ghế khi nhận đơn.
 - Đơn, email, bản in, vé công khai và trang check-in cùng đọc số lượng/giá combo đã lưu. Hủy hoặc hết hạn giữ lịch sử combo và trả ghế/điểm như trước.
 
