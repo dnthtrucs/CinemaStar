@@ -46,8 +46,7 @@ Chỉ cần Docker Desktop và Node.js 20+; PHP 8.3 và MySQL 8 chạy trong con
 git clone https://github.com/dnthtrucs/CinemaStar.git
 cd CinemaStar
 copy .env.example .env
-docker compose up -d --build
-docker compose exec app composer install
+docker compose up -d --build --wait
 docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
@@ -57,7 +56,7 @@ npm run build
 
 Mở http://127.0.0.1:8000. MySQL trong container được mở ra máy ở cổng `3307` và đã có sẵn hai database `cinema_db` (dev) và `cinema_test` (test). Khi sửa giao diện, chạy `npm run dev` để Vite tự nạp lại CSS/JS.
 
-Docker tự cài dependency theo `composer.lock` vào volume Linux `vendor-data` ở lần chạy đầu; các lần khởi động sau dùng lại volume, chỉ cài lại khi `composer.json` hoặc lock thay đổi. Cache Blade và package cũng ở volume Linux để tránh đọc hàng trăm file qua ổ Windows khi chuyển trang. OPcache chỉ bật cho web, vẫn kiểm tra code sửa ở mỗi request; CLI/test không bị cache bytecode. Chạy Composer/Artisan trong container khi dùng Docker. Không xóa volume MySQL để làm mới thư viện; sau khi lấy thay đổi Docker, chạy `docker compose up -d --build app`.
+Docker tự cài dependency theo `composer.lock` vào volume Linux `vendor-data` ở lần chạy đầu; `--wait` chờ cài xong và web sẵn sàng trước lệnh Artisan tiếp theo. Các lần khởi động sau dùng lại volume, chỉ cài lại khi `composer.json` hoặc lock thay đổi. Cache Blade và package cũng ở volume Linux để tránh đọc hàng trăm file qua ổ Windows khi chuyển trang. OPcache chỉ bật cho web, vẫn kiểm tra code sửa ở mỗi request; CLI/test không bị cache bytecode. Chạy Composer/Artisan trong container khi dùng Docker. Không xóa volume MySQL để làm mới thư viện; sau khi lấy thay đổi Docker, chạy `docker compose up -d --build --wait app`.
 
 Xem [đo hiệu năng và cách kiểm tra](docs/PERFORMANCE.md). Database dev và test được giữ riêng; việc nâng schema dev cần được thực hiện riêng, không nằm trong bước khởi động web.
 
