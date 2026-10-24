@@ -82,3 +82,13 @@ erDiagram
 Callback đọc bộ đếm sau khi lấy khóa user nên thấy phần thưởng vừa commit từ callback trước, kể cả MySQL REPEATABLE READ. Không đổi isolation, không thêm kết nối hay khóa booking sau user. Thứ tự khóa voucher → booking → user và chống cộng trùng theo `points_earned` giữ nguyên.
 
 `User::lifetimePoints()` đọc trực tiếp cột đã lưu. Hồ sơ và danh sách tài khoản quản trị không SUM lịch sử booking hoặc dùng withSum để đè bộ đếm.
+
+## Báo cáo và nhật ký quản trị
+
+- `ReportService` tổng hợp doanh thu từ payment `success` của booking còn `paid`, loại các đơn đã hoàn. Kỳ 30 ngày lịch Việt Nam bắt đầu 00:00 ngày hiện tại trừ 29 ngày và kết thúc tại thời điểm xem; ngày không bán được điền 0. Biên giờ chuyển về timezone lưu trữ của app, không cần bảng timezone MySQL.
+- Top 10 phim chỉ cộng phần tiền vé sau ưu đãi của từng đơn gắn với phim trong kỳ. Hàm `allocatedCash()` dùng chung với biểu đồ vé/combo: cộng các biên lai thành công theo đơn, làm tròn phần combo một lần rồi lấy tiền vé bằng phần còn lại. Khi có tối đa 10 phim, tổng top phim khớp doanh thu vé. Không join ticket vào số tiền để tránh nhân doanh thu theo số ghế.
+- Lấp đầy ghế tính ticket của đơn paid có success payment trên các suất không hủy, đã kết thúc trong kỳ. Mẫu số cộng `rooms.total_seats` một lần mỗi suất, gồm suất không bán vé; vé thanh toán trước kỳ vẫn là ghế đã bán. Đây là công suất phòng hiện có, chưa có snapshot công suất theo lịch sử.
+- Doanh thu vé/combo là tiền sau voucher và đổi điểm, phân bổ theo tỷ lệ giá gốc snapshot trong booking. Phần combo làm tròn tới đồng một lần mỗi đơn; vé nhận phần còn lại, nên tổng khớp tiền thực thu.
+- `resources/js/admin-dashboard.js` đóng gói Chart.js qua Vite và chỉ nạp ở dashboard admin. Mỗi biểu đồ có bảng số liệu để đọc khi không dùng canvas/JS.
+- Nút CSV trên dashboard truyền cùng kỳ30ngày. Export CSV/XLS/HTML hiểu ngày theo Việt Nam và chuyển biên về timezone lưu trữ; chặn ngày sai/đảo khoảng và không lấy giao dịch tương lai. Link báo cáo không truyền ngày vẫn mặc định một tháng như trước.
+- `/admin/activity-logs` chỉ GET, admin đọc và lọc nhóm hành động, người thực hiện, ngày Việt Nam, 30 dòng/trang. `ActivityLogService` nạp đối tượng liên quan theo lô từ danh sách model cho phép, xử lý an toàn loại cũ hoặc đối tượng đã xóa. Link payment trỏ vào biên lai trong chi tiết đơn; không công khai raw properties/payload thanh toán.

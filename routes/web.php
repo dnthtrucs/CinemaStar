@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CinemaController as AdminCinemaController;
@@ -74,6 +75,7 @@ Route::post('/payments/sepay/webhook', [PaymentController::class, 'sepayWebhook'
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::resource('movies', AdminMovieController::class)->except('show');
     Route::resource('banners', AdminBannerController::class)->except('show');
     Route::resource('concessions', ConcessionController::class)->except('show');
