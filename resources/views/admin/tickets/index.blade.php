@@ -40,47 +40,5 @@
 @endsection
 
 @push('scripts')
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
-<script>
-window.addEventListener('load', () => {
-    const startButton = document.getElementById('start-scanner');
-    const reader = document.getElementById('qr-reader');
-    const message = document.getElementById('scanner-message');
-    const form = document.getElementById('scan-form');
-    const tokenInput = document.getElementById('ticket-token');
-    let scanner;
-
-    startButton?.addEventListener('click', async () => {
-        if (!window.Html5Qrcode) {
-            message.textContent = 'Không tải được trình quét QR. Hãy kiểm tra kết nối Internet rồi thử lại.';
-            message.classList.add('text-danger');
-            return;
-        }
-
-        startButton.disabled = true;
-        reader.classList.remove('d-none');
-        message.textContent = 'Đang khởi động camera...';
-        scanner = new Html5Qrcode('qr-reader');
-
-        try {
-            await scanner.start(
-                { facingMode: 'environment' },
-                { fps: 10, qrbox: { width: 240, height: 240 } },
-                async (decodedText) => {
-                    await scanner.stop();
-                    tokenInput.value = decodedText;
-                    form.submit();
-                },
-                () => {},
-            );
-            message.textContent = 'Đưa mã QR vé vào khung hình để check-in.';
-        } catch (error) {
-            reader.classList.add('d-none');
-            startButton.disabled = false;
-            message.textContent = 'Không thể mở camera. Hãy cấp quyền camera; trên điện thoại cần truy cập bằng HTTPS hoặc localhost.';
-            message.classList.add('text-danger');
-        }
-    });
-});
-</script>
+    @vite('resources/js/checkin.js')
 @endpush

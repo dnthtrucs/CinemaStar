@@ -31,7 +31,7 @@ class DashboardController extends Controller
             ->groupBy(fn (Payment $payment) => $payment->paid_at->format('m/Y'))
             ->map->sum('amount');
 
-        $latePayments = Payment::with('booking.user')->whereIn('response_code', Payment::manualRefundCodes())
+        $latePayments = Payment::with('booking.user')->awaitingManualRefund()
             ->latest()->paginate(10, ['*'], 'late_payments_page');
 
         return view('admin.dashboard', compact('stats', 'recentBookings', 'monthlyRevenue', 'latePayments'));

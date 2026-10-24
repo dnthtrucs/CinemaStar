@@ -26,6 +26,10 @@ php artisan test
 | `ShowtimeSafetyTest` | Chặn đổi lịch khi đang giữ ghế; vẫn đổi giá được; giải phóng đơn hết hạn trước khi đổi lịch; hủy suất có khách trả tiền hiện cảnh báo; hủy suất trả ghế/điểm của đơn đang giữ và chặn thanh toán |
 | `TestDatabaseGuardTest` | `DB_URL` trỏ sang database khác bị chặn trước khi test chạy |
 | `HomePageTest` | Trang chủ hiển thị được |
+| `ManualRefundResolutionTest` | Admin xử lý hoàn tay đúng một lần, giữ biên lai, có ghi chú/log; lọc và phân trang; staff/khách bị chặn |
+| `LocalAssetsTest` | Trang chủ, đăng nhập, check-in không còn host CDN |
+| `Unit/SchedulerSupervisorTest` | Scheduler thoát mã42 được khởi động lại sau5giây, có log/web còn chạy; PATH chỉ có fixture, cleanup dùng kill builtin và xác nhận không còn supervisor, không cần DB |
+| `FileStorageSecurityTest` | Trang chủ đọc lại model từ cache file với allow-list; session JSON file giữ lỗi/old input/flash/đăng nhập qua các request |
 | `Unit/VoucherDiscountTest` | Tính giảm giá voucher cố định/phần trăm, nhãn ghế (không cần database) |
 
 Các test điểm, QR, hoàn tiền, voucher và thanh toán đã được chạy trước sửa để tái hiện lỗi, sau đó chạy lại để xác nhận pass. Helper `showtimeWithSeats()` dùng chung tại `tests/Concerns/CreatesCinemaBookings.php`.

@@ -1,4 +1,12 @@
-/* Giao diện chung CinemaStar (Bootstrap 5 nạp từ CDN trong layouts/app). */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import '@fontsource/be-vietnam-pro/400.css';
+@import '@fontsource/be-vietnam-pro/500.css';
+@import '@fontsource/be-vietnam-pro/600.css';
+@import '@fontsource/be-vietnam-pro/700.css';
+@import '@fontsource/be-vietnam-pro/800.css';
+
+/* Giao diện chung CinemaStar, toàn bộ tài nguyên được Vite đóng gói. */
 
 :root { --brand:#12365b; --brand-dark:#081f3a; --brand-light:#e7eff8; --gold:#f3c969; --gold-dark:#c9972e; --ink:#10243b; --muted:#667587; --surface:#f4f7fb; --night:#07182c; }
 body { font-family:'Be Vietnam Pro',sans-serif; color:var(--ink); background:linear-gradient(180deg,#fafdff 0,var(--surface) 42rem); }

@@ -1,5 +1,11 @@
 <?php
 
+use App\Models\Banner;
+use App\Models\Cinema;
+use App\Models\Movie;
+use App\Models\Room;
+use App\Models\Showtime;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
 return [
@@ -16,6 +22,16 @@ return [
     */
 
     'default' => env('CACHE_STORE', 'database'),
+
+    // HomeController cache các model này, gồm cả quan hệ room.cinema của suất chiếu.
+    'serializable_classes' => [
+        Collection::class,
+        Banner::class,
+        Movie::class,
+        Showtime::class,
+        Room::class,
+        Cinema::class,
+    ],
 
     /*
     |--------------------------------------------------------------------------

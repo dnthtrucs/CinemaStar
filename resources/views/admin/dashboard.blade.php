@@ -17,6 +17,7 @@
                                 <th>Số tiền</th>
                                 <th>Mã ngân hàng</th>
                                 <th>Lý do</th>
+                                <th>Xử lý</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -30,6 +31,7 @@
                                     <td>{{ number_format($payment->amount, 0, ',', '.') }}₫</td>
                                     <td>{{ $payment->transaction_id }}</td>
                                     <td>{{ \App\Models\Payment::MANUAL_REFUND_REASONS[$payment->response_code] }}</td>
+                                    <td>@include('admin.manual-refunds.resolve-form')</td>
                                 </tr>
                             @endforeach
                         </tbody>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CinemaController as AdminCinemaController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ManualRefundController;
 use App\Http\Controllers\Admin\MovieController as AdminMovieController;
 use App\Http\Controllers\Admin\RefundController as AdminRefundController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
@@ -88,6 +89,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/reports/revenue.xls', [AdminReportController::class, 'excel'])->name('reports.excel');
     Route::get('/reports/revenue.pdf', [AdminReportController::class, 'pdf'])->name('reports.pdf');
     Route::get('/refunds', [AdminRefundController::class, 'index'])->name('refunds.index');
+    Route::get('/manual-refunds', [ManualRefundController::class, 'index'])->name('manual-refunds.index');
+    Route::patch('/manual-refunds/{payment}', [ManualRefundController::class, 'resolve'])->name('manual-refunds.resolve');
     Route::patch('/refunds/{refund}', [AdminRefundController::class, 'update'])->name('refunds.update');
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
     Route::patch('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
