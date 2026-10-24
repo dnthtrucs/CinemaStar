@@ -59,6 +59,13 @@ erDiagram
 - `app/Http/Controllers/Admin/TicketController.php`: quét QR/mã BK và check-in cả đơn.
 - `app/Notifications/PaymentReceiptNotification.php`: email vé và QR PNG.
 - `resources/views/showtimes/show.blade.php`: sơ đồ ghế, VIP, ghế đôi và lưu lựa chọn trước đăng nhập.
-- `resources/views/layouts/app.blade.php`: layout chung (Bootstrap 5 từ CDN); `layouts/auth.blade.php` là khung cho các trang tài khoản.
+- `resources/views/layouts/app.blade.php`: layout chung; Bootstrap 5, icon và font được đóng gói bằng Vite, không phụ thuộc CDN. `layouts/auth.blade.php` là khung cho các trang tài khoản.
 - `resources/css/app.css`, `resources/js/app.js`: giao diện chung và vẽ QR vé trên trình duyệt (`ticket-qr.js`, thư viện `qrcode`), được Vite build vào `public/build`.
 - `database/migrations`: cấu trúc dữ liệu, cập nhật hàng E–G VIP và hàng H ghế đôi.
+
+## Hoàn thủ công và vận hành
+
+- `ManualRefundService` khóa payment, đánh dấu ngày/người/ghi chú xử lý đúng một lần và ghi ActivityLog. Không thay trạng thái hoặc response_code của biên lai ngân hàng.
+- Dashboard dùng scope `awaitingManualRefund`; `/admin/manual-refunds` giữ cả khoản đã xử lý cho đối soát. Chỉ admin được truy cập.
+- `resources/js/checkin.js` chỉ tải ở trang check-in; trình quét QR không cần CDN. Mất mạng vẫn cần kết nối được tới máy chủ CinemaStar; ảnh poster bên ngoài cần mạng.
+- `deploy/start.sh` cho phép chạy scheduler cùng web bằng RUN_SCHEDULER, dùng thay cho Cron Job bên ngoài.

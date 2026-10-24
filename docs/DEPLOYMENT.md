@@ -102,6 +102,16 @@ php artisan schedule:run
 
 Copy Environment cần thiết từ Web Service sang Cron Job.
 
+### Không có Render Cron Job
+
+Đặt `RUN_SCHEDULER=true` trong Environment của Web Service. Script `deploy/start.sh` giữ các bước migrate, seed khi bảng users trống, tạo storage link và dựng cache; sau đó chạy `schedule:work` nền, log chung với web, trước khi mở HTTP server. Mặc định là `false`.
+
+Chỉ dùng **một** trong hai cách: Cron Job bên ngoài hoặc `RUN_SCHEDULER=true`; không bật cả hai cùng lúc. Scheduler trong web chỉ chạy khi container còn hoạt động; service ngủ sẽ không chạy tác vụ trong thời gian ngủ.
+
+### Cache và session Laravel 13
+
+Cache chỉ cho phép deserialize Eloquent Collection và các model trang chủ (Banner, Movie, Showtime, Room, Cinema). Session dùng JSON; lỗi form, dữ liệu nhập lại, flash và đăng nhập đã được kiểm tra bằng session file thật. Khi deploy lần đầu cấu hình JSON, người dùng hiện có sẽ bị đăng xuất **một lần** và cần đăng nhập lại.
+
 ## 6. Kiểm tra sau triển khai
 
 - Đăng ký/đăng nhập, chọn ghế, ghế VIP và ghế đôi.
