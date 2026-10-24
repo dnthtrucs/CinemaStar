@@ -388,6 +388,12 @@ class PaymentController extends Controller
     private function markSuccessful(Payment $payment, string $transactionId, array $payload): bool
     {
         try {
+            // Refresh the tier SUM after waiting for the user lock. This setting
+            // applies only to the next transaction, leaving the session default intact.
+            if (DB::transactionLevel() === 0) {
+                DB::statement('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
+            }
+
             return DB::transaction(function () use ($payment, $transactionId, $payload) {
                 $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
