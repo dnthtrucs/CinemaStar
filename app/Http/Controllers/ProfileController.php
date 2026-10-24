@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\RefundRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
@@ -48,9 +51,33 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        // Khóa booking trước user, cùng thứ tự với tạo payment và xác nhận thanh toán.
+        $deleted = DB::transaction(function () use ($user) {
+            $user->bookings()->orderBy('id')->lockForUpdate()->get(['id']);
+            $user = User::query()->lockForUpdate()->findOrFail($user->id);
 
-        $user->delete();
+            // Mọi payment đều là mã tham chiếu còn có thể nhận callback, kể cả failed.
+            $hasFinancialRecords = $user->bookings()->where(fn ($query) => $query->whereIn('payment_status', ['paid', 'refunded'])
+                ->orWhereNotNull('paid_at')
+                ->orWhereHas('payments'))->exists()
+                || RefundRequest::where('requested_by', $user->id)->exists()
+                || $user->bookings()->whereHas('refundRequest')->exists();
+            if ($hasFinancialRecords) {
+                return false;
+            }
+
+            $user->delete();
+
+            return true;
+        });
+
+        if (! $deleted) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => 'Không thể xóa tài khoản đã có giao dịch thanh toán hoặc yêu cầu hoàn tiền.',
+            ], 'userDeletion');
+        }
+
+        Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

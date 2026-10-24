@@ -13,9 +13,9 @@ use Illuminate\Http\Request;
 
 class BookingTicketController extends Controller
 {
-    public function verify(Booking $booking, string $signature)
+    public function verify(Request $request, Booking $booking)
     {
-        abort_unless(hash_equals($this->signature($booking), $signature), 403, 'Mã QR không hợp lệ.');
+        abort_unless(hash_equals($booking->verificationSignature(), (string) $request->query('signature')), 403, 'Mã QR không hợp lệ.');
 
         return view('tickets.verify-booking', [
             'booking' => $this->loadBooking($booking),
@@ -29,16 +29,14 @@ class BookingTicketController extends Controller
                 && ($request->user()->id === $booking->user_id || $request->user()->role === 'admin'),
             403,
         );
+        abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
 
         $booking = $this->loadBooking($booking);
 
         return view('bookings.print', [
             'booking' => $booking,
             'qrDataUri' => 'data:image/svg+xml;base64,'.base64_encode(
-                $this->makeQrSvg(route('bookings.verify', [
-                    'booking' => $booking->id,
-                    'signature' => $this->signature($booking),
-                ]))
+                $this->makeQrSvg($booking->verificationUrl())
             ),
         ]);
     }
@@ -51,11 +49,6 @@ class BookingTicketController extends Controller
             'showtime.room.cinema',
             'tickets.seat',
         ]);
-    }
-
-    private function signature(Booking $booking): string
-    {
-        return hash_hmac('sha256', $booking->id.'|'.$booking->code, (string) config('app.key'));
     }
 
     private function makeQrSvg(string $url): string
@@ -71,6 +64,6 @@ class BookingTicketController extends Controller
             backgroundColor: new Color(255, 255, 255),
         );
 
-        return (new SvgWriter())->write($qrCode)->getString();
+        return (new SvgWriter)->write($qrCode)->getString();
     }
 }

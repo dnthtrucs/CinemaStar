@@ -12,7 +12,8 @@ class Booking extends Model
     protected $fillable = [
         'user_id', 'showtime_id', 'code', 'quantity', 'subtotal', 'discount',
         'total_price', 'status', 'payment_status', 'payment_method', 'expires_at',
-        'paid_at', 'cancelled_at', 'notes',
+        'paid_at', 'cancelled_at', 'notes', 'voucher_id', 'points_used', 'points_earned',
+        'refund_status', 'refund_reason', 'refund_requested_at', 'refunded_at',
     ];
 
     protected function casts(): array
@@ -20,25 +21,62 @@ class Booking extends Model
         return [
             'subtotal' => 'decimal:0', 'discount' => 'decimal:0', 'total_price' => 'decimal:0',
             'expires_at' => 'datetime', 'paid_at' => 'datetime', 'cancelled_at' => 'datetime',
+            'points_used' => 'integer', 'points_earned' => 'integer',
+            'refund_requested_at' => 'datetime', 'refunded_at' => 'datetime',
         ];
     }
 
-    public function user() { return $this->belongsTo(User::class); }
-    public function showtime() { return $this->belongsTo(Showtime::class); }
-    public function tickets() { return $this->hasMany(Ticket::class); }
-    public function payments() { return $this->hasMany(Payment::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function showtime()
+    {
+        return $this->belongsTo(Showtime::class);
+    }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function verificationSignature(): string
+    {
+        return hash_hmac('sha256', $this->id.'|'.$this->code, (string) config('app.key'));
+    }
+
+    public function verificationUrl(): string
+    {
+        return route('bookings.verify', ['booking' => $this->id, 'signature' => $this->verificationSignature()]);
+    }
 
     /* One booking is checked in as a whole. This status is calculated live,
        so an unscanned ticket automatically becomes expired after the show ends. */
     public function getTicketStatusAttribute(): string
     {
-        if ($this->status === 'cancelled') return 'cancelled';
-        if ($this->payment_status !== 'paid' || $this->status !== 'confirmed') return 'unpaid';
+        if ($this->status === 'cancelled' || $this->payment_status === 'refunded') {
+            return 'cancelled';
+        }
+        if ($this->payment_status !== 'paid' || $this->status !== 'confirmed') {
+            return 'unpaid';
+        }
 
         $tickets = $this->relationLoaded('tickets') ? $this->tickets : $this->tickets()->get();
-        if ($tickets->isNotEmpty() && $tickets->every(fn (Ticket $ticket) => $ticket->status === 'used')) return 'checked_in';
+        if ($tickets->isNotEmpty() && $tickets->every(fn (Ticket $ticket) => $ticket->status === 'used')) {
+            return 'checked_in';
+        }
 
         $showtime = $this->relationLoaded('showtime') ? $this->showtime : $this->showtime()->first();
+        if ($showtime && $showtime->status !== 'scheduled') {
+            return 'cancelled';
+        }
+
         return $showtime?->ends_at?->isPast() ? 'expired' : 'valid';
     }
 
@@ -63,6 +101,30 @@ class Booking extends Model
         return $this->belongsTo(Voucher::class);
     }
 
-    public function isPayable(): bool { return $this->status === 'pending' && $this->payment_status === 'unpaid' && (! $this->expires_at || $this->expires_at->isFuture()); }
-    public function isCancellable(): bool { return $this->status === 'pending' && $this->payment_status === 'unpaid'; }
+    public function refundRequest()
+    {
+        return $this->hasOne(RefundRequest::class);
+    }
+
+    public function canRequestRefund(): bool
+    {
+        return $this->status === 'confirmed'
+            && $this->payment_status === 'paid'
+            && ! $this->refundRequest()->exists()
+            && ! $this->tickets()->whereNotNull('checked_in_at')->exists()
+            && ! $this->tickets()->where('status', 'used')->exists()
+            && $this->showtime->starts_at->isFuture();
+    }
+
+    public function isPayable(): bool
+    {
+        return $this->status === 'pending' && $this->payment_status === 'unpaid'
+            && (! $this->expires_at || $this->expires_at->isFuture())
+            && $this->showtime?->status === 'scheduled';
+    }
+
+    public function isCancellable(): bool
+    {
+        return $this->status === 'pending' && $this->payment_status === 'unpaid';
+    }
 }

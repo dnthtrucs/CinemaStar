@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Voucher;
+use App\Models\VoucherUsage;
 use App\Notifications\PaymentReceiptNotification;
+use App\Services\BookingService;
 use App\Services\PaymentGatewayService;
 use Endroid\QrCode\Color\Color;
 use Endroid\QrCode\Encoding\Encoding;
@@ -12,17 +16,17 @@ use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class PaymentController extends Controller
 {
-    public function __construct(private readonly PaymentGatewayService $gateway)
-    {
-    }
+    public function __construct(private readonly PaymentGatewayService $gateway) {}
 
     public function show(Booking $booking)
     {
@@ -72,7 +76,9 @@ class PaymentController extends Controller
                 // Điểm chỉ được đổi trên số tiền còn lại sau voucher.
                 $amountAfterVoucher = max(0, (int) $lockedBooking->subtotal - (int) $lockedBooking->discount);
                 $maxRedeemable = min((int) $user->loyalty_points, (int) floor($amountAfterVoucher / 1000));
-                if ($pointsToUse > $maxRedeemable) abort(422, "Bạn chỉ có thể dùng tối đa {$maxRedeemable} điểm cho đơn này.");
+                if ($pointsToUse > $maxRedeemable) {
+                    throw ValidationException::withMessages(['points_to_use' => "Bạn chỉ có thể dùng tối đa {$maxRedeemable} điểm cho đơn này."]);
+                }
                 $discount = $pointsToUse * 1000;
                 $lockedBooking->update([
                     'points_used' => $pointsToUse,
@@ -100,6 +106,7 @@ class PaymentController extends Controller
 
         if ((int) $payment->amount === 0) {
             $successful = $this->markSuccessful($payment, 'POINTS-'.$payment->id, ['result' => 'points_redemption', 'points_only' => true]);
+
             return redirect()->route('bookings.show', $payment->booking_id)->with($successful ? 'success' : 'error', $successful ? 'Đơn hàng đã được thanh toán hoàn toàn bằng điểm thành viên.' : 'Không thể xác nhận đơn hàng.');
         }
 
@@ -164,8 +171,10 @@ class PaymentController extends Controller
         $content = strtoupper(trim(implode(' ', array_filter([
             $payload['content'] ?? null, $payload['description'] ?? null, $payload['code'] ?? null,
         ]))));
-        $payment = Payment::query()->where('provider', 'sepay')->whereIn('status', ['initiated', 'pending', 'success'])
-            ->latest('id')->get()->first(fn (Payment $item) => str_contains($content, strtoupper($item->request_id)));
+        preg_match('/PAY\d{12}[A-Z0-9]{6}/', $content, $matches);
+        $payment = isset($matches[0])
+            ? Payment::query()->where('provider', 'sepay')->where('request_id', $matches[0])->first()
+            : null;
 
         if (! $payment) {
             return response()->json(['message' => 'Payment not found'], 404);
@@ -204,6 +213,7 @@ class PaymentController extends Controller
                 && in_array($payment->provider, ['momo', 'vnpay'], true),
             404,
         );
+        abort_unless(in_array($payment->status, ['initiated', 'pending'], true), 422, 'Giao dịch đã kết thúc.');
 
         $validated = $request->validate([
             'result' => ['required', 'in:success,cancelled'],
@@ -277,9 +287,7 @@ class PaymentController extends Controller
             return response()->json(['RspCode' => '04', 'Message' => 'Invalid amount']);
         }
 
-        if ($payment->status === 'success') {
-            return response()->json(['RspCode' => '02', 'Message' => 'Order already confirmed']);
-        }
+        $alreadySuccessful = $payment->status === 'success';
 
         if ($request->input('vnp_ResponseCode') === '00'
             && $request->input('vnp_TransactionStatus') === '00') {
@@ -288,7 +296,7 @@ class PaymentController extends Controller
                 (string) $request->input('vnp_TransactionNo'),
                 $request->query(),
             );
-        } else {
+        } elseif (! $alreadySuccessful) {
             $this->markFailed(
                 $payment,
                 (string) $request->input('vnp_ResponseCode'),
@@ -296,7 +304,9 @@ class PaymentController extends Controller
             );
         }
 
-        return response()->json(['RspCode' => '00', 'Message' => 'Confirm success']);
+        return response()->json($alreadySuccessful
+            ? ['RspCode' => '02', 'Message' => 'Order already confirmed']
+            : ['RspCode' => '00', 'Message' => 'Confirm success']);
     }
 
     public function momoReturn(Request $request)
@@ -371,77 +381,154 @@ class PaymentController extends Controller
         );
 
         return 'data:image/svg+xml;base64,'.base64_encode(
-            (new SvgWriter())->write($qrCode)->getString(),
+            (new SvgWriter)->write($qrCode)->getString(),
         );
     }
 
     private function markSuccessful(Payment $payment, string $transactionId, array $payload): bool
     {
-        return DB::transaction(function () use ($payment, $transactionId, $payload) {
-            $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+        try {
+            return DB::transaction(function () use ($payment, $transactionId, $payload) {
+                $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
-            if ($payment->status === 'success') {
-                return true;
-            }
+                if ($payment->transaction_id === $transactionId) {
+                    return $payment->status === 'success';
+                }
+                $receipt = Payment::query()->where('provider', $payment->provider)->where('transaction_id', $transactionId)->first();
+                if ($receipt) {
+                    return $receipt->status === 'success';
+                }
+                // Mỗi mã ngân hàng khác nhau là một khoản tiền mới, kể cả khi dùng lại QR cũ.
+                if ($payment->status === 'success' || $payment->needsManualRefund()) {
+                    $receipt = Payment::create([
+                        'booking_id' => $payment->booking_id,
+                        'provider' => $payment->provider,
+                        'request_id' => $payment->request_id.'-'.sha1($transactionId),
+                        'transaction_id' => $transactionId,
+                        'amount' => $payment->amount,
+                        'status' => 'failed',
+                    ]);
+                    $this->flagForManualRefund($receipt, $payment->booking, $transactionId, $payload, 'DUPLICATE_TRANSFER');
 
-            $booking = $payment->booking()->lockForUpdate()->firstOrFail();
-            $amountMatches = (int) $payment->amount === (int) $booking->total_price;
-            $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
-            if ($booking->status !== 'pending' || ! $amountMatches || ! $ticketsAreHeld) {
+                    return false;
+                }
+                // Payment 'failed' (timeout lúc tạo, cổng báo lỗi trước đó) vẫn được xử lý khi có callback
+                // thành công đã xác thực chữ ký; luồng giả lập đã chặn trạng thái này ở completeSimulation.
+                if (! in_array($payment->status, ['initiated', 'pending', 'failed'], true)) {
+                    return false;
+                }
+
+                // Cùng thứ tự khóa với giữ lượt voucher: voucher trước, booking sau.
+                $voucherId = $payment->booking()->value('voucher_id');
+                $voucher = $voucherId ? Voucher::query()->lockForUpdate()->findOrFail($voucherId) : null;
+                $booking = $payment->booking()->lockForUpdate()->firstOrFail();
+                // Giữ số tiền phải trả trước khi hoàn điểm của đơn hết hạn.
+                $amountMatches = (int) $payment->amount === (int) $booking->total_price;
+                app(BookingService::class)->expirePendingBooking($booking->id);
+                $booking->refresh();
+                $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
+                if (! $booking->isPayable() || ! $amountMatches || ! $ticketsAreHeld) {
+                    // Callback đã kiểm tra số tiền theo payment, nên tiền thật đã đến: không được để mất dấu.
+                    // Đơn hủy/hết hạn có thể đã được hoàn điểm.
+                    if ((int) $payment->amount === 0) {
+                        $payment->update(['transaction_id' => $transactionId, 'status' => 'failed', 'response_code' => 'ORDER_INVALID', 'payload' => $payload]);
+                    } else {
+                        $this->flagForManualRefund($payment, $booking, $transactionId, $payload, match (true) {
+                            in_array($booking->payment_status, ['paid', 'refunded'], true) => 'ALREADY_PAID',
+                            $booking->showtime->status !== 'scheduled' => 'SHOWTIME_CANCELLED',
+                            ! $booking->isPayable() => 'PAID_AFTER_EXPIRY',
+                            default => 'ORDER_CHANGED',
+                        });
+                    }
+
+                    return false;
+                }
+
+                if ($voucher) {
+                    if ($voucher->usages()->where('user_id', $booking->user_id)->lockForUpdate()->first()
+                        || ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit)) {
+                        $this->flagForManualRefund($payment, $booking, $transactionId, $payload, 'VOUCHER_UNAVAILABLE');
+
+                        return false;
+                    }
+
+                    VoucherUsage::create([
+                        'voucher_id' => $voucher->id, 'booking_id' => $booking->id,
+                        'user_id' => $booking->user_id, 'discount_amount' => $booking->discount,
+                    ]);
+                    $voucher->increment('used_count');
+                }
+
+                $paidAt = now();
                 $payment->update([
                     'transaction_id' => $transactionId,
-                    'status' => 'failed',
-                    'response_code' => 'ORDER_INVALID',
+                    'status' => 'success',
+                    'response_code' => '00',
                     'payload' => $payload,
+                    'paid_at' => $paidAt,
                 ]);
 
-                return false;
-            }
-
-            $paidAt = now();
-            $payment->update([
-                'transaction_id' => $transactionId,
-                'status' => 'success',
-                'response_code' => '00',
-                'payload' => $payload,
-                'paid_at' => $paidAt,
-            ]);
-
-            $booking->update([
-                'status' => 'confirmed',
-                'payment_status' => 'paid',
-                'payment_method' => $payment->provider,
-                'paid_at' => $paidAt,
-                'expires_at' => null,
-            ]);
-            if ((int) $booking->points_earned === 0) {
-                $earnedPoints = (int) floor((float) $booking->total_price / 10000);
-                if ($earnedPoints > 0) {
-                    $booking->user()->lockForUpdate()->firstOrFail()->increment('loyalty_points', $earnedPoints);
-                    $booking->update(['points_earned' => $earnedPoints]);
+                $booking->update([
+                    'status' => 'confirmed',
+                    'payment_status' => 'paid',
+                    'payment_method' => $payment->provider,
+                    'paid_at' => $paidAt,
+                    'expires_at' => null,
+                ]);
+                if ((int) $booking->points_earned === 0) {
+                    $earnedPoints = (int) floor((float) $booking->total_price / 10000);
+                    if ($earnedPoints > 0) {
+                        $booking->user()->lockForUpdate()->firstOrFail()->increment('loyalty_points', $earnedPoints);
+                        $booking->update(['points_earned' => $earnedPoints]);
+                    }
                 }
-            }
 
-            // Gửi email chỉ sau khi giao dịch đã được lưu thành công. Áp dụng cho
-            // thanh toán trực tiếp và callback IPN từ cổng thanh toán.
-            DB::afterCommit(function () use ($booking) {
-                try {
-                    $booking->loadMissing([
-                        'user',
-                        'showtime.movie',
-                        'showtime.room.cinema',
-                        'tickets.seat',
-                    ]);
+                // Gửi email chỉ sau khi giao dịch đã được lưu thành công. Áp dụng cho
+                // thanh toán trực tiếp và callback IPN từ cổng thanh toán.
+                DB::afterCommit(function () use ($booking) {
+                    try {
+                        $booking->loadMissing([
+                            'user',
+                            'showtime.movie',
+                            'showtime.room.cinema',
+                            'tickets.seat',
+                        ]);
 
-                    $booking->user->notify(new PaymentReceiptNotification($booking));
-                } catch (Throwable $exception) {
-                    // Không để lỗi SMTP làm mất trạng thái thanh toán thành công.
-                    report($exception);
-                }
+                        $booking->user->notify(new PaymentReceiptNotification($booking));
+                    } catch (Throwable $exception) {
+                        // Không để lỗi SMTP làm mất trạng thái thanh toán thành công.
+                        report($exception);
+                    }
+                });
+
+                return true;
             });
+        } catch (UniqueConstraintViolationException $exception) {
+            // Transaction đã rollback: đọc biên lai thắng cuộc từ callback đồng thời.
+            $receipt = Payment::query()->where('provider', $payment->provider)->where('transaction_id', $transactionId)->first();
+            if (! $receipt) {
+                throw $exception;
+            }
 
-            return true;
-        });
+            return $receipt->status === 'success';
+        }
+    }
+
+    private function flagForManualRefund(Payment $payment, Booking $booking, string $transactionId, array $payload, string $responseCode): void
+    {
+        $payment->update([
+            'transaction_id' => $transactionId,
+            'status' => 'failed',
+            'response_code' => $responseCode,
+            'payload' => $payload,
+        ]);
+        $reason = Payment::MANUAL_REFUND_REASONS[$responseCode];
+        ActivityLog::record(
+            'payment.'.strtolower($responseCode),
+            "Tiền đến cho đơn {$booking->code} nhưng không thể xác nhận ({$reason}); cần xử lý hoàn tiền.",
+            $payment,
+            ['booking_id' => $booking->id, 'transaction_id' => $transactionId, 'amount' => $payment->amount],
+        );
     }
 
     private function markFailed(Payment $payment, string $responseCode, array $payload): void
@@ -449,7 +536,7 @@ class PaymentController extends Controller
         DB::transaction(function () use ($payment, $responseCode, $payload) {
             $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
-            if ($payment->status !== 'success') {
+            if (in_array($payment->status, ['initiated', 'pending'], true)) {
                 $payment->update([
                     'status' => 'failed',
                     'response_code' => $responseCode,

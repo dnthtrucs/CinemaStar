@@ -20,13 +20,18 @@ class MovieController extends Controller
         return view('movies.index', compact('movies'));
     }
 
-    public function show(Movie $movie)
+    public function show(Request $request, Movie $movie)
     {
         $movie->load(['showtimes' => fn ($query) => $query
             ->available()
             ->with('room.cinema')
             ->orderBy('starts_at')]);
 
-        return view('movies.show', compact('movie'));
+        $reviews = $movie->reviews()->where('status', 'approved')->with('user')->latest()->paginate(10);
+        $averageRating = $movie->reviews()->where('status', 'approved')->avg('rating');
+        $canReview = $request->user()?->bookings()->where('payment_status', 'paid')
+            ->whereHas('showtime', fn ($query) => $query->where('movie_id', $movie->id))->exists() ?? false;
+
+        return view('movies.show', compact('movie', 'reviews', 'averageRating', 'canReview'));
     }
 }

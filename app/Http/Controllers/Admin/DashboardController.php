@@ -18,19 +18,22 @@ class DashboardController extends Controller
             'showtimes' => Showtime::where('starts_at', '>=', now()->startOfDay())->count(),
             'bookings' => Booking::count(),
             'customers' => User::where('role', 'customer')->count(),
-            'revenue' => Payment::where('status', 'success')->sum('amount'),
-            'today_revenue' => Payment::where('status', 'success')->whereDate('paid_at', today())->sum('amount'),
+            'revenue' => Payment::where('status', 'success')->whereHas('booking', fn ($query) => $query->where('payment_status', 'paid'))->sum('amount'),
+            'today_revenue' => Payment::where('status', 'success')->whereHas('booking', fn ($query) => $query->where('payment_status', 'paid'))->whereDate('paid_at', today())->sum('amount'),
         ];
 
         $recentBookings = Booking::with(['user', 'showtime.movie', 'showtime.room.cinema'])
             ->latest()->limit(8)->get();
 
-        $monthlyRevenue = Payment::where('status', 'success')
+        $monthlyRevenue = Payment::where('status', 'success')->whereHas('booking', fn ($query) => $query->where('payment_status', 'paid'))
             ->where('paid_at', '>=', now()->subMonths(5)->startOfMonth())
             ->get()
             ->groupBy(fn (Payment $payment) => $payment->paid_at->format('m/Y'))
             ->map->sum('amount');
 
-        return view('admin.dashboard', compact('stats', 'recentBookings', 'monthlyRevenue'));
+        $latePayments = Payment::with('booking.user')->whereIn('response_code', Payment::manualRefundCodes())
+            ->latest()->paginate(10, ['*'], 'late_payments_page');
+
+        return view('admin.dashboard', compact('stats', 'recentBookings', 'monthlyRevenue', 'latePayments'));
     }
 }

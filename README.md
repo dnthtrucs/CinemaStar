@@ -27,7 +27,7 @@ CinemaStar là hệ thống Laravel 11 phục vụ quản lý rạp, lịch chi�
 
 - Quản lý phim, rạp, phòng, banner trang chủ, suất chiếu, người dùng và voucher.
 - Tạo suất chiếu đơn lẻ hoặc hàng loạt; tự tính giờ kết thúc và chặn trùng phòng.
-- Theo dõi dashboard, đơn vé, hoàn tiền và xuất báo cáo CSV/Excel/PDF.
+- Theo dõi dashboard, đơn vé, hoàn tiền và xuất báo cáo CSV/Excel/Bản in (HTML).
 - Admin/Staff quét QR bằng camera điện thoại hoặc tra cứu mã BK để check-in; một lần quét check-in toàn bộ ghế trong đơn.
 
 ## Công nghệ
@@ -74,6 +74,18 @@ php artisan serve
 ```
 
 Mở http://127.0.0.1:8000.
+
+### Tài khoản demo
+
+Sau khi chạy `php artisan migrate --seed`:
+
+| Vai trò | Email | Mật khẩu |
+|---|---|---|
+| Quản trị viên | admin@cinema.test | Admin@123 |
+| Nhân viên | staff@cinema.test | Staff@123 |
+| Khách hàng | customer@cinema.test | User@123 |
+
+Khi cập nhật từ phiên bản cũ, chạy `php artisan migrate` để thêm bảng thông báo hoàn tiền.
 
 ### Bật QR PNG trong email
 
@@ -131,12 +143,36 @@ https://ten-mien-cua-ban/payments/sepay/webhook
 php artisan schedule:work
 ```
 
-Scheduler giải phóng ghế của đơn chưa thanh toán đã hết hạn.
+Phải duy trì `php artisan schedule:work` trong lúc demo để scheduler tự giải phóng ghế của đơn chưa thanh toán đã hết hạn và hoàn lại điểm đã giữ.
+
+## Hoàn tiền và voucher
+
+- Khách mở **Vé của tôi → Chi tiết đơn → Yêu cầu hoàn tiền**. Đơn phải đã xác nhận và thanh toán, chưa check-in, suất chiếu chưa bắt đầu và chưa có yêu cầu hoàn tiền.
+- Admin mở **Hoàn tiền**, chuyển **Chờ xử lý → Đã duyệt/Từ chối**, sau đó **Đã duyệt → Đã hoàn tiền/Từ chối**. Chỉ chọn **Đã hoàn tiền** sau khi đã chuyển tiền lại cho khách qua ngân hàng/cổng thanh toán; ứng dụng không tự chuyển tiền.
+- Khi xác nhận đã hoàn: hủy đơn, giải phóng ghế, chặn check-in, thu hồi điểm thưởng (không để âm), hoàn điểm đã dùng và loại khoản đó khỏi doanh thu. Khách nhận thông báo trong database và email sau khi lưu thành công; không cần queue worker cho thông báo hoàn tiền.
+- Giao dịch đến sau khi đơn hết hạn/hủy được ghi nhận trên Dashboard ở **Cần xử lý hoàn tiền**. Admin đối chiếu mã ngân hàng và liên hệ khách để xử lý thủ công; hệ thống không giữ lại ghế cho đơn này.
+- Voucher chỉ tính lượt và lưu lịch sử sử dụng sau thanh toán thành công. Mỗi khách dùng một mã một lần; đơn pending còn hạn tạm giữ lượt, đơn hủy/hết hạn trả lượt giữ.
+- **Bản in (HTML)** mở hộp thoại in của trình duyệt, có thể chọn Lưu dưới dạng PDF.
 
 ## Kiểm thử
 
+Tạo database MySQL riêng trước khi chạy test:
+
+```sql
+CREATE DATABASE IF NOT EXISTS cinema_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Tham khảo `.env.testing.example` để cấu hình host/user MySQL nếu khác môi trường dev. Giữ `DB_DATABASE=cinema_test`. PHPUnit cố định database này và `tests/TestCase.php` kiểm tra cấu hình trước khi chạy migration; tuyệt đối không dùng `cinema_db`. Test tự tạo lại schema trên `cinema_test`, không cần seed hoặc chạy `npm run build`.
+
 ```powershell
+php artisan config:clear
 php artisan test
+```
+
+Nếu dùng các container dev có sẵn:
+
+```powershell
+docker run --rm --network cinemastar-net -e DB_HOST=cinemastar-mysql -e DB_DATABASE=cinema_test -v ${PWD}:/app cinemastar-php-dev php artisan test
 ```
 
 - [Kiến trúc hệ thống](docs/ARCHITECTURE.md)

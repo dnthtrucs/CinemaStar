@@ -51,9 +51,14 @@
                         </div>
                         <div class="col-md-4 border-start-md">
                             <div class="small text-muted">Tổng thanh toán</div>
-                            @if($booking->discount > 0)
+                            @if($booking->discount > 0 || $booking->points_used > 0)
                                 <div class="small text-muted text-decoration-line-through">{{ number_format($booking->subtotal, 0, ',', '.') }}₫</div>
-                                <div class="small text-success">Đã đổi {{ number_format($booking->points_used) }} điểm: -{{ number_format($booking->discount, 0, ',', '.') }}₫</div>
+                            @endif
+                            @if($booking->discount > 0)
+                                <div class="small text-success">Voucher {{ $booking->voucher?->code }}: -{{ number_format($booking->discount, 0, ',', '.') }}₫</div>
+                            @endif
+                            @if($booking->points_used > 0)
+                                <div class="small text-success">Đổi {{ number_format($booking->points_used) }} điểm: -{{ number_format($booking->points_used * 1000, 0, ',', '.') }}₫</div>
                             @endif
                             <div class="fs-3 fw-bold text-brand">{{ number_format($booking->total_price, 0, ',', '.') }}₫</div>
                             <div class="small text-muted">{{ $booking->quantity }} vé</div>
@@ -67,6 +72,12 @@
                     </div>
 
                     <hr class="my-4">
+
+                    @if($booking->refundRequest)
+                        <div class="alert alert-info">Yêu cầu hoàn tiền: {{ match($booking->refundRequest->status) {'requested' => 'Chờ xử lý', 'approved' => 'Đã duyệt', 'refunded' => 'Đã hoàn tiền', 'rejected' => 'Đã từ chối'} }}</div>
+                    @elseif($booking->canRequestRefund())
+                        <a href="{{ route('refunds.create', $booking) }}" class="btn btn-outline-danger mb-3">Yêu cầu hoàn tiền</a>
+                    @endif
 
                     @if($booking->payment_status === 'paid' && $booking->points_earned > 0)
                         <div class="alert alert-light border mb-3"><i class="bi bi-stars text-warning me-2"></i>Bạn nhận được <strong>{{ number_format($booking->points_earned) }} điểm</strong> từ đơn này.</div>
@@ -87,6 +98,7 @@
                             </form>
                         </div>
                     @elseif($booking->status === 'confirmed')
+                        <a href="{{ route('bookings.print', $booking) }}" class="btn btn-outline-dark mb-3" target="_blank">In vé</a>
                         <div class="alert alert-success">
                             <i class="bi bi-check-circle-fill me-2"></i>
                             Vé đã sẵn sàng. Một mã QR dùng để check-in toàn bộ ghế trong đơn.

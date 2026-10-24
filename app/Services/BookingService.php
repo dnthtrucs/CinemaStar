@@ -16,6 +16,8 @@ class BookingService
 {
     public function create(User $user, Showtime $showtime, array $seatIds, ?string $voucherCode = null): Booking
     {
+        $this->expirePendingBookings($showtime->id);
+
         return DB::transaction(function () use ($user, $showtime, $seatIds, $voucherCode) {
             $showtime = Showtime::query()->lockForUpdate()->findOrFail($showtime->id);
 
@@ -24,8 +26,6 @@ class BookingService
                     'seats' => 'Suất chiếu đã bắt đầu hoặc không còn nhận đặt vé.',
                 ]);
             }
-
-            $this->expirePendingBookings($showtime->id);
 
             $requestedSeatIds = array_values(array_unique($seatIds));
             $seats = Seat::query()
@@ -93,7 +93,9 @@ class BookingService
             $voucher = null;
             if ($voucherCode) {
                 $voucher = Voucher::query()->where('code', strtoupper(trim($voucherCode)))->lockForUpdate()->first();
-                if (! $voucher || ! $voucher->isUsableFor((int) $subtotal)) throw ValidationException::withMessages(['voucher_code' => 'Mã giảm giá không hợp lệ hoặc không áp dụng cho đơn này.']);
+                if (! $voucher || ! $voucher->isUsableFor((int) $subtotal, $user)) {
+                    throw ValidationException::withMessages(['voucher_code' => 'Mã giảm giá không hợp lệ hoặc không áp dụng cho đơn này.']);
+                }
             }
             $discount = $voucher ? $voucher->discountFor((int) $subtotal) : 0;
 
@@ -110,7 +112,6 @@ class BookingService
                 'payment_status' => 'unpaid',
                 'expires_at' => now()->addMinutes(config('cinema.booking_hold_minutes', 10)),
             ]);
-            if ($voucher) $voucher->increment('used_count');
 
             foreach ($seats as $seat) {
                 Ticket::create([
@@ -159,15 +160,29 @@ class BookingService
             $query->where('showtime_id', $showtimeId);
         }
 
-        $expired = $query->with('tickets')->get();
-
-        foreach ($expired as $booking) {
-                $this->refundReservedPoints($booking);
-                $booking->tickets()->delete();
-            $booking->update(['status' => 'expired']);
+        $expiredCount = 0;
+        foreach ($query->pluck('id') as $bookingId) {
+            $expiredCount += (int) $this->expirePendingBooking($bookingId);
         }
 
-        return $expired->count();
+        return $expiredCount;
+    }
+
+    public function expirePendingBooking(int $bookingId): bool
+    {
+        return DB::transaction(function () use ($bookingId) {
+            $booking = Booking::query()->lockForUpdate()->find($bookingId);
+            if (! $booking || $booking->status !== 'pending' || $booking->payment_status !== 'unpaid'
+                || ! $booking->expires_at || $booking->expires_at->isFuture()) {
+                return false;
+            }
+
+            $this->refundReservedPoints($booking);
+            $booking->tickets()->delete();
+            $booking->update(['status' => 'expired']);
+
+            return true;
+        });
     }
 
     private function uniqueCode(string $prefix, string $model): string
