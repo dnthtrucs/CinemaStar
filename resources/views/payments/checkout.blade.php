@@ -44,12 +44,14 @@
 
                         @php
                             $availablePoints = (int) $booking->user->loyalty_points;
+                            $membership = $booking->user->membershipTier();
                             // $booking->discount là số tiền voucher giảm.
                             $amountAfterVoucher = max(0, (int) $booking->subtotal - (int) $booking->discount);
                             $maxRedeemablePoints = min($availablePoints, (int) floor($amountAfterVoucher / 1000));
                             $usedPoints = (int) old('points_to_use', $booking->points_used);
                         @endphp
                         <div class="border rounded-4 p-3 mb-4 bg-light">
+                            <p class="small fw-semibold">Hạng {{ $membership['label'] }} — tích điểm x{{ $membership['multiplier'] }}</p>
                             <div class="d-flex justify-content-between align-items-center gap-3">
                                 <div>
                                     <strong><i class="bi bi-stars text-warning me-1"></i>Điểm thành viên</strong>

@@ -16,6 +16,7 @@
                         <tr>
                             <th>Người dùng</th>
                             <th>Vai trò</th>
+                            <th>Hạng</th>
                             <th>Trạng thái</th>
                             <th>Cập nhật</th>
                         </tr>
@@ -34,6 +35,7 @@
                                         <option value="admin" @selected($user->role==='admin')>Quản trị</option>
                                     </select>
                                 </td>
+                                <td>{{ $user->membershipTier()['label'] }}</td>
                                 <td>
                                     <label>
                                         <input type="checkbox" name="is_active" value="1" form="update-user-{{ $user->id }}" @checked($user->is_active) @disabled($user->is(auth()->user()))>

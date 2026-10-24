@@ -476,9 +476,11 @@ class PaymentController extends Controller
                     'expires_at' => null,
                 ]);
                 if ((int) $booking->points_earned === 0) {
-                    $earnedPoints = (int) floor((float) $booking->total_price / 10000);
+                    // Serialize awards per user; the current booking still has zero earned points.
+                    $user = $booking->user()->lockForUpdate()->firstOrFail();
+                    $earnedPoints = (int) floor((float) $booking->total_price / 10000 * $user->earnMultiplier());
                     if ($earnedPoints > 0) {
-                        $booking->user()->lockForUpdate()->firstOrFail()->increment('loyalty_points', $earnedPoints);
+                        $user->increment('loyalty_points', $earnedPoints);
                         $booking->update(['points_earned' => $earnedPoints]);
                     }
                 }
