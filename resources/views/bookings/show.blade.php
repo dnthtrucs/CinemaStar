@@ -71,6 +71,7 @@
                         </div>
                     </div>
 
+                    @include('bookings.concessions')
                     <hr class="my-4">
 
                     @if($booking->refundRequest)

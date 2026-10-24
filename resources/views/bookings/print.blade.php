@@ -22,6 +22,7 @@
             </div>
             <div class="qr"><img src="{{ $qrDataUri }}" alt="QR đơn đặt {{ $booking->code }}"><div class="label">Một QR cho toàn bộ đơn</div></div>
         </div>
+        @include('bookings.concessions')
         <p class="note">Vé này áp dụng cho tất cả ghế ghi trên vé. Xuất trình một mã QR tại quầy/rạp.</p>
     </section>
 </body>

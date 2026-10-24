@@ -69,3 +69,11 @@ erDiagram
 - Dashboard dùng scope `awaitingManualRefund`; `/admin/manual-refunds` giữ cả khoản đã xử lý cho đối soát. Chỉ admin được truy cập.
 - `resources/js/checkin.js` chỉ tải ở trang check-in; trình quét QR không cần CDN. Mất mạng vẫn cần kết nối được tới máy chủ CinemaStar; ảnh poster bên ngoài cần mạng.
 - `deploy/start.sh` cho phép chạy scheduler cùng web bằng RUN_SCHEDULER, dùng thay cho Cron Job bên ngoài.
+
+## Hạng thành viên và bắp nước
+
+- Hạng Đồng/Bạc/Vàng dựa trên tổng `points_earned` của các booking còn `payment_status=paid`, ngưỡng 0/300/1000. Đổi điểm không giảm hạng; đơn hoàn tiền bị loại. Hệ số 1/1.2/1.5 của hạng trước đơn hiện tại được áp khi cộng điểm, làm tròn xuống, đúng một lần.
+- `bookings.subtotal` gồm tiền ghế và combo; `concessions_total` là tiền combo trước ưu đãi. Voucher và đơn tối thiểu xét toàn bộ subtotal, sau đó mới đổi điểm. Tiền thực trả, điểm thưởng và tiền hoàn vẫn theo `total_price`.
+- `BookingService` kiểm tra tối đa 5 loại combo, mỗi loại 1–10; khóa combo đang bán để đọc giá và lưu `booking_concessions.unit_price`. Sửa giá không đổi các đơn cũ. Combo đã xuất hiện trong đơn không thể xóa; admin có thể tắt bán.
+- `resources/js/seat-selection.js` là entry Vite riêng cho sơ đồ ghế, combo và tổng tạm tính; lưu lựa chọn theo suất vào localStorage. Server luôn tính lại giá và kiểm tra ghế khi nhận đơn.
+- Đơn, email, bản in, vé công khai và trang check-in cùng đọc số lượng/giá combo đã lưu. Hủy hoặc hết hạn giữ lịch sử combo và trả ghế/điểm như trước.

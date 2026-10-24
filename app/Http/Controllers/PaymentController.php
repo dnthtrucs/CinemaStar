@@ -33,7 +33,7 @@ class PaymentController extends Controller
         $this->authorizeBooking($booking);
         abort_unless($booking->isPayable(), 422, 'Đơn hàng không còn hiệu lực thanh toán.');
 
-        $booking->loadMissing(['showtime.movie', 'showtime.room.cinema', 'user', 'voucher']);
+        $booking->loadMissing(['showtime.movie', 'showtime.room.cinema', 'user', 'voucher', 'concessions']);
         $paymentMode = $this->gateway->mode();
         $providerStatus = [
             'momo' => $paymentMode === 'simulate' || $this->gateway->isConfigured('momo'),

@@ -17,6 +17,7 @@
         <div class="row"><div class="label">Suất chiếu</div><div class="value">{{ $booking->showtime->starts_at->format('H:i, d/m/Y') }}</div></div>
         <div class="row"><div class="label">Tất cả ghế trong đơn</div><div class="value">{{ $booking->tickets->pluck('seat.label')->filter()->join(', ') }}</div></div>
         <div class="row"><div class="label">Số ghế</div><div class="value">{{ $booking->tickets->count() }}</div></div>
+        @include('bookings.concessions')
     </main>
 </body>
 </html>

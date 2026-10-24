@@ -30,6 +30,9 @@ php artisan test
 | `LocalAssetsTest` | Trang chủ, đăng nhập, check-in không còn host CDN |
 | `Unit/SchedulerSupervisorTest` | Scheduler thoát mã42 được khởi động lại sau5giây, có log/web còn chạy; PATH chỉ có fixture, cleanup dùng kill builtin và xác nhận không còn supervisor, không cần DB |
 | `FileStorageSecurityTest` | Trang chủ đọc lại model từ cache file với allow-list; session JSON file giữ lỗi/old input/flash/đăng nhập qua các request |
+| `MembershipTest`, `Unit/MembershipTierTest` | Ngưỡng 0/300/1000; đổi điểm giữ hạng; đơn hoàn không tính; hệ số trước đơn, callback lặp và thu hồi đúng điểm khi hoàn |
+| `ConcessionTest` | VIP/ghế đôi + combo, voucher/min_order toàn đơn, combo không hợp lệ, giá snapshot, CRUD/ảnh/quyền, tiền hoàn/điểm, hủy/hết hạn, mọi màn hình vé, cặp H3–H4 vẫn chọn được |
+| `ConcessionMigrationTest` | Nâng cấp/rollback trên booking có sẵn không đổi dữ liệu, giá combo mặc định 0 cho đơn cũ; seed lặp không đè giá admin |
 | `Unit/VoucherDiscountTest` | Tính giảm giá voucher cố định/phần trăm, nhãn ghế (không cần database) |
 
 Các test điểm, QR, hoàn tiền, voucher và thanh toán đã được chạy trước sửa để tái hiện lỗi, sau đó chạy lại để xác nhận pass. Helper `showtimeWithSeats()` dùng chung tại `tests/Concerns/CreatesCinemaBookings.php`.
@@ -78,3 +81,5 @@ Hai test chạy nhiều process dùng MySQL `cinema_test` và Symfony Process c�
 12. Khóa tài khoản đã đăng nhập rồi mở trang mới; thử xóa tài khoản đã có đơn thanh toán hoặc yêu cầu hoàn tiền.
 13. Mở trang phim bằng khách chưa mua vé và khách đã trả tiền: chỉ khách đã trả tiền thấy form; chỉ đánh giá approved và điểm trung bình của chúng được công khai.
 14. Mở Bản in (HTML), kiểm tra hộp thoại in, tiêu đề và bảng doanh thu khi in/Lưu PDF.
+15. Chọn ghế và combo 0–10 phần, tải lại và đăng nhập: lựa chọn được giữ, tạm tính gồm cả hai. Trên 5 loại không tiếp tục được. Sau đặt, đổi giá/tắt combo trong admin rồi kiểm tra đơn cũ và các bản vé vẫn giữ đơn giá lúc đặt.
+16. Kiểm tra huy hiệu hạng, điểm tích lũy và điểm còn lại tại hồ sơ/dashboard; đổi điểm không tụt hạng, hoàn một đơn làm giảm điểm tích lũy và trừ đúng điểm đã cộng.

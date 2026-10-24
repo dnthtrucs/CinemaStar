@@ -141,6 +141,7 @@
                         <div class="mb-3">{{ $booking->showtime->starts_at->format('H:i · d/m/Y') }}</div>
                         <div class="small text-white-50">Rạp / Phòng</div>
                         <div class="mb-3">{{ $booking->showtime->room->cinema->name }} / {{ $booking->showtime->room->name }}</div>
+                        @include('bookings.concessions')
                         <div class="d-flex justify-content-between"><span>Tạm tính</span><span>{{ number_format($booking->subtotal, 0, ',', '.') }}₫</span></div>
                         @if($booking->voucher && $booking->discount > 0)
                             <div class="d-flex justify-content-between text-success mt-2">

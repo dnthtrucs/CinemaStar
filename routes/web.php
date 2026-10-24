@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CinemaController as AdminCinemaController;
+use App\Http\Controllers\Admin\ConcessionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ManualRefundController;
 use App\Http\Controllers\Admin\MovieController as AdminMovieController;
@@ -75,6 +76,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::resource('movies', AdminMovieController::class)->except('show');
     Route::resource('banners', AdminBannerController::class)->except('show');
+    Route::resource('concessions', ConcessionController::class)->except('show');
     Route::resource('cinemas', AdminCinemaController::class)->except('show');
     Route::resource('rooms', AdminRoomController::class)->except('show');
     Route::get('/showtimes/bulk/create', [AdminShowtimeController::class, 'bulkCreate'])->name('showtimes.bulk.create');

@@ -25,6 +25,7 @@ class PaymentReceiptNotification extends Notification
     {
         $booking = $this->booking->loadMissing([
             'showtime.movie', 'showtime.room.cinema', 'tickets.seat',
+            'concessions',
         ]);
         $showtime = $booking->showtime;
         $seatLabels = $booking->tickets->pluck('seat.label')->filter()->join(', ');
