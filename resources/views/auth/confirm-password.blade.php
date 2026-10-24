@@ -1,27 +1,16 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
-    </div>
+@extends('layouts.auth')
 
+@section('title', 'Xác nhận mật khẩu')
+@section('heading', 'Xác nhận mật khẩu')
+@section('subheading', 'Đây là khu vực bảo mật. Vui lòng nhập lại mật khẩu để tiếp tục.')
+
+@section('form')
     <form method="POST" action="{{ route('password.confirm') }}">
         @csrf
-
-        <!-- Password -->
-        <div>
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="mb-4">
+            <label class="form-label" for="password">Mật khẩu</label>
+            <input id="password" type="password" class="form-control form-control-lg" name="password" required autocomplete="current-password">
         </div>
-
-        <div class="flex justify-end mt-4">
-            <x-primary-button>
-                {{ __('Confirm') }}
-            </x-primary-button>
-        </div>
+        <button class="btn btn-primary btn-lg w-100">Xác nhận</button>
     </form>
-</x-guest-layout>
+@endsection

@@ -1,6 +1,6 @@
 # CinemaStar – Hệ thống quản lý và đặt vé rạp chiếu phim
 
-CinemaStar là hệ thống Laravel 11 phục vụ quản lý rạp, lịch chiếu, đặt vé trực tuyến, thanh toán và check-in QR. Ứng dụng dùng MySQL, Blade/Bootstrap và giao diện tiếng Việt.
+CinemaStar là hệ thống Laravel 13 phục vụ quản lý rạp, lịch chiếu, đặt vé trực tuyến, thanh toán và check-in QR. Ứng dụng dùng MySQL, Blade/Bootstrap và giao diện tiếng Việt.
 
 ## Chức năng chính
 
@@ -32,11 +32,30 @@ CinemaStar là hệ thống Laravel 11 phục vụ quản lý rạp, lịch chi�
 
 ## Công nghệ
 
-- PHP 8.2+, Laravel 11, MySQL 8+/MariaDB 10.6+
+- PHP 8.3+, Laravel 13, MySQL 8+/MariaDB 10.6+
 - Blade, Bootstrap, Vite
 - Endroid QR Code
 - SePay, MoMo, VNPAY
 - Docker/Render cho triển khai cloud
+
+## Cài đặt bằng Docker (khuyên dùng khi phát triển)
+
+Chỉ cần Docker Desktop và Node.js 20+; PHP 8.3 và MySQL 8 chạy trong container (`compose.yaml`).
+
+```powershell
+git clone https://github.com/dnthtrucs/CinemaStar.git
+cd CinemaStar
+copy .env.example .env
+docker compose up -d --build
+docker compose exec app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
+npm install
+npm run build
+```
+
+Mở http://127.0.0.1:8000. MySQL trong container được mở ra máy ở cổng `3307` và đã có sẵn hai database `cinema_db` (dev) và `cinema_test` (test). Khi sửa giao diện, chạy `npm run dev` để Vite tự nạp lại CSS/JS.
 
 ## Cài đặt trên XAMPP
 
@@ -169,11 +188,53 @@ php artisan config:clear
 php artisan test
 ```
 
-Nếu dùng các container dev có sẵn:
+Nếu cài bằng Docker:
 
 ```powershell
-docker run --rm --network cinemastar-net -e DB_HOST=cinemastar-mysql -e DB_DATABASE=cinema_test -v ${PWD}:/app cinemastar-php-dev php artisan test
+docker compose exec app php artisan test
 ```
+
+GitHub Actions (`.github/workflows/tests.yml`) tự chạy kiểm tra style, build giao diện và toàn bộ test trên MySQL cho mỗi pull request và mỗi lần push lên `main`.
+
+## Quy trình phát triển
+
+| Việc | Lệnh |
+|---|---|
+| Chạy web + queue + log + Vite cùng lúc | `composer dev` |
+| Build CSS/JS cho production | `npm run build` |
+| Định dạng code PHP (PSR-12, Laravel Pint) | `vendor/bin/pint` |
+| Kiểm tra style như CI | `vendor/bin/pint --test` |
+| Chạy test | `php artisan test` |
+
+Quy ước:
+
+- Làm việc trên nhánh riêng (`fix/...`, `feature/...`, `chore/...`), mở pull request vào `main`; CI phải xanh trước khi merge.
+- Thay đổi schema luôn bằng migration mới, không sửa migration đã chạy.
+- Thêm hoặc sửa nghiệp vụ thì kèm test trong `tests/Feature`; logic thuần (không cần DB) đặt trong `tests/Unit`.
+- CSS chung đặt trong `resources/css/app.css`, JavaScript trong `resources/js`; không viết `<style>` dài trong layout.
+
+## Cấu trúc thư mục
+
+```text
+app/
+  Http/Controllers/        Controller phía khách; Admin/ cho trang quản trị và check-in
+  Http/Middleware/         Phân quyền admin/staff, khóa tài khoản
+  Http/Requests/           Validate form (phim, rạp, phòng, suất chiếu, banner, hồ sơ)
+  Models/                  Eloquent model và quy tắc trạng thái (Booking, Payment, Voucher...)
+  Notifications/           Email vé điện tử, thông báo hoàn tiền
+  Services/                BookingService (giữ ghế, giá, hết hạn), PaymentGatewayService (SePay/MoMo/VNPAY)
+config/cinema.php          Cấu hình thời gian giữ ghế và cổng thanh toán
+database/migrations/       Lịch sử schema; database/seeders/ dữ liệu demo
+resources/views/           Blade: layouts/ (app, auth), admin/, auth/, bookings/, payments/...
+resources/css, resources/js  Giao diện được Vite build vào public/build
+routes/web.php             Route khách, admin (/admin) và nhân viên (/staff)
+routes/console.php         Lệnh bookings:expire và lịch chạy scheduler
+tests/Feature, tests/Unit  Test nghiệp vụ và test đơn vị
+docker/, compose.yaml      Môi trường phát triển; Dockerfile ở gốc dùng để deploy
+docs/                      Kiến trúc, kế hoạch kiểm thử, hướng dẫn triển khai
+```
+
+## Tài liệu
 
 - [Kiến trúc hệ thống](docs/ARCHITECTURE.md)
 - [Kế hoạch kiểm thử](docs/TEST_PLAN.md)

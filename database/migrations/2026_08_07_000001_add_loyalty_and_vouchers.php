@@ -33,9 +33,13 @@ return new class extends Migration
             $table->timestamp('refunded_at')->nullable();
         });
     }
+
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) { $table->dropConstrainedForeignId('voucher_id'); $table->dropColumn(['refund_status','refund_reason','refund_requested_at','refunded_at']); });
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('voucher_id');
+            $table->dropColumn(['refund_status', 'refund_reason', 'refund_requested_at', 'refunded_at']);
+        });
         Schema::dropIfExists('vouchers');
         Schema::table('users', fn (Blueprint $table) => $table->dropColumn('loyalty_points'));
     }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Payment;
 use App\Models\RefundRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -47,7 +48,7 @@ class RefundTest extends TestCase
     {
         $booking = $this->bookingFor();
         $booking->update(['status' => 'cancelled', 'payment_status' => 'refunded']);
-        \App\Models\Payment::create(['booking_id' => $booking->id, 'provider' => 'momo', 'request_id' => 'REFUNDED', 'amount' => 80000, 'status' => 'success', 'paid_at' => now()]);
+        Payment::create(['booking_id' => $booking->id, 'provider' => 'momo', 'request_id' => 'REFUNDED', 'amount' => 80000, 'status' => 'success', 'paid_at' => now()]);
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => (int) $stats['revenue'] === 0 && (int) $stats['today_revenue'] === 0);
         $this->get(route('admin.reports.excel'))->assertOk()->assertDontSee($booking->code);

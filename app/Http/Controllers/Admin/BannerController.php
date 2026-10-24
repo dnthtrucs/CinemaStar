@@ -18,7 +18,7 @@ class BannerController extends Controller
 
     public function create()
     {
-        return view('admin.banners.form', ['banner' => new Banner()]);
+        return view('admin.banners.form', ['banner' => new Banner]);
     }
 
     public function store(BannerRequest $request)

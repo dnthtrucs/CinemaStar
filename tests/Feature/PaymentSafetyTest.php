@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ActivityLog;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\BookingService;
@@ -56,7 +57,7 @@ class PaymentSafetyTest extends TestCase
         $this->assertSame('expired', $booking->fresh()->status);
         $this->assertSame(0, $booking->tickets()->count());
         $this->assertDatabaseHas('activity_logs', ['action' => 'payment.paid_after_expiry', 'subject_id' => $payment->id]);
-        $this->assertSame(1, \App\Models\ActivityLog::where('action', 'payment.paid_after_expiry')->count());
+        $this->assertSame(1, ActivityLog::where('action', 'payment.paid_after_expiry')->count());
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('admin.dashboard'))
             ->assertOk()->assertSee('Cần xử lý hoàn tiền')->assertSee($payment->request_id);
     }

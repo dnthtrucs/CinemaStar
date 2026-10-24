@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Cinema;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class CinemaSeeder extends Seeder

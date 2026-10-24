@@ -9,6 +9,7 @@ class CinemaController extends Controller
     public function index()
     {
         $cinemas = Cinema::query()->where('is_active', true)->withCount('rooms')->paginate(12);
+
         return view('cinemas.index', compact('cinemas'));
     }
 
