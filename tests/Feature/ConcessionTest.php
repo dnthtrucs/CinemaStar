@@ -60,7 +60,7 @@ class ConcessionTest extends TestCase
         [$showtime, $seats] = $this->showtimeWithSeats();
         $combo = $this->combo(['is_active' => false]);
         $this->actingAs(User::factory()->create());
-        foreach ([[$combo->id => 1], [999999 => 1], [$combo->id => 0], [$combo->id => 11], [1 => 1, 2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1]] as $selection) {
+        foreach ([[$combo->id => 1], [999999 => 1], [$combo->id => -1], [$combo->id => 11], [1 => 1, 2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1]] as $selection) {
             $this->postJson(route('bookings.store', $showtime), ['seats' => [$seats[0]->id], 'concessions' => $selection])->assertUnprocessable();
         }
         $this->assertDatabaseCount('bookings', 0);

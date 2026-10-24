@@ -30,8 +30,8 @@ class BookingController extends Controller
             'seats' => ['required', 'array', 'min:1', 'max:10'],
             'seats.*' => ['required', 'integer', 'distinct', 'exists:seats,id'],
             'voucher_code' => ['nullable', 'string', 'max:40'],
-            'concessions' => ['sometimes', 'array', 'max:5'],
-            'concessions.*' => ['integer', 'min:1', 'max:10'],
+            'concessions' => ['sometimes', 'array'],
+            'concessions.*' => ['integer', 'min:0', 'max:10'],
         ]);
 
         $booking = $this->bookingService->create($request->user(), $showtime, $validated['seats'], $validated['voucher_code'] ?? null, $validated['concessions'] ?? []);

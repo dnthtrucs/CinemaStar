@@ -33,6 +33,7 @@ php artisan test
 | `MembershipTest`, `Unit/MembershipTierTest` | Ngưỡng 0/300/1000; đổi điểm giữ hạng; đơn hoàn không tính; hệ số trước đơn, callback lặp và thu hồi đúng điểm khi hoàn |
 | `MembershipConcurrencyTest` | Hai callback độc lập cùng khách 299 điểm: đơn đầu cộng 8, đơn sau đọc commit mới và cộng 9; retry không cộng trùng, isolation mặc định không bị đổi |
 | `ConcessionTest` | VIP/ghế đôi + combo, voucher/min_order toàn đơn, combo không hợp lệ, giá snapshot, CRUD/ảnh/quyền, tiền hoàn/điểm, hủy/hết hạn, mọi màn hình vé, cặp H3–H4 vẫn chọn được |
+| `ConcessionZeroQuantityTest` | HTTP/service nhận dòng số lượng0 và bỏ trước kiểm tra khả dụng/giới hạn; 6 dòng chỉ5loại dương hợp lệ, 6loại dương bị từ chối |
 | `ConcessionMigrationTest` | Nâng cấp/rollback trên booking có sẵn không đổi dữ liệu, giá combo mặc định 0 cho đơn cũ; seed lặp không đè giá admin |
 | `Unit/VoucherDiscountTest` | Tính giảm giá voucher cố định/phần trăm, nhãn ghế (không cần database) |
 

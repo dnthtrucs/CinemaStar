@@ -21,8 +21,12 @@ class BookingService
         $this->expirePendingBookings($showtime->id);
 
         Validator::make(['concessions' => $concessions], [
-            'concessions' => ['array', 'max:5'], 'concessions.*' => ['integer', 'min:1', 'max:10'],
-        ], ['concessions.*' => 'Mỗi combo được chọn từ 1 đến 10 phần, tối đa 5 loại.'])->validate();
+            'concessions' => ['array'], 'concessions.*' => ['integer', 'min:0', 'max:10'],
+        ], ['concessions.*' => 'Mỗi combo được chọn từ 0 đến 10 phần, tối đa 5 loại.'])->validate();
+        $concessions = array_filter($concessions, fn ($quantity) => (int) $quantity > 0);
+        Validator::make(['concessions' => $concessions], [
+            'concessions' => ['max:5'],
+        ], ['concessions.max' => 'Mỗi đơn được chọn tối đa 5 loại combo.'])->validate();
         foreach (array_keys($concessions) as $id) {
             if (! ctype_digit((string) $id) || (int) $id < 1 || (string) (int) $id !== (string) $id) {
                 throw ValidationException::withMessages(['concessions' => 'Mã combo không hợp lệ.']);

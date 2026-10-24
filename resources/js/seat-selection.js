@@ -54,6 +54,5 @@ form.addEventListener('submit', event => {
         event.preventDefault();
         return;
     }
-    combos.forEach(combo => { combo.disabled = quantity(combo) === 0; });
 });
 update();
