@@ -11,7 +11,6 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $users = User::query()
-            ->withSum(['bookings as lifetime_points' => fn ($query) => $query->where('payment_status', 'paid')], 'points_earned')
             ->when($request->filled('q'), fn ($query) => $query
                 ->where(fn ($sub) => $sub->where('name', 'like', '%'.$request->string('q').'%')
                     ->orWhere('email', 'like', '%'.$request->string('q').'%')))

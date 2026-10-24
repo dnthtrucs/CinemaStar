@@ -79,3 +79,5 @@ erDiagram
 - Đơn, email, bản in, vé công khai và trang check-in cùng đọc số lượng/giá combo đã lưu. Hủy hoặc hết hạn giữ lịch sử combo và trả ghế/điểm như trước.
 
 Callback đọc bộ đếm sau khi lấy khóa user nên thấy phần thưởng vừa commit từ callback trước, kể cả MySQL REPEATABLE READ. Không đổi isolation, không thêm kết nối hay khóa booking sau user. Thứ tự khóa voucher → booking → user và chống cộng trùng theo `points_earned` giữ nguyên.
+
+`User::lifetimePoints()` đọc trực tiếp cột đã lưu. Hồ sơ và danh sách tài khoản quản trị không SUM lịch sử booking hoặc dùng withSum để đè bộ đếm.
