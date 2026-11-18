@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'concession_shared_locks' => env('DB_USE_SHARED_LOCKS'),
     'booking_hold_minutes' => (int) env('BOOKING_HOLD_MINUTES', 10),
     'payment_mode' => env('PAYMENT_MODE', 'simulate'),
 

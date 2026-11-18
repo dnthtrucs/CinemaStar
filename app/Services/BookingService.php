@@ -104,10 +104,12 @@ class BookingService
                 ]);
             }
 
-            // Price snapshots go into the pivot; shared locks allow parallel
-            // bookings while preventing catalogue edits until this read commits.
-            $items = Concession::query()->whereIn('id', array_keys($concessions))->where('is_active', true)
-                ->orderBy('id')->sharedLock()->get();
+            // Keep shared reads on MySQL. TiDB requires exclusive price locks.
+            $sharedLocks = config('cinema.concession_shared_locks')
+                ?? ! str_ends_with(strtolower((string) DB::connection()->getConfig('host')), '.tidbcloud.com');
+            $query = Concession::query()->whereIn('id', array_keys($concessions))->where('is_active', true)->orderBy('id');
+            $items = $concessions === [] ? collect()
+                : ($sharedLocks ? $query->sharedLock()->get() : $query->lockForUpdate()->get());
             if ($items->count() !== count($concessions)) {
                 throw ValidationException::withMessages(['concessions' => 'Combo đã ngừng bán hoặc không tồn tại. Vui lòng chọn lại.']);
             }
