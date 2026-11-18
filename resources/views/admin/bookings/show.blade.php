@@ -7,6 +7,12 @@
         @if($booking->ticket_status === 'checked_in' && $booking->showtime->status === 'scheduled')
             <a href="{{ route('bookings.print', $booking) }}" target="_blank" rel="noopener" class="btn btn-outline-dark mt-3">In vé</a>
         @endif
+        @if($booking->status === 'confirmed' && $booking->payment_status === 'paid')
+            <form action="{{ route('admin.bookings.receipt-email', $booking) }}" method="POST" class="mt-3">
+                @csrf
+                <button class="btn btn-outline-primary" type="submit"><i class="bi bi-envelope me-2"></i>Gửi lại email vé</button>
+            </form>
+        @endif
         <div class="row g-4 mt-1">
             <div class="col-lg-7">
                 <div class="card shadow-soft p-4">

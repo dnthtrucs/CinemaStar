@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ConcessionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ManualRefundController;
 use App\Http\Controllers\Admin\MovieController as AdminMovieController;
+use App\Http\Controllers\Admin\ReceiptEmailController;
 use App\Http\Controllers\Admin\RefundController as AdminRefundController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\ReviewController;
@@ -83,6 +84,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('/showtimes/bulk', [AdminShowtimeController::class, 'bulkStore'])->name('showtimes.bulk.store');
     Route::resource('showtimes', AdminShowtimeController::class)->except('show');
     Route::resource('bookings', AdminBookingController::class)->only(['index', 'show']);
+    Route::post('/bookings/{booking}/receipt-email', [ReceiptEmailController::class, 'store'])->middleware('throttle:3,1')->name('bookings.receipt-email');
     Route::resource('users', AdminUserController::class)->only(['index', 'update']);
     Route::get('/vouchers', [AdminVoucherController::class, 'index'])->name('vouchers.index');
     Route::post('/vouchers', [AdminVoucherController::class, 'store'])->name('vouchers.store');

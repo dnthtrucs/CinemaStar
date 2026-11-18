@@ -147,3 +147,28 @@ Cache chỉ cho phép deserialize Eloquent Collection và các model trang chủ
 6. Gắn tên miền riêng sau: khai báo domain trên Render, nhập đúng bản ghi DNS do Render cấp và chờ trạng thái TLS hợp lệ. Không cần mua tên miền để có HTTPS đầu tiên.
 
 Tài liệu nhà cung cấp: https://render.com/docs/docker, https://render.com/docs/free, https://render.com/docs/custom-domains.
+
+
+## Email trên Render Free
+
+Render Free chặn SMTP cổng 25, 465 và 587. Gmail SMTP ở cổng 587 trong máy không dùng được trên gói này.
+Nguồn: https://render.com/docs/free
+
+Để dùng Brevo SMTP, xác minh sender và kích hoạt transactional email trong Brevo trước. Lưu các biến sau trực tiếp trong Render Environment, không đưa SMTP key lên GitHub hoặc chat:
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=smtp-relay.brevo.com
+MAIL_PORT=2525
+MAIL_USERNAME=<SMTP login do Brevo cấp>
+MAIL_PASSWORD=<SMTP key, không phải mật khẩu đăng nhập hay API key>
+MAIL_FROM_ADDRESS=<địa chỉ sender đã xác minh>
+MAIL_FROM_NAME=CinemaStar
+MAIL_TIMEOUT=15
+```
+
+Xóa giá trị MAIL_URL cũ nếu có vì nó có thể ghi đè SMTP host/user. Không đổi MAIL_MAILER từ log sang smtp trước khi có đủ thông tin thật.
+Gửi thử một email, kiểm tra kết quả trong Brevo và hộp thư nhận (cả Spam). Quản trị viên có thể mở chi tiết đơn đã thanh toán và chọn **Gửi lại email vé**; thao tác này không tạo giao dịch hoặc đổi giá vé.
+
+Tài liệu Brevo: https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP
