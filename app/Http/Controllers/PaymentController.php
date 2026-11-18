@@ -19,7 +19,9 @@ use Endroid\QrCode\Writer\SvgWriter;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -36,8 +38,8 @@ class PaymentController extends Controller
         $booking->loadMissing(['showtime.movie', 'showtime.room.cinema', 'user', 'voucher', 'concessions']);
         $paymentMode = $this->gateway->mode();
         $providerStatus = [
-            'momo' => $paymentMode === 'simulate' || $this->gateway->isConfigured('momo'),
-            'vnpay' => $paymentMode === 'simulate' || $this->gateway->isConfigured('vnpay'),
+            'momo' => $paymentMode !== 'simulate' && $this->gateway->isConfigured('momo'),
+            'vnpay' => $paymentMode !== 'simulate' && $this->gateway->isConfigured('vnpay'),
             'sepay' => $this->gateway->isSepayConfigured(),
         ];
 
@@ -55,6 +57,10 @@ class PaymentController extends Controller
         ]);
         $provider = $validated['provider'];
         $pointsToUse = (int) ($validated['points_to_use'] ?? 0);
+
+        if (in_array($provider, ['momo', 'vnpay'], true) && $this->gateway->isSimulationMode()) {
+            return back()->withInput()->with('error', 'Phương thức thanh toán này hiện không khả dụng. Vui lòng chọn chuyển khoản QR ngân hàng.');
+        }
 
         if ($provider === 'sepay' && ! $this->gateway->isSepayConfigured()) {
             return back()->withInput()->with('error', 'Cổng SePay chưa được cấu hình.');
@@ -151,10 +157,35 @@ class PaymentController extends Controller
     {
         $this->authorizePayment($payment);
 
+        $reconciliation = $this->reconcileSepayPayment($payment);
+
         return response()->json([
+            'reconciliation' => $reconciliation,
             'status' => $payment->fresh()->status,
             'redirect_url' => route('bookings.show', $payment->booking_id),
         ]);
+    }
+
+    public function reconcileSepayPayment(Payment $payment): string
+    {
+        if ($payment->provider !== 'sepay' || ! in_array($payment->fresh()->status, ['pending', 'initiated'], true)) {
+            return 'not_needed';
+        }
+        if (! Cache::add('sepay-reconcile:'.$payment->id, true, 15)) {
+            return 'waiting';
+        }
+        try {
+            foreach ($this->gateway->sepayTransfersFor($payment) as $transfer) {
+                $this->markSuccessful($payment->fresh(), $transfer['referenceCode'], $transfer);
+            }
+
+            return 'checked';
+        } catch (Throwable $exception) {
+            // Never log the HTTP exception: its response may contain account details.
+            Log::warning('SePay reconciliation unavailable', ['payment_id' => $payment->id, 'exception_type' => get_class($exception)]);
+
+            return 'unavailable';
+        }
     }
 
     public function sepayWebhook(Request $request)
@@ -186,59 +217,6 @@ class PaymentController extends Controller
         $successful = $this->markSuccessful($payment, (string) ($payload['referenceCode'] ?? $payload['id'] ?? 'SEPAY-'.$payment->id), $payload);
 
         return response()->json(['message' => $successful ? 'Payment confirmed' : 'Payment cannot be confirmed'], $successful ? 200 : 422);
-    }
-
-    public function simulate(Payment $payment)
-    {
-        $this->authorizePayment($payment);
-        abort_unless(
-            $this->gateway->isSimulationMode()
-                && in_array($payment->provider, ['momo', 'vnpay'], true),
-            404,
-        );
-        abort_unless(in_array($payment->status, ['initiated', 'pending'], true), 422, 'Giao dịch đã kết thúc.');
-
-        $payment->loadMissing('booking.showtime.movie');
-
-        $paymentQr = $this->makeQrDataUri(route('payments.simulate', $payment));
-
-        return view('payments.simulate', compact('payment', 'paymentQr'));
-    }
-
-    public function completeSimulation(Request $request, Payment $payment)
-    {
-        $this->authorizePayment($payment);
-        abort_unless(
-            $this->gateway->isSimulationMode()
-                && in_array($payment->provider, ['momo', 'vnpay'], true),
-            404,
-        );
-        abort_unless(in_array($payment->status, ['initiated', 'pending'], true), 422, 'Giao dịch đã kết thúc.');
-
-        $validated = $request->validate([
-            'result' => ['required', 'in:success,cancelled'],
-        ]);
-
-        if ($validated['result'] === 'cancelled') {
-            $this->markFailed($payment, 'USER_CANCELLED', ['result' => 'cancelled', 'simulated' => true]);
-
-            return redirect()->route('bookings.show', $payment->booking_id)
-                ->with('error', 'Bạn đã hủy thanh toán.');
-        }
-
-        $provider = strtoupper($payment->provider);
-        $successful = $this->markSuccessful(
-            $payment,
-            'SIM-'.$provider.'-'.$payment->id,
-            ['result' => 'success', 'simulated' => true],
-        );
-
-        return redirect()->route('bookings.show', $payment->booking_id)->with(
-            $successful ? 'success' : 'error',
-            $successful
-                ? "Thanh toán {$provider} thành công. Mã QR vé đã được kích hoạt."
-                : 'Đơn không còn đủ điều kiện để xác nhận thanh toán.',
-        );
     }
 
     public function vnpayReturn(Request $request)

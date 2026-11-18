@@ -16,3 +16,17 @@ storage/framework/views
 .phpunit.result.cache
 docker
 compose.yaml
+
+# Never bake runtime backups, certificates, sessions, uploads or database dumps.
+storage
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+*.sql
+*.sql.gz
+*.backup
+*.pem
+*.key
+auth.json
+tests
+
+!deploy/certs/aiven-ca.pem

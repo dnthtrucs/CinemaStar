@@ -53,10 +53,10 @@ class ShowtimeSafetyTest extends TestCase
 
     public function test_cancelling_showtime_releases_held_bookings_so_they_cannot_be_paid(): void
     {
-        config(['cinema.payment_mode' => 'simulate']);
+        config(['cinema.sepay.api_key' => 'key', 'cinema.sepay.account_number' => '123', 'cinema.sepay.bank_code' => 'MBBank']);
         $user = User::factory()->create(['loyalty_points' => 50]);
         $booking = $this->bookingFor($user);
-        $this->actingAs($user)->post(route('payments.store', $booking), ['provider' => 'momo', 'points_to_use' => 10])->assertRedirect();
+        $this->actingAs($user)->post(route('payments.store', $booking), ['provider' => 'sepay', 'points_to_use' => 10])->assertRedirect();
         $payment = Payment::firstOrFail();
         $showtime = $booking->showtime;
         $data = $showtime->only(['movie_id', 'room_id', 'base_price', 'format', 'language']);
@@ -68,7 +68,7 @@ class ShowtimeSafetyTest extends TestCase
         $this->assertSame(0, $booking->tickets()->count());
         $this->assertSame(50, (int) $user->fresh()->loyalty_points);
         $this->actingAs($user)->get(route('payments.show', $booking))->assertUnprocessable();
-        $this->post(route('payments.simulate.complete', $payment), ['result' => 'success'])->assertRedirect();
+        $this->post(route('payments.store', $booking), ['provider' => 'sepay'])->assertUnprocessable();
         $this->assertSame('cancelled', $booking->fresh()->status);
         $this->assertNotSame('success', $payment->fresh()->status);
     }

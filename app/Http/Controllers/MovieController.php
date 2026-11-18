@@ -9,10 +9,11 @@ class MovieController extends Controller
 {
     public function index(Request $request)
     {
-        $movies = Movie::query()
+        $movies = Movie::query()->whereIn('status', ['now_showing', 'upcoming'])
             ->when($request->filled('q'), fn ($query) => $query->where('title', 'like', '%'.$request->string('q').'%'))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->orderByRaw("CASE WHEN status = 'now_showing' THEN 0 WHEN status = 'upcoming' THEN 1 ELSE 2 END")
+            ->orderByRaw("CASE WHEN status = 'upcoming' THEN release_date END ASC")
             ->orderByDesc('release_date')
             ->paginate(12)
             ->withQueryString();

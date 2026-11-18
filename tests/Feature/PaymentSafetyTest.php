@@ -14,25 +14,23 @@ class PaymentSafetyTest extends TestCase
 {
     use CreatesCinemaBookings, RefreshDatabase;
 
-    public function test_cancelled_simulation_cannot_be_confirmed_later(): void
+    public function test_removed_simulation_cannot_confirm_a_payment(): void
     {
         config(['cinema.payment_mode' => 'simulate']);
         $booking = $this->bookingFor();
-        $this->actingAs($booking->user)->post(route('payments.store', $booking), ['provider' => 'momo'])->assertRedirect();
-        $payment = Payment::firstOrFail();
-        $this->post(route('payments.simulate.complete', $payment), ['result' => 'cancelled'])->assertRedirect();
-        $this->post(route('payments.simulate.complete', $payment), ['result' => 'success'])->assertUnprocessable();
-        $this->assertSame('pending', $booking->fresh()->status);
-        $this->assertSame('failed', $payment->fresh()->status);
+        $this->actingAs($booking->user)->post(route('payments.store', $booking), ['provider' => 'momo'])->assertRedirect()->assertSessionHas('error');
+        $this->post('/payments/1/simulate', ['result' => 'success'])->assertNotFound();
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame('unpaid', $booking->fresh()->payment_status);
     }
 
     public function test_excessive_points_are_a_form_validation_error(): void
     {
-        config(['cinema.payment_mode' => 'simulate']);
+        $this->configureSepayPayments();
         $user = User::factory()->create(['loyalty_points' => 5]);
         $booking = $this->bookingFor($user);
         $this->actingAs($user)->from(route('payments.show', $booking))->post(route('payments.store', $booking), [
-            'provider' => 'momo', 'points_to_use' => 10,
+            'provider' => 'sepay', 'points_to_use' => 10,
         ])->assertRedirect(route('payments.show', $booking))->assertSessionHasErrors('points_to_use')->assertSessionHasInput('points_to_use', 10);
         $this->assertSame(5, (int) $user->fresh()->loyalty_points);
         $this->assertDatabaseCount('payments', 0);

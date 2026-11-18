@@ -26,6 +26,9 @@ return [
     ],
 
     'sepay' => [
+        'ca_bundle' => env('SEPAY_CA_BUNDLE', PHP_OS_FAMILY === 'Windows' ? storage_path('app/certs/windows-ca.pem') : null),
+        'api_token' => env('SEPAY_API_TOKEN', env('SEPAY_API_KEY')),
+        'reconcile_enabled' => env('SEPAY_RECONCILE_ENABLED', true),
         'api_key' => env('SEPAY_API_KEY'),
         'bank_code' => env('SEPAY_BANK_CODE'),
         'account_number' => env('SEPAY_ACCOUNT_NUMBER'),

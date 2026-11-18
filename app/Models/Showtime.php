@@ -45,6 +45,7 @@ class Showtime extends Model
 
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'scheduled')->where('starts_at', '>', now());
+        return $query->where('status', 'scheduled')->where('starts_at', '>', now())
+            ->whereHas('movie', fn ($q) => $q->whereIn('status', ['now_showing', 'upcoming']));
     }
 }

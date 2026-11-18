@@ -153,6 +153,9 @@ class ConcessionTest extends TestCase
         $this->actingAs($booking->user)->get(route('bookings.show', $booking))->assertOk()->assertSee($combo->name);
         $this->get(route('payments.show', $booking))->assertOk()->assertSee($combo->name);
         $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
+        $this->get(route('bookings.print', $booking))->assertForbidden();
+        $this->actingAs(User::factory()->create(['role' => 'staff']))
+            ->post(route('staff.tickets.scan'), ['ticket_token' => $booking->verificationUrl()])->assertRedirect();
         $this->get(route('bookings.print', $booking))->assertOk()->assertSee($combo->name)->assertSee('100.000');
         $this->get($booking->verificationUrl())->assertOk()->assertSee($combo->name);
         $message = (new PaymentReceiptNotification($booking))->toMail($booking->user);

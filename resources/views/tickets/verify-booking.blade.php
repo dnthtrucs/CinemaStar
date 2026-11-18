@@ -18,6 +18,10 @@
         <div class="row"><div class="label">Tất cả ghế trong đơn</div><div class="value">{{ $booking->tickets->pluck('seat.label')->filter()->join(', ') }}</div></div>
         <div class="row"><div class="label">Số ghế</div><div class="value">{{ $booking->tickets->count() }}</div></div>
         @include('bookings.concessions')
+        @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'staff'], true))
+            <p><a href="{{ auth()->user()->isAdmin() ? route('admin.tickets.index', ['code' => $booking->code]) : route('staff.tickets.index', ['code' => $booking->code]) }}">Mở quầy kiểm tra và in vé</a></p>
+        @endif
+
     </main>
 </body>
 </html>

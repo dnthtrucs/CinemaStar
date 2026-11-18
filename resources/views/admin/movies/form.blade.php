@@ -26,15 +26,18 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Mô tả *</label>
-                            <textarea class="form-control" rows="4" name="description" required>{{ old('description',$movie->description) }}</textarea>
+                            <textarea class="form-control" rows="4" name="description" minlength="20" required>{{ old('description',$movie->description) }}</textarea>
+                            <div class="form-text">Nhập mô tả phim ít nhất 20 ký tự.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">URL poster</label>
                             <input type="url" class="form-control" name="poster" value="{{ old('poster',$movie->poster) }}">
+                            <div class="form-text">Dán liên kết ảnh poster đầy đủ bắt đầu bằng https:// hoặc http://. Có thể để trống.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">URL trailer</label>
                             <input type="url" class="form-control" name="trailer_url" value="{{ old('trailer_url',$movie->trailer_url) }}">
+                            <div class="form-text">Dán liên kết trailer đầy đủ bắt đầu bằng https:// hoặc http://. Có thể để trống.</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Thể loại *</label>
@@ -49,14 +52,15 @@
                             <input class="form-control" name="actors" value="{{ old('actors',$movie->actors) }}">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Thời lượng *</label>
-                            <input type="number" class="form-control" name="duration" value="{{ old('duration',$movie->duration?:120) }}" required>
+                            <label class="form-label">Thời lượng (phút)</label>
+                            <input type="number" class="form-control" name="duration" value="{{ old('duration',$movie->duration ?: '') }}" placeholder="Chưa công bố" min="30" max="400">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Phân loại tuổi</label>
                             <select class="form-select" name="age_rating">
+                                <option value="NO" @selected(old('age_rating',$movie->age_rating ?: 'NO') === 'NO')>Chưa công bố</option>
                                 @foreach(['P','K','T13','T16','T18'] as $value)
-                                    <option @selected(old('age_rating',$movie->age_rating?:'P')===$value)>{{ $value }}</option>
+                                    <option @selected(old('age_rating',$movie->age_rating?:'NO')===$value)>{{ $value }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -65,12 +69,22 @@
                             <input type="date" class="form-control" name="release_date" value="{{ old('release_date',$movie->release_date?->format('Y-m-d')) }}">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Trạng thái</label>
+                            <label class="form-label">Trạng thái thủ công</label>
                             <select class="form-select" name="status">
                                 @foreach(['now_showing'=>'Đang chiếu','upcoming'=>'Sắp chiếu','stopped'=>'Ngừng chiếu'] as $value=>$label)
                                     <option value="{{ $value }}" @selected(old('status',$movie->status?:'upcoming')===$value)>{{ $label }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ngày kết thúc chiếu</label>
+                            <input type="date" class="form-control" name="end_date" value="{{ old('end_date', $movie->end_date?->format('Y-m-d')) }}">
+                            <div class="form-text">Phim ngừng chiếu từ ngày kế tiếp. Để trống nếu chưa xác định.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="hidden" name="auto_schedule" value="0">
+                            <label><input type="checkbox" name="auto_schedule" value="1" @checked(old('auto_schedule', $movie->exists ? $movie->auto_schedule : true))> Tự động theo ngày</label>
+                            <div class="form-text">Cần ngày khởi chiếu. Tự chuyển Sắp chiếu → Đang chiếu → Ngừng chiếu, thay cho trạng thái thủ công. Dữ liệu vé và doanh thu được giữ nguyên.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Quốc gia</label>

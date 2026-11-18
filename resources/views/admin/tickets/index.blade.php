@@ -11,11 +11,16 @@
         <section class="card shadow-soft p-4 mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="brand-mark"><i class="bi bi-qr-code-scan"></i></span>
-                <div><h2 class="h5 fw-bold mb-1">Quét mã QR bằng camera</h2><p class="small text-muted mb-0">Mỗi mã QR là một vé; hệ thống chặn check-in lặp lại.</p></div>
+                <div><h2 class="h5 fw-bold mb-1">Quét mã QR bằng camera</h2><p class="small text-muted mb-0">Một mã QR cho toàn bộ đơn. Quét mã, xác nhận vé rồi in tại quầy.</p></div>
             </div>
             <div id="qr-reader" class="rounded overflow-hidden d-none"></div>
             <div id="scanner-message" class="small text-muted mb-3">Bấm nút để bật camera sau của điện thoại.</div>
             <button id="start-scanner" class="btn btn-primary w-100" type="button"><i class="bi bi-camera me-2"></i>Mở camera quét QR</button>
+            <div class="mt-3">
+                <label for="qr-file" class="form-label small fw-semibold">Hoặc chụp/chọn ảnh mã QR</label>
+                <input id="qr-file" type="file" accept="image/*" capture="environment" class="form-control">
+                <div class="form-text">Dùng khi điện thoại không mở được camera trực tiếp trên mạng Wi-Fi.</div>
+            </div>
             <form id="scan-form" method="POST" action="{{ $scanRoute }}" class="d-none">@csrf<input id="ticket-token" type="hidden" name="ticket_token"></form>
         </section>
 
@@ -29,6 +34,9 @@
                 <div class="card shadow-soft p-4"><div class="d-flex justify-content-between align-items-start"><div><div class="small text-muted">MÃ ĐƠN / MÃ CHECK-IN</div><h3 class="fw-bold">{{ $booking->code }}</h3></div><span class="badge h-100 text-bg-{{ $booking->ticket_status_badge }}">{{ $booking->ticket_status_label }}</span></div><hr>
                 <p><strong>Khách:</strong> {{ $booking->user->name }}</p><p><strong>Phim:</strong> {{ $booking->showtime->movie->title }}</p><p><strong>Suất:</strong> {{ $booking->showtime->starts_at->format('H:i d/m/Y') }}</p><p><strong>Ghế:</strong> {{ $booking->tickets->pluck('seat.label')->filter()->join(', ') }}</p>
                 @include('bookings.concessions')
+                @if($booking->ticket_status === 'checked_in' && $booking->showtime->status === 'scheduled')
+                    <a href="{{ route('bookings.print', $booking) }}" target="_blank" rel="noopener" class="btn btn-dark btn-lg w-100 mb-3"><i class="bi bi-printer me-2"></i>In vé tại quầy</a>
+                @endif
                 @if($booking->ticket_status === 'valid')<form method="POST" action="{{ auth()->user()->isAdmin() ? route('admin.tickets.update', $booking) : route('staff.tickets.update', $booking) }}">@csrf @method('PATCH')<button class="btn btn-primary btn-lg w-100">Xác nhận check-in toàn bộ ghế</button></form>
                 @elseif($booking->ticket_status === 'checked_in')<div class="alert alert-success mb-0">Đơn đã check-in lúc {{ $booking->tickets->first()?->checked_in_at?->format('H:i · d/m/Y') }}.</div>
                 @elseif($booking->ticket_status === 'expired')<div class="alert alert-secondary mb-0">Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.</div>

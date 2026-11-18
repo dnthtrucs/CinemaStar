@@ -12,15 +12,27 @@ class Movie extends Model
     protected $fillable = [
         'title', 'slug', 'original_title', 'description', 'poster', 'trailer_url',
         'genre', 'director', 'actors', 'duration', 'age_rating', 'release_date',
-        'country', 'language', 'status', 'is_featured',
+        'country', 'language', 'status', 'is_featured', 'end_date', 'auto_schedule',
     ];
 
     protected function casts(): array
     {
         return [
             'release_date' => 'date',
+            'end_date' => 'date',
+            'auto_schedule' => 'boolean',
             'is_featured' => 'boolean',
         ];
+    }
+
+    public function getDurationLabelAttribute(): string
+    {
+        return $this->duration > 0 ? $this->duration.' phút' : 'Thời lượng chưa công bố';
+    }
+
+    public function getAgeRatingLabelAttribute(): string
+    {
+        return $this->age_rating && $this->age_rating !== 'NO' ? $this->age_rating : 'Chưa phân loại';
     }
 
     public function showtimes()

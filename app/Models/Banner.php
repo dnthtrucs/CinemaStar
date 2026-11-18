@@ -20,6 +20,13 @@ class Banner extends Model
         return ['is_active' => 'boolean'];
     }
 
+    public function getImageUrlAttribute(): string
+    {
+        return str_starts_with($this->image_path, '/catalog-assets/')
+            ? asset(ltrim($this->image_path, '/'))
+            : asset('storage/'.$this->image_path);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

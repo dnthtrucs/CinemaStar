@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -13,7 +14,7 @@ class PaymentGatewayService
     public function paymentUrl(Payment $payment, string $ipAddress): string
     {
         if (in_array($payment->provider, ['momo', 'vnpay'], true) && $this->isSimulationMode()) {
-            return route('payments.simulate', $payment);
+            throw new RuntimeException('Thanh toán mô phỏng đã được ngừng hỗ trợ.');
         }
 
         return match ($payment->provider) {
@@ -68,6 +69,62 @@ class PaymentGatewayService
             'des' => $payment->request_id,
             'template' => 'compact',
         ], '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public function sepayTransfersFor(Payment $payment): array
+    {
+        $token = (string) config('cinema.sepay.api_token');
+        if (! config('cinema.sepay.reconcile_enabled') || $token === '') {
+            return [];
+        }
+        $client = Http::withToken($token)->acceptJson()->connectTimeout(3)->timeout(6);
+        $ca = config('cinema.sepay.ca_bundle');
+        if ($ca && is_file($ca)) {
+            $client = $client->withOptions(['verify' => $ca]);
+        }
+        // v1 remains compatible with the existing account's verified API token.
+        $response = $client->get('https://my.sepay.vn/userapi/transactions/list', [
+            'account_number' => config('cinema.sepay.account_number'),
+            'transaction_date_min' => $payment->created_at->format('Y-m-d'),
+            'amount_in' => (int) $payment->amount,
+            'limit' => 100,
+        ])->throw();
+        $transfers = [];
+        foreach ($response->json('transactions', []) as $row) {
+            $content = strtoupper((string) ($row['transaction_content'] ?? ''));
+            if (! preg_match('/(?<![A-Z0-9])'.preg_quote($payment->request_id, '/').'(?![A-Z0-9])/', $content)) {
+                continue;
+            }
+            if ((string) ($row['account_number'] ?? '') !== (string) config('cinema.sepay.account_number')) {
+                continue;
+            }
+            if (! is_numeric($row['amount_in'] ?? null) || (float) $row['amount_in'] !== (float) $payment->amount) {
+                continue;
+            }
+            if (! is_numeric($row['amount_out'] ?? null) || (float) $row['amount_out'] !== 0.0) {
+                continue;
+            }
+            $reference = (string) ($row['reference_number'] ?? '');
+            if ($reference === '') {
+                continue;
+            }
+            try {
+                $receivedAt = Carbon::parse($row['transaction_date'] ?? '');
+            } catch (\Throwable) {
+                continue;
+            }
+            if (empty($row['transaction_date']) || $receivedAt->lt($payment->created_at->copy()->subMinute()) || $receivedAt->gt(now()->addMinutes(5))) {
+                continue;
+            }
+            $transfers[] = [
+                'accountNumber' => $row['account_number'], 'transferType' => 'in',
+                'transferAmount' => (int) $payment->amount, 'content' => $content,
+                'referenceCode' => $reference, 'transactionDate' => $row['transaction_date'],
+                'source' => 'sepay_authenticated_api',
+            ];
+        }
+
+        return $transfers;
     }
 
     public function hasValidSepayWebhookKey(Request $request): bool

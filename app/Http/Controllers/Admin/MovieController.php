@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MovieRequest;
 use App\Models\Movie;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class MovieController extends Controller
@@ -54,8 +55,16 @@ class MovieController extends Controller
     private function data(MovieRequest $request): array
     {
         $data = $request->validated();
+        $data['duration'] = $data['duration'] ?? 0;
         $data['slug'] = ($data['slug'] ?? null) ?: Str::slug($data['title']).'-'.Str::lower(Str::random(4));
         $data['is_featured'] = $request->boolean('is_featured');
+        $data['auto_schedule'] = $request->boolean('auto_schedule');
+        if ($data['auto_schedule']) {
+            $today = today()->toDateString();
+            $data['status'] = ! empty($data['end_date']) && $data['end_date'] < $today
+                ? 'stopped' : ($data['release_date'] > $today ? 'upcoming' : 'now_showing');
+        }
+        Cache::forget('home-page-data:v1');
 
         return $data;
     }

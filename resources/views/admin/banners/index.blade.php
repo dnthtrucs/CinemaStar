@@ -15,7 +15,7 @@
                 <tbody>
                 @forelse($banners as $banner)
                     <tr>
-                        <td><img src="{{ asset('storage/'.$banner->image_path) }}" alt="{{ $banner->title }}" class="rounded" style="width:140px;height:55px;object-fit:cover"></td>
+                        <td><img src="{{ $banner->image_url }}" alt="{{ $banner->title }}" class="rounded" style="width:140px;height:55px;object-fit:cover"></td>
                         <td><strong>{{ $banner->title }}</strong><div class="small text-muted">{{ $banner->subtitle }}</div></td>
                         <td>{{ $banner->sort_order }}</td>
                         <td><span class="badge text-bg-{{ $banner->is_active ? 'success' : 'secondary' }}">{{ $banner->is_active ? 'Đang hiển thị' : 'Đang ẩn' }}</span></td>

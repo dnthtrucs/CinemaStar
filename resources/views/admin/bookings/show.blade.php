@@ -4,6 +4,9 @@
     <div class="container py-4">
         @include('admin.partials.nav')
         <h1 class="section-title">Chi tiết đơn {{ $booking->code }}</h1>
+        @if($booking->ticket_status === 'checked_in' && $booking->showtime->status === 'scheduled')
+            <a href="{{ route('bookings.print', $booking) }}" target="_blank" rel="noopener" class="btn btn-outline-dark mt-3">In vé</a>
+        @endif
         <div class="row g-4 mt-1">
             <div class="col-lg-7">
                 <div class="card shadow-soft p-4">

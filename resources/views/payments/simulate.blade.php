@@ -16,18 +16,18 @@
                 <div class="p-4 p-md-5 text-white text-center" style="background:{{ $providerColor }}">
                     <div class="display-3 fw-bold">{{ $isMomo ? 'M' : 'V' }}</div>
                     <h1 class="h3 fw-bold mt-2 mb-1">Thanh toán {{ $providerName }}</h1>
-                    <div class="badge text-bg-warning mt-2"> </div>
+                    <div class="badge text-bg-warning mt-2">MÔ PHỎNG · KHÔNG CHUYỂN TIỀN</div>
                 </div>
 
                 <div class="p-4 p-md-5">
                     <div class="alert alert-warning small">
-                        Trang này  phản hồi của {{ $providerName }} trên máy cá nhân.
+                        Trang này mô phỏng phản hồi của {{ $providerName }} trên máy cá nhân.
                         Không quét mã bằng ứng dụng thật và không có tiền được chuyển.
                     </div>
 
                     <div class="text-center py-3">
                         <img src="{{ $paymentQr }}" class="payment-qr border rounded-4 p-2 bg-white" alt="Mã QR thanh toán {{ $providerName }}">
-                        <p class="small text-muted mt-3 mb-0">Dùng điện thoại quét QR để mở trang xác nhận thanh toán {{ $providerName }}.</p>
+                        <p class="small text-muted mt-3 mb-0">QR mở trang xác nhận mô phỏng {{ $providerName }}.</p>
                     </div>
 
                     <div class="bg-light rounded-4 p-4 my-4">
@@ -48,7 +48,7 @@
                     <form method="POST" action="{{ route('payments.simulate.complete', $payment) }}" class="d-grid gap-2">
                         @csrf
                         <button class="btn btn-lg text-white" style="background:{{ $providerColor }}" name="result" value="success">
-                            <i class="bi bi-check-circle me-1"></i>Xác nhận thanh toán thành công
+                            <i class="bi bi-check-circle me-1"></i>Mô phỏng thanh toán thành công
                         </button>
                         <button class="btn btn-outline-secondary" name="result" value="cancelled">
                             Hủy giao dịch

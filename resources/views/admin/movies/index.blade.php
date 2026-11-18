@@ -30,7 +30,7 @@
                                         <img src="{{ $movie->poster }}" class="rounded" style="width:42px;height:60px;object-fit:cover">
                                         <div>
                                             <strong>{{ $movie->title }}</strong>
-                                            <div class="small text-muted">{{ $movie->duration }} phút · {{ $movie->age_rating }}</div>
+                                            <div class="small text-muted">{{ $movie->duration_label }} · {{ $movie->age_rating_label }}</div>
                                         </div>
                                     </div>
                                 </td>

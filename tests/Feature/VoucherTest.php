@@ -37,13 +37,13 @@ class VoucherTest extends TestCase
 
     public function test_successful_payment_consumes_voucher_once_and_prevents_reuse(): void
     {
-        config(['cinema.payment_mode' => 'simulate']);
+        $this->configureSepayPayments();
         $voucher = Voucher::create(['code' => 'SAVE', 'name' => 'Test', 'type' => 'fixed', 'value' => 10000]);
         $booking = $this->bookingFor(voucher: 'SAVE');
         $user = $booking->user;
-        $this->actingAs($user)->post(route('payments.store', $booking), ['provider' => 'momo'])->assertRedirect();
+        $this->actingAs($user)->post(route('payments.store', $booking), ['provider' => 'sepay'])->assertRedirect();
         $payment = Payment::firstOrFail();
-        $this->actingAs($user)->post(route('payments.simulate.complete', $payment), ['result' => 'success'])->assertRedirect();
+        $this->confirmSepayPayment($payment)->assertOk();
         $this->assertSame(1, (int) $voucher->fresh()->used_count);
         $this->assertDatabaseHas('voucher_usages', ['voucher_id' => $voucher->id, 'user_id' => $user->id, 'booking_id' => $booking->id]);
         $this->actingAs($user)->post(route('bookings.store', $booking->showtime), [
@@ -53,15 +53,15 @@ class VoucherTest extends TestCase
 
     public function test_payment_rejected_by_voucher_limit_is_flagged_for_refund(): void
     {
-        config(['cinema.payment_mode' => 'simulate']);
+        $this->configureSepayPayments();
         $voucher = Voucher::create(['code' => 'SAVE', 'name' => 'Test', 'type' => 'fixed', 'value' => 10000, 'usage_limit' => 1]);
         $booking = $this->bookingFor(voucher: 'SAVE');
-        $this->actingAs($booking->user)->post(route('payments.store', $booking), ['provider' => 'momo'])->assertRedirect();
+        $this->actingAs($booking->user)->post(route('payments.store', $booking), ['provider' => 'sepay'])->assertRedirect();
         $payment = Payment::firstOrFail();
         // Lượt cuối bị dùng ở nơi khác trước khi khách trả tiền xong.
         $voucher->update(['used_count' => 1]);
 
-        $this->post(route('payments.simulate.complete', $payment), ['result' => 'success'])->assertRedirect();
+        $this->confirmSepayPayment($payment)->assertUnprocessable();
 
         $this->assertSame('VOUCHER_UNAVAILABLE', $payment->fresh()->response_code);
         $this->assertSame('pending', $booking->fresh()->status);

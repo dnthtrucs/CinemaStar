@@ -36,7 +36,7 @@ class BookingService
         return DB::transaction(function () use ($user, $showtime, $seatIds, $voucherCode, $concessions) {
             $showtime = Showtime::query()->lockForUpdate()->findOrFail($showtime->id);
 
-            if ($showtime->status !== 'scheduled' || $showtime->starts_at->isPast()) {
+            if ($showtime->status !== 'scheduled' || $showtime->starts_at->isPast() || $showtime->movie->status === 'stopped') {
                 throw ValidationException::withMessages([
                     'seats' => 'Suất chiếu đã bắt đầu hoặc không còn nhận đặt vé.',
                 ]);

@@ -35,7 +35,7 @@
                             @enderror
                             <div class="form-text">JPG, PNG hoặc WebP; tối đa 5MB; khuyến nghị 1600 × 600 px.</div>
                             @if($banner->image_path)
-                                <img src="{{ asset('storage/'.$banner->image_path) }}" alt="{{ $banner->title }}" class="img-fluid rounded mt-3 border" style="max-height:220px">
+                                <img src="{{ $banner->image_url }}" alt="{{ $banner->title }}" class="img-fluid rounded mt-3 border" style="max-height:220px">
                             @endif
                         </div>
                         <div class="col-md-6">

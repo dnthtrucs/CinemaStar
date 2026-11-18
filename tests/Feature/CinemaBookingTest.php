@@ -85,14 +85,14 @@ class CinemaBookingTest extends TestCase
         $this->assertSame('paid', $booking->fresh()->payment_status);
     }
 
-    public function test_simulated_momo_payment_confirms_booking_and_activates_qr_ticket(): void
+    public function test_simulated_momo_payment_is_unavailable(): void
     {
-        $this->assertSimulatedProviderConfirmsBooking('momo');
+        $this->assertSimulatedProviderIsRejected('momo');
     }
 
-    public function test_simulated_vnpay_payment_confirms_booking_and_activates_qr_ticket(): void
+    public function test_simulated_vnpay_payment_is_unavailable(): void
     {
-        $this->assertSimulatedProviderConfirmsBooking('vnpay');
+        $this->assertSimulatedProviderIsRejected('vnpay');
     }
 
     public function test_real_sandbox_provider_cannot_start_without_credentials(): void
@@ -147,31 +147,14 @@ class CinemaBookingTest extends TestCase
         $this->get(route('tickets.verify', ['qrToken' => str_repeat('a', 64)]))->assertNotFound();
     }
 
-    private function assertSimulatedProviderConfirmsBooking(string $provider): void
+    private function assertSimulatedProviderIsRejected(string $provider): void
     {
         config(['cinema.payment_mode' => 'simulate']);
-        [$showtime, $seats] = $this->showtimeWithSeats();
-        $user = User::factory()->create();
-        $this->actingAs($user)->post(route('bookings.store', $showtime), ['seats' => [$seats[0]->id]]);
-        $booking = Booking::firstOrFail();
-
-        $response = $this->actingAs($user)
-            ->post(route('payments.store', $booking), ['provider' => $provider]);
-        $payment = Payment::firstOrFail();
-
-        $response->assertRedirect(route('payments.simulate', $payment));
-        $this->actingAs($user)
-            ->post(route('payments.simulate.complete', $payment), ['result' => 'success'])
-            ->assertRedirect(route('bookings.show', $booking));
-
-        $this->assertSame('success', $payment->fresh()->status);
-        $this->assertSame('confirmed', $booking->fresh()->status);
-        $this->assertSame('paid', $booking->fresh()->payment_status);
-        $this->assertSame($provider, $booking->fresh()->payment_method);
-
-        $this->actingAs($user)
-            ->get(route('bookings.show', $booking))
-            ->assertOk()
-            ->assertSee('data-ticket-qr', false);
+        $booking = $this->bookingFor();
+        $this->actingAs($booking->user)->post(route('payments.store', $booking), ['provider' => $provider])
+            ->assertRedirect()->assertSessionHas('error');
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame('unpaid', $booking->fresh()->payment_status);
+        $this->get(route('bookings.show', $booking))->assertOk()->assertDontSee('data-ticket-qr', false);
     }
 }

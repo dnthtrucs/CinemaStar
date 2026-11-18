@@ -26,12 +26,13 @@ class BookingTicketController extends Controller
     {
         abort_unless(
             $request->user()
-                && ($request->user()->id === $booking->user_id || $request->user()->role === 'admin'),
+                && in_array($request->user()->role, ['admin', 'staff'], true),
             403,
         );
         abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
 
         $booking = $this->loadBooking($booking);
+        abort_unless($booking->ticket_status === 'checked_in' && $booking->showtime->status === 'scheduled', 422, 'Nhân viên cần quét mã hoặc xác nhận check-in trước khi in vé.');
 
         return view('bookings.print', [
             'booking' => $booking,

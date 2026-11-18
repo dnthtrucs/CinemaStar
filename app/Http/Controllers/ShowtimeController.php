@@ -10,7 +10,7 @@ class ShowtimeController extends Controller
 {
     public function show(Showtime $showtime, BookingService $bookingService)
     {
-        abort_if($showtime->status !== 'scheduled', 404);
+        abort_if($showtime->status !== 'scheduled' || $showtime->movie->status === 'stopped', 404);
 
         $bookingService->expirePendingBookings($showtime->id);
         $showtime->load(['movie', 'room.cinema', 'room.seats']);

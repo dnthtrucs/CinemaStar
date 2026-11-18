@@ -58,9 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/bookings/{booking}/payment', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('/payments/{payment}/sepay', [PaymentController::class, 'sepay'])->name('payments.sepay.show');
     Route::get('/payments/{payment}/sepay/status', [PaymentController::class, 'sepayStatus'])->name('payments.sepay.status');
-    Route::get('/payments/{payment}/simulate', [PaymentController::class, 'simulate'])->name('payments.simulate');
-    Route::post('/payments/{payment}/simulate', [PaymentController::class, 'completeSimulation'])->name('payments.simulate.complete');
-    Route::get('/bookings/{booking}/print', [BookingTicketController::class, 'print'])->name('bookings.print');
+    Route::get('/bookings/{booking}/print', [BookingTicketController::class, 'print'])->middleware('staff')->name('bookings.print');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

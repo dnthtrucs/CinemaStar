@@ -41,3 +41,46 @@ a:hover { color:var(--brand-dark); }
 .ticket-qr-loading { position:absolute; inset:0; display:grid; place-items:center; }
 footer { background:linear-gradient(105deg,#06172c,#12365b); border-top:2px solid rgba(243,201,105,.55); color:#d7e0ea; }
 @media (max-width:767px) { .display-4 { font-size:2.1rem; } }
+
+/* Mobile: preserve touch targets and keep wide content inside its own scroller. */
+@media (max-width: 767.98px) {
+    .container { --bs-gutter-x: 1.5rem; }
+    .navbar-logo { width:38px; height:38px; }
+    .navbar-wordmark { font-size:1rem; }
+    .navbar-brand { margin-right:.5rem; }
+    .navbar-collapse { padding:12px 0; }
+    .navbar-collapse .nav-link { padding:12px 8px; }
+    .navbar-collapse .btn { margin-top:8px; min-height:44px; }
+    .form-control, .form-select { font-size:16px; min-height:44px; }
+    .btn { min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+    .input-group .btn { min-width:44px; }
+    .row > *, .card, .d-flex > .flex-grow-1 { min-width:0; }
+    h1, h2, h3, h4, .hall-value, .transfer-code { overflow-wrap:anywhere; }
+    .section-title { font-size:1.65rem; }
+    .movie-card h5 { font-size:.95rem; }
+    .movie-card .card-body { padding-top:12px; }
+    .admin-nav .nav { flex-wrap:nowrap; overflow-x:auto; padding-bottom:8px; }
+    .admin-nav .nav-link { white-space:nowrap; padding:12px; }
+    .checkout-page .payment-option { gap:10px!important; padding:14px!important; flex-wrap:wrap; }
+    .checkout-page .payment-option .flex-grow-1 { flex-basis:calc(100% - 85px); }
+    .checkout-page .payment-option > .badge { margin-left:30px; white-space:normal; }
+    .checkout-page aside { position:static; }
+    .checkout-steps { font-size:11px!important; gap:14px!important; }
+    .hold-notice { padding:14px!important; }
+    #payButton { white-space:normal; font-size:1rem; }
+    .bank-checkout .transfer-row { flex-wrap:wrap; }
+    .bank-checkout .transfer-row > div { max-width:100%; flex-wrap:wrap; }
+    .ticket-qr-card { padding:18px!important; }
+    .ticket-qr-wrap { min-height:200px; }
+    .ticket-qr { width:200px!important; height:200px!important; }
+    .seat-grid { max-width:100%; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; }
+    .seat-row { justify-content:flex-start!important; min-width:max-content!important; padding-right:12px; }
+    .seat { width:44px!important; height:44px!important; }
+    .seat.couple { width:95px!important; }
+    .seat-input:focus-visible + .seat { outline:3px solid #12365b; outline-offset:3px; }
+    .seat-row > label { position:relative; flex-shrink:0; }
+    .seat-scroll-hint { display:block!important; }
+    .seat-grid:focus-visible { outline:2px solid #12365b; }
+    .qr-frame { max-width:100%!important; }
+    footer { padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))!important; }
+}

@@ -9,6 +9,9 @@ class SchedulerSupervisorTest extends TestCase
 {
     public function test_scheduler_restarts_after_failure_while_the_web_process_stays_alive(): void
     {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->markTestSkipped('The production supervisor requires a POSIX shell.');
+        }
         $directory = sys_get_temp_dir().'/cinema-scheduler-'.bin2hex(random_bytes(6));
         mkdir($directory);
         file_put_contents($directory.'/running', '1');
@@ -36,7 +39,8 @@ exit 0
 SH;
         file_put_contents($directory.'/php', $fakePhp);
         chmod($directory.'/php', 0755);
-        $process = new Process(['/bin/sh', dirname(__DIR__, 2).'/deploy/start.sh'], dirname(__DIR__, 2), [
+        file_put_contents($directory.'/start.sh', "#!/bin/sh\n. ./deploy/workers.sh\nexec php artisan serve --host=0.0.0.0\n");
+        $process = new Process(['/bin/sh', $directory.'/start.sh'], dirname(__DIR__, 2), [
             'PATH' => $directory, 'RUN_SCHEDULER' => 'true', 'SCHEDULER_TEST_DIR' => $directory,
             'DB_DATABASE' => 'cinema_test', 'DB_URL' => '',
         ], null, 12);

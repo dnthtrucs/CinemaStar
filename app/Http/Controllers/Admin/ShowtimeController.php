@@ -85,6 +85,9 @@ class ShowtimeController extends Controller
         }
 
         $movie = Movie::findOrFail($data['movie_id']);
+        if ($movie->duration < 30 || ! $movie->age_rating || $movie->age_rating === 'NO') {
+            throw ValidationException::withMessages(['movie_id' => 'Phim chưa có thời lượng hoặc phân loại tuổi. Cập nhật đủ thông tin trước khi tạo suất chiếu.']);
+        }
         $created = 0;
         $conflicts = [];
         $past = 0;
@@ -190,6 +193,9 @@ class ShowtimeController extends Controller
     {
         $data = $request->validated();
         $movie = Movie::findOrFail($data['movie_id']);
+        if ($movie->duration < 30 || ! $movie->age_rating || $movie->age_rating === 'NO') {
+            throw ValidationException::withMessages(['movie_id' => 'Phim chưa có thời lượng hoặc phân loại tuổi. Cập nhật đủ thông tin trước khi tạo suất chiếu.']);
+        }
         $startsAt = Carbon::parse($data['starts_at']);
         $endsAt = $startsAt->copy()->addMinutes($movie->duration + 15);
         $conflict = Showtime::query()->where('room_id', $data['room_id'])->where('status', '!=', 'cancelled')->when($showtime, fn ($query) => $query->where('id', '!=', $showtime->id))->where('starts_at', '<', $endsAt)->where('ends_at', '>', $startsAt)->exists();

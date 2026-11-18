@@ -5,14 +5,29 @@ namespace Tests\Concerns;
 use App\Models\Booking;
 use App\Models\Cinema;
 use App\Models\Movie;
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\Seat;
 use App\Models\Showtime;
 use App\Models\User;
 use App\Services\BookingService;
+use Illuminate\Testing\TestResponse;
 
 trait CreatesCinemaBookings
 {
+    protected function configureSepayPayments(): void
+    {
+        config(['cinema.sepay.api_key' => 'test-webhook-key', 'cinema.sepay.account_number' => '123456789', 'cinema.sepay.bank_code' => 'MBBank']);
+    }
+
+    protected function confirmSepayPayment(Payment $payment): TestResponse
+    {
+        return $this->postJson(route('payments.sepay.webhook'), [
+            'accountNumber' => '123456789', 'transferType' => 'in', 'transferAmount' => (int) $payment->amount,
+            'content' => $payment->request_id, 'referenceCode' => 'TEST-RECEIPT-'.$payment->id,
+        ], ['Authorization' => 'Apikey test-webhook-key']);
+    }
+
     protected function showtimeWithSeats(): array
     {
         $cinema = Cinema::create([

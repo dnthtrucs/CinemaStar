@@ -104,7 +104,7 @@ Copy Environment cần thiết từ Web Service sang Cron Job.
 
 ### Không có Render Cron Job
 
-Đặt `RUN_SCHEDULER=true` trong Environment của Web Service. Script `deploy/start.sh` giữ các bước migrate, seed khi bảng users trống, tạo storage link và dựng cache; sau đó chạy `schedule:work` nền, log chung với web, trước khi mở HTTP server. Khi scheduler thoát, vòng giám sát ghi mã thoát, đợi 5 giây rồi khởi động lại. Web vẫn dùng `exec php artisan serve` làm tiến trình chính. Mặc định là `false`.
+Đặt `RUN_SCHEDULER=true` trong Environment của Web Service. Script `deploy/start.sh` kiểm tra HTTPS/APP_KEY, migrate, tạo storage link và dựng cache; không tự tạo tài khoản mẫu; sau đó chạy `schedule:work` nền, log chung với web, trước khi mở HTTP server. Khi scheduler thoát, vòng giám sát ghi mã thoát, đợi 5 giây rồi khởi động lại. Web vẫn dùng `exec php artisan serve` làm tiến trình chính. Mặc định là `false`.
 
 Chỉ dùng **một** trong hai cách: Cron Job bên ngoài hoặc `RUN_SCHEDULER=true`; không bật cả hai cùng lúc. Scheduler trong web chỉ chạy khi container còn hoạt động; service ngủ sẽ không chạy tác vụ trong thời gian ngủ.
 
@@ -119,3 +119,31 @@ Cache chỉ cho phép deserialize Eloquent Collection và các model trang chủ
 - Kiểm tra email QR PNG và scan QR đơn bằng tài khoản Staff.
 - Kiểm tra banner đã tải. Lưu trữ file trên Render là tạm thời; dùng Cloudinary/S3 cho banner lâu dài.
 - Giữ `APP_DEBUG=false`; không công khai `.env`, Gmail App Password, API key hoặc mật khẩu database.
+
+
+## Bộ triển khai HTTPS hiện tại
+
+- Dùng `render.yaml` để tạo web service Docker tại Singapore. Tên dịch vụ có thể đổi nếu trùng.
+- Chọn gói Free cho bản trình diễn, chưa tạo tài nguyên có phí. URL thực tế do Render trả về; không tự đoán URL.
+- Cần MySQL từ nhà cung cấp riêng: Render không có MySQL miễn phí tích hợp. Không nhập địa chỉ `127.0.0.1` hoặc IP Wi-Fi vào DB_HOST trên Render.
+- Sau khi Render cấp URL, đặt APP_URL đúng URL HTTPS đó và triển khai lại. APP_KEY tạo một lần và lưu trong Environment; giữ ổn định qua các lần deploy.
+- Blueprint để trống các bí mật bằng `sync: false`. Không đưa `.env` hay file SQL vào Git hoặc Docker image.
+- Chạy `php artisan cinema:admin` trong shell của máy chủ để tạo quản trị viên với mật khẩu nhập ẩn. Không chạy DemoAccountSeeder trên website công khai.
+- Bản web dùng Apache, document root là `public/`, nhận PORT do Render cấp. Laravel chỉ tin proxy khi TRUSTED_PROXIES được cấu hình. Cookie đăng nhập trên bản cloud được đặt Secure.
+- Bật scheduler/queue trong một instance bằng RUN_SCHEDULER/RUN_QUEUE_WORKER. Nếu dùng cron/worker riêng thì tắt các tiến trình trùng tương ứng.
+- Dùng SESSION_DRIVER=database và CACHE_STORE=database để giữ đăng nhập và khóa tác vụ qua deploy. Các bảng cần thiết đã có migration trong dự án.
+- Docker không chứa storage của máy phát triển. Chuyển riêng ảnh công khai sang lưu trữ bền vững hoặc volume; không chuyển file sao lưu, khóa, session và dữ liệu khách hàng cùng ảnh.
+- MAIL_MAILER=log chỉ dành cho chuẩn bị. Cấu hình SMTP trước khi dùng email xác nhận thật; không xem log mail là gửi email thành công.
+- Cấu hình SePay webhook tới `<APP_URL>/payments/sepay/webhook`, API Key và API Token riêng trong Environment. API_TOKEN dùng đọc đối soát, API_KEY xác thực webhook.
+- Free web service có thể ngủ khi không có truy cập. Scheduler trong web không chạy lúc ngủ; để vận hành thanh toán liên tục cần chọn dịch vụ luôn hoạt động sau khi chủ tài khoản duyệt chi phí.
+
+### Kiểm tra trước khi nhận khách
+
+1. Địa chỉ HTTPS mở được từ điện thoại ngoài Wi-Fi của máy phát triển, không có cảnh báo chứng chỉ.
+2. Đăng nhập/đăng xuất ổn định; tài khoản khách không truy cập được chức năng in vé.
+3. Tài nguyên CSS/JS/ảnh và liên kết QR đều dùng hostname công khai, không chứa localhost hay IP nội bộ.
+4. Kiểm tra giao dịch SePay với sự cho phép của chủ tài khoản, webhook/đối soát tự cập nhật và không cộng điểm hai lần.
+5. Kiểm tra lưu ảnh sau restart, sao lưu database ngoài web container và thử khôi phục trên database riêng.
+6. Gắn tên miền riêng sau: khai báo domain trên Render, nhập đúng bản ghi DNS do Render cấp và chờ trạng thái TLS hợp lệ. Không cần mua tên miền để có HTTPS đầu tiên.
+
+Tài liệu nhà cung cấp: https://render.com/docs/docker, https://render.com/docs/free, https://render.com/docs/custom-domains.

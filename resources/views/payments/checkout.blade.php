@@ -3,7 +3,8 @@
 @section('title', 'Thanh toán')
 
 @section('content')
-<div class="container py-5">
+<div class="container py-5 checkout-page">
+    <nav class="checkout-steps mb-4" aria-label="Tiến trình đặt vé"><span><i class="bi bi-check-circle-fill"></i> Chọn ghế</span><span class="current" aria-current="step">2 · Thanh toán</span><span>3 · Nhận vé</span></nav>
     <div class="row justify-content-center">
         <div class="col-xl-10">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-4">
@@ -11,36 +12,27 @@
                     <a href="{{ route('bookings.show', $booking) }}" class="text-decoration-none small">
                         <i class="bi bi-arrow-left me-1"></i>Quay lại đơn hàng
                     </a>
-                    <h1 class="section-title mt-2 mb-1">Chọn phương thức thanh toán</h1>
+                    <h1 class="section-title mt-2 mb-1">Hoàn tất đặt vé</h1>
                     <p class="text-muted mb-0">Mã đơn {{ $booking->code }}</p>
                 </div>
-                <span class="badge rounded-pill text-bg-{{ $paymentMode === 'simulate' ? 'warning' : 'success' }} p-2 px-3">
-                    {{ $paymentMode === 'production' ? 'Thanh toán trực tuyến' : 'Quét QR hoặc xác nhận trên ứng dụng' }}
-                </span>
+                <span class="badge rounded-pill text-bg-light border p-2 px-3">Thanh toán đơn vé</span>
             </div>
 
-            @if($paymentMode === 'simulate')
-                <div class="alert alert-info d-flex gap-2 align-items-start">
-                    <i class="bi bi-info-circle-fill mt-1"></i>
-                    <div>
-                        <strong>Đang dùng chế độ trình diễn đồ án.</strong>
-                        Bạn có thể chọn MoMo hoặc VNPAY và xác nhận kết quả mà không phát sinh giao dịch thật.
-                    </div>
-                </div>
-            @else
-                <div class="alert alert-success d-flex gap-2 align-items-start">
-                    <i class="bi bi-shield-check mt-1"></i>
-                    <div>
-                        Giao dịch được chuyển sang trang thanh toán chính thức của nhà cung cấp.
-                        Kết quả chỉ được ghi nhận sau khi hệ thống kiểm tra chữ ký, số tiền và mã đơn.
-                    </div>
-                </div>
-            @endif
+            <div class="alert alert-light border small"><i class="bi bi-shield-check me-2"></i>Vé được phát hành sau khi hệ thống nhận xác nhận thanh toán thành công.</div>
+            @unless(array_filter($providerStatus))
+                <div class="alert alert-warning">Chưa có phương thức thanh toán khả dụng. Vui lòng liên hệ rạp để được hỗ trợ.</div>
+            @endunless
 
+            <div class="hold-notice mb-4" role="status"><div><i class="bi bi-hourglass-split me-2"></i>Thời gian giữ ghế còn lại <strong id="checkoutCountdown" class="ms-2">--:--</strong></div><span id="holdDescription" class="small">Hoàn tất thanh toán để nhận vé và mã QR.</span></div>
             <div class="row g-4">
                 <div class="col-lg-7">
-                    <form action="{{ route('payments.store', $booking) }}" method="POST" class="card shadow-soft p-4 p-md-5">
+                    <form action="{{ route('payments.store', $booking) }}" method="POST" id="checkoutForm" class="card shadow-soft p-4 p-md-5">
                         @csrf
+                        <h2 class="h5 fw-bold mb-1">Phương thức thanh toán</h2>
+                        <p class="text-muted small mb-4">Chọn cách thanh toán phù hợp với bạn.</p>
+                        @php
+                            $defaultProvider = old('provider', $providerStatus['sepay'] ? 'sepay' : (array_key_first(array_filter($providerStatus)) ?? ''));
+                        @endphp
 
                         @php
                             $availablePoints = (int) $booking->user->loyalty_points;
@@ -72,41 +64,45 @@
                             @error('points_to_use')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
                         </div>
 
+                        @if($providerStatus['momo'])
                         <label class="payment-option border rounded-4 p-3 mb-3 d-flex align-items-center gap-3 {{ $providerStatus['momo'] ? '' : 'opacity-50' }}">
                             <input class="form-check-input flex-shrink-0" type="radio" name="provider" value="momo"
-                                {{ old('provider') === 'momo' ? 'checked' : '' }}
+                                {{ $defaultProvider === 'momo' ? 'checked' : '' }}
                                 {{ $providerStatus['momo'] ? '' : 'disabled' }} required>
                             <span class="brand-mark flex-shrink-0" style="background:#a50064">M</span>
                             <span class="flex-grow-1">
                                 <strong class="d-block">Ví MoMo</strong>
                                 <span class="small text-muted">
-                                    {{ $paymentMode === 'production' ? 'Chuyển đến ứng dụng hoặc website MoMo để thanh toán' : 'Quét QR hoặc xác nhận trên ứng dụng MoMo' }}
+                                    Chuyển đến ứng dụng hoặc website MoMo để thanh toán
                                 </span>
                             </span>
                             <span class="badge text-bg-{{ $providerStatus['momo'] ? 'light' : 'secondary' }}">
-                                {{ $providerStatus['momo'] ? 'Sẵn sàng' : 'Chưa cấu hình' }}
+                                {{ $providerStatus['momo'] ? ($paymentMode === 'sandbox' ? 'Thử nghiệm' : 'Khả dụng') : 'Tạm chưa khả dụng' }}
                             </span>
                         </label>
+                        @endif
 
+                        @if($providerStatus['vnpay'])
                         <label class="payment-option border rounded-4 p-3 mb-3 d-flex align-items-center gap-3 {{ $providerStatus['vnpay'] ? '' : 'opacity-50' }}">
                             <input class="form-check-input flex-shrink-0" type="radio" name="provider" value="vnpay"
-                                {{ old('provider') === 'vnpay' ? 'checked' : '' }}
+                                {{ $defaultProvider === 'vnpay' ? 'checked' : '' }}
                                 {{ $providerStatus['vnpay'] ? '' : 'disabled' }}>
                             <span class="brand-mark flex-shrink-0" style="background:#075eaa">V</span>
                             <span class="flex-grow-1">
                                 <strong class="d-block">VNPAY</strong>
                                 <span class="small text-muted">
-                                    {{ $paymentMode === 'production' ? 'Chuyển đến QR/trang thanh toán VNPAY' : 'QR, ATM nội địa và thẻ quốc tế' }}
+                                    Chuyển đến QR/trang thanh toán VNPAY
                                 </span>
                             </span>
                             <span class="badge text-bg-{{ $providerStatus['vnpay'] ? 'light' : 'secondary' }}">
-                                {{ $providerStatus['vnpay'] ? 'Sẵn sàng' : 'Chưa cấu hình' }}
+                                {{ $providerStatus['vnpay'] ? ($paymentMode === 'sandbox' ? 'Thử nghiệm' : 'Khả dụng') : 'Tạm chưa khả dụng' }}
                             </span>
                         </label>
+                        @endif
 
                         <label class="payment-option border rounded-4 p-3 mb-4 d-flex align-items-center gap-3 {{ $providerStatus['sepay'] ? '' : 'opacity-50' }}">
                             <input class="form-check-input flex-shrink-0" type="radio" name="provider" value="sepay"
-                                {{ old('provider') === 'sepay' ? 'checked' : '' }}
+                                {{ $defaultProvider === 'sepay' ? 'checked' : '' }}
                                 {{ $providerStatus['sepay'] ? '' : 'disabled' }}>
                             <span class="brand-mark flex-shrink-0" style="background:#1261d8"><i class="bi bi-qr-code-scan"></i></span>
                             <span class="flex-grow-1">
@@ -114,7 +110,7 @@
                                 <span class="small text-muted">Quét QR bằng ứng dụng ngân hàng để chuyển khoản đúng số tiền</span>
                             </span>
                             <span class="badge text-bg-{{ $providerStatus['sepay'] ? 'light' : 'secondary' }}">
-                                {{ $providerStatus['sepay'] ? 'Sẵn sàng' : 'Chưa cấu hình' }}
+                                {{ $providerStatus['sepay'] ? 'QR ngân hàng' : 'Tạm chưa khả dụng' }}
                             </span>
                         </label>
 
@@ -122,11 +118,11 @@
                             <div class="text-danger small mb-3">{{ $message }}</div>
                         @enderror
 
-                        <button class="btn btn-primary btn-lg w-100" type="submit">
-                            Tiếp tục thanh toán <i class="bi bi-arrow-right ms-1"></i>
+                        <button id="payButton" class="btn btn-primary btn-lg w-100" type="submit" @disabled(!array_filter($providerStatus))>
+                            <i class="bi bi-lock me-2"></i><span id="payButtonText">Tiếp tục thanh toán</span>
                         </button>
                         <p class="small text-muted text-center mt-3 mb-0">
-                            Không đóng trình duyệt cho đến khi hệ thống hiển thị kết quả giao dịch.
+                            Bạn sẽ được chuyển đến bước thanh toán của phương thức đã chọn.
                         </p>
                     </form>
                 </div>
@@ -134,13 +130,17 @@
                 <div class="col-lg-5">
                     <aside class="card bg-dark text-white p-4 p-md-5 shadow-soft sticky-lg-top" style="top:92px">
                         <div class="small text-white-50">ĐƠN HÀNG</div>
-                        <h4 class="fw-bold mt-1">{{ $booking->showtime->movie->title }}</h4>
+                        <div class="d-flex gap-3 mt-3 mb-3">
+                            @if($booking->showtime->movie->poster)<img src="{{ $booking->showtime->movie->poster }}" alt="Poster {{ $booking->showtime->movie->title }}" class="checkout-poster">@endif
+                            <div><span class="badge bg-light text-dark mb-2">{{ $booking->showtime->movie->age_rating_label }} · {{ $booking->showtime->format }}</span><h4 class="fw-bold h5">{{ $booking->showtime->movie->title }}</h4><span class="small text-white-50">{{ $booking->showtime->movie->duration_label }}</span></div>
+                        </div>
                         <div class="small text-white-50">{{ $booking->code }}</div>
                         <hr>
                         <div class="small text-white-50">Suất chiếu</div>
                         <div class="mb-3">{{ $booking->showtime->starts_at->format('H:i · d/m/Y') }}</div>
                         <div class="small text-white-50">Rạp / Phòng</div>
                         <div class="mb-3">{{ $booking->showtime->room->cinema->name }} / {{ $booking->showtime->room->name }}</div>
+                        <div class="small text-white-50">Ghế đã chọn</div><div class="mb-3 fw-bold">{{ $booking->tickets->pluck('seat.label')->join(', ') }}</div>
                         @include('bookings.concessions')
                         <div class="d-flex justify-content-between"><span>Tạm tính</span><span>{{ number_format($booking->subtotal, 0, ',', '.') }}₫</span></div>
                         @if($booking->voucher && $booking->discount > 0)
@@ -168,6 +168,16 @@
 
 @push('styles')
 <style>
+    .checkout-steps { display:flex; justify-content:center; gap:clamp(12px,4vw,56px); color:#788293; font-size:13px; }
+    .checkout-steps .current { color:#12365b; font-weight:800; }
+    .hold-notice { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:18px 22px; border:1px solid #e9d6aa; background:#fff9e9; border-radius:14px; color:#654a0d; }
+    #checkoutCountdown { font-variant-numeric:tabular-nums; font-size:20px; }
+    .checkout-poster { width:75px; height:110px; object-fit:cover; border-radius:8px; }
+    .checkout-page .card { border:1px solid #e5eaf0; }
+    .payment-option:has(input:disabled) { cursor:not-allowed; }
+    .checkout-page input[type=radio] { width:20px; height:20px; }
+    .checkout-page aside { background:linear-gradient(145deg,#0a213d,#173d61)!important; }
+
     .payment-option { cursor:pointer; transition:.18s ease; background:#fff; }
     .payment-option:has(input:not(:disabled)):hover,
     .payment-option:has(input:checked) { border-color:var(--brand)!important; box-shadow:0 8px 24px rgba(23,23,23,.08); }
@@ -197,5 +207,43 @@
 
     pointsInput?.addEventListener('input', updatePointsPreview);
     updatePointsPreview();
+    const form = document.getElementById('checkoutForm');
+    const payButton = document.getElementById('payButton');
+    const buttonText = document.getElementById('payButtonText');
+    let submitting = false;
+    let expired = false;
+    const providerNames = {momo:'MoMo', vnpay:'VNPAY', sepay:'QR ngân hàng'};
+    function updateButton() {
+        if (expired || submitting) return;
+        const selected = form.querySelector('input[name="provider"]:checked');
+        const total = document.getElementById('checkoutTotal').textContent;
+        buttonText.textContent = selected ? `Thanh toán ${total} · ${providerNames[selected.value]}` : 'Chọn phương thức thanh toán';
+        payButton.disabled = !selected;
+    }
+    form.querySelectorAll('input[name="provider"]').forEach(input => input.addEventListener('change', updateButton));
+    pointsInput?.addEventListener('input', updateButton);
+    const deadline = @json($booking->expires_at?->toIso8601String());
+    const countdown = document.getElementById('checkoutCountdown');
+    function tick() {
+        if (!deadline) { countdown.textContent = 'Theo thời hạn đơn'; return; }
+        const seconds = Math.max(0, Math.ceil((Date.parse(deadline) - Date.now()) / 1000));
+        countdown.textContent = `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
+        if (!seconds) {
+            expired = true;
+            payButton.disabled = true;
+            buttonText.textContent = 'Đã hết thời gian giữ ghế';
+            document.getElementById('holdDescription').textContent = 'Quay lại đơn hàng để kiểm tra và đặt lại ghế.';
+        }
+    }
+    tick();
+    setInterval(tick, 1000);
+    updateButton();
+    form.addEventListener('submit', event => {
+        if (submitting || expired) { event.preventDefault(); return; }
+        submitting = true;
+        payButton.disabled = true;
+        buttonText.textContent = 'Đang tạo giao dịch…';
+    });
+    window.addEventListener('pageshow', () => { submitting = false; tick(); updateButton(); });
 </script>
 @endpush

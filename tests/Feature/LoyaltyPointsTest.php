@@ -17,13 +17,13 @@ class LoyaltyPointsTest extends TestCase
 
     public function test_redeemed_points_are_stored_and_not_deducted_twice(): void
     {
-        config(['cinema.payment_mode' => 'simulate']);
+        $this->configureSepayPayments();
         $user = User::factory()->create(['loyalty_points' => 50]);
         $booking = $this->bookingFor($user);
 
         foreach ([1, 2] as $attempt) {
             $this->actingAs($user)->post(route('payments.store', $booking), [
-                'provider' => 'momo', 'points_to_use' => 10,
+                'provider' => 'sepay', 'points_to_use' => 10,
             ])->assertRedirect();
             $this->assertSame(10, $booking->fresh()->points_used);
             $this->assertSame(40, (int) $user->fresh()->loyalty_points);
@@ -33,11 +33,11 @@ class LoyaltyPointsTest extends TestCase
 
     public function test_cancellation_returns_reserved_points(): void
     {
-        config(['cinema.payment_mode' => 'simulate']);
+        $this->configureSepayPayments();
         $user = User::factory()->create(['loyalty_points' => 50]);
         $booking = $this->bookingFor($user);
         $this->actingAs($user)->post(route('payments.store', $booking), [
-            'provider' => 'momo', 'points_to_use' => 10,
+            'provider' => 'sepay', 'points_to_use' => 10,
         ])->assertRedirect();
 
         app(BookingService::class)->cancel($booking);

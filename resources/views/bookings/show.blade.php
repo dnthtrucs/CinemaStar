@@ -99,10 +99,10 @@
                             </form>
                         </div>
                     @elseif($booking->status === 'confirmed')
-                        <a href="{{ route('bookings.print', $booking) }}" class="btn btn-outline-dark mb-3" target="_blank">In vé</a>
+
                         <div class="alert alert-success">
                             <i class="bi bi-check-circle-fill me-2"></i>
-                            Vé đã sẵn sàng. Một mã QR dùng để check-in toàn bộ ghế trong đơn.
+                            Đặt vé thành công. Xuất trình mã QR hoặc mã đặt vé tại quầy để nhân viên quét mã và in vé cho bạn.
                         </div>
 
                         <article class="card border p-4 text-center ticket-qr-card mx-auto mt-4" style="max-width:460px">

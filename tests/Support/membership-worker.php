@@ -3,6 +3,7 @@
 use App\Http\Controllers\PaymentController;
 use App\Models\Payment;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -76,7 +77,14 @@ try {
     $controller = $app->make(PaymentController::class);
     $response = $controller->sepayWebhook($request);
     $retry = $controller->sepayWebhook($request);
-    $isolation = DB::selectOne('SELECT @@session.transaction_isolation AS isolation_level')->isolation_level;
+    try {
+        $isolation = DB::selectOne('SELECT @@session.transaction_isolation AS isolation_level')->isolation_level;
+    } catch (QueryException $exception) {
+        if ((int) ($exception->errorInfo[1] ?? 0) !== 1193) {
+            throw $exception;
+        }
+        $isolation = DB::selectOne('SELECT @@session.tx_isolation AS isolation_level')->isolation_level;
+    }
     echo json_encode(['status' => $response->getStatusCode(), 'retry_status' => $retry->getStatusCode(), 'default_isolation' => $isolation]), "\n";
 } catch (Throwable $exception) {
     fwrite(STDERR, $exception::class.': '.$exception->getMessage()."\n");

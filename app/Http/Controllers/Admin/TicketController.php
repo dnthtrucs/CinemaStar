@@ -40,7 +40,8 @@ class TicketController extends Controller
         if ($booking = $this->bookingFromQr($value)) {
             $this->checkInBooking($booking);
 
-            return back()->with('success', "Check-in thành công toàn bộ ghế trong đơn {$booking->code}.");
+            return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])
+                ->with('success', "Đã quét và check-in đơn {$booking->code}. Bạn có thể in vé tại đây.");
         }
 
         $token = $this->extractQrToken($value);
@@ -55,7 +56,8 @@ class TicketController extends Controller
 
         $this->checkInTicket($ticket);
 
-        return back()->with('success', "Check-in thành công vé {$ticket->fresh()->code}.");
+        return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $ticket->booking->code])
+            ->with('success', "Check-in thành công vé {$ticket->fresh()->code}.");
     }
 
     private function checkInTicket(Ticket $ticket): void
