@@ -1,26 +1,42 @@
 <!doctype html>
 <html lang="vi">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0;padding:20px;background:#ffffff;color:#222222;font-family:Arial,sans-serif;font-size:15px;line-height:1.6">
-  <div style="max-width:600px;margin:0 auto">
-    <p>Xin chào {{ $customer->name }},</p>
-    <p>CinemaStar xác nhận đã nhận thanh toán cho đơn <strong>{{ $booking->code }}</strong>. Thông tin vé của bạn:</p>
-    <table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px">
-      <tr><td style="padding:6px 0">Mã vé</td><td style="padding:6px 0">{{ $booking->code }}</td></tr>
-      <tr><td style="padding:6px 0">Phim</td><td style="padding:6px 0">{{ $showtime->movie->title }}</td></tr>
-      <tr><td style="padding:6px 0">Rạp</td><td style="padding:6px 0">{{ $showtime->room->cinema->name }}</td></tr>
-      <tr><td style="padding:6px 0">Địa chỉ</td><td style="padding:6px 0">{{ $showtime->room->cinema->address }}</td></tr>
-      <tr><td style="padding:6px 0">Suất chiếu</td><td style="padding:6px 0">{{ $showtime->starts_at->format('H:i d/m/Y') }}</td></tr>
-      <tr><td style="padding:6px 0">Phòng</td><td style="padding:6px 0">{{ $showtime->room->name }}</td></tr>
-      <tr><td style="padding:6px 0">Ghế</td><td style="padding:6px 0">{{ $seatLabels }}</td></tr>
-      @include('emails.partials.concessions')
-      <tr><td style="padding:6px 0">Đã thanh toán</td><td style="padding:6px 0"><strong>{{ number_format((int) $booking->total_price, 0, ',', '.') }} VNĐ</strong></td></tr>
+<body style="margin:0;background:#f1f3f5;font-family:Arial,sans-serif;color:#20242a">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 12px"><tr><td align="center">
+    <table role="presentation" width="480" cellspacing="0" cellpadding="0" style="max-width:480px;background:#fff;border-radius:8px;overflow:hidden">
+      <tr><td align="center" style="padding:26px 24px 18px;border-bottom:4px dotted #eef1f4">
+        <div style="font-size:25px;font-weight:700;color:#d71920;letter-spacing:.4px">CINEMASTAR</div>
+        <div style="font-size:13px;color:#667085;margin-top:7px">VÉ ĐIỆN TỬ - THANH TOÁN THÀNH CÔNG</div>
+      </td></tr>
+      <tr><td style="padding:24px">
+        <p style="margin:0 0 14px;font-size:15px">Xin chào <b>{{ $customer->name }}</b>, cảm ơn bạn đã đặt vé!</p>
+        <div style="text-align:center;padding:8px 0 19px">
+          <div style="font-size:21px;font-weight:700;text-transform:uppercase">{{ $showtime->movie->title }}</div>
+          <div style="margin-top:8px;color:#1677c8;font-size:14px;font-weight:700">{{ $showtime->room->cinema->name }}</div>
+          <div style="margin-top:7px;font-size:13px;color:#596579">{{ $showtime->room->cinema->address ?? '' }}</div>
+        </div>
+        <div style="border-top:1px dashed #ccd5df;padding-top:18px;text-align:center">
+          <div style="font-size:12px;color:#52647a">MÃ VÉ / MÃ ĐẶT CHỖ</div>
+          <div style="font-size:25px;font-weight:700;letter-spacing:1px;margin-top:6px">{{ $booking->code }}</div>
+          <div style="padding:18px 0 2px">
+            <img src="{{ $message->embedData($qrPng, 'CinemaStar-QR-'.$booking->code.'.png', 'image/png') }}" width="210" height="210" alt="Mã QR đơn vé CinemaStar" style="display:block;width:210px;height:210px;margin:0 auto;border:8px solid #fff;border-radius:8px">
+          </div>
+          <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#52647a">Đơn sử dụng một mã QR duy nhất cho toàn bộ ghế. Đưa mã này cho nhân viên khi check-in.</p>
+        </div>
+      </td></tr>
+      <tr><td style="padding:0 24px 20px;border-bottom:4px dotted #eef1f4">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px">
+          <tr><td style="padding:12px 0;border-bottom:1px dashed #cbd5e1;color:#52647a">Suất chiếu<br><i style="font-size:11px">Session</i></td><td align="right" style="padding:12px 0;border-bottom:1px dashed #cbd5e1;font-weight:700">{{ $showtime->starts_at->format('d/m/Y H:i') }}</td></tr>
+          <tr><td style="padding:12px 0;border-bottom:1px dashed #cbd5e1;color:#52647a">Phòng chiếu<br><i style="font-size:11px">Hall</i></td><td align="right" style="padding:12px 0;border-bottom:1px dashed #cbd5e1;font-weight:700">{{ $showtime->room->name }}</td></tr>
+          <tr><td style="padding:12px 0;border-bottom:1px dashed #cbd5e1;color:#52647a">Ghế<br><i style="font-size:11px">Seat</i></td><td align="right" style="padding:12px 0;border-bottom:1px dashed #cbd5e1;font-weight:700">{{ $seatLabels }}</td></tr>
+          @include('emails.partials.concessions')
+          <tr><td style="padding:12px 0;color:#52647a">Tổng thanh toán<br><i style="font-size:11px">Payment amount</i></td><td align="right" style="padding:12px 0;font-size:16px;font-weight:700;color:#d71920">{{ number_format((int) $booking->total_price, 0, ',', '.') }} VNĐ</td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:20px 24px 24px;background:#fafbfd;font-size:12px;line-height:1.55;color:#4b5563">
+        <b>Lưu ý:</b> Vui lòng đến rạp trước giờ chiếu và đưa mã QR/mã đặt chỗ để nhân viên check-in. Vé đã thanh toán không thể hủy hoặc đổi trả theo quy định của rạp.<br><br>
+        Cần hỗ trợ? Liên hệ CinemaStar để được giải đáp.
+      </td></tr>
     </table>
-    <p>Đưa mã vé ở trên hoặc mã QR dưới đây cho nhân viên rạp để kiểm tra và in vé.</p>
-    <p><img src="{{ $message->embedData($qrPng, 'CinemaStar-QR-'.$booking->code.'.png', 'image/png') }}" width="180" height="180" alt="Mã QR vé {{ $booking->code }}" style="display:block;width:180px;height:180px"></p>
-    <p>Bạn cũng có thể đăng nhập CinemaStar và mở mục Vé của tôi để xem lại vé. Vui lòng đến rạp trước giờ chiếu.</p>
-    <p>Cảm ơn bạn,<br>CinemaStar</p>
-    <p style="font-size:12px;color:#555555">Đây là thư xác nhận cho giao dịch đặt vé của bạn.</p>
-  </div>
+  </td></tr></table>
 </body>
 </html>
