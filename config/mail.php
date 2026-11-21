@@ -37,6 +37,8 @@ return [
 
     'mailers' => [
 
+        'gmail_api' => ['transport' => 'gmail_api'],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),

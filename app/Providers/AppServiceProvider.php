@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Mail\GmailApiTransport;
+use App\Services\GmailApiService;
 use Carbon\Carbon;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
             URL::forceRootUrl(config('app.url'));
             URL::forceScheme('https');
         }
+
+        Mail::extend('gmail_api', fn () => new GmailApiTransport(app(GmailApiService::class)));
 
         Carbon::setLocale('vi');
         Paginator::useBootstrapFive();

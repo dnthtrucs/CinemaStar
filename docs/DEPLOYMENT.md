@@ -149,26 +149,27 @@ Cache chỉ cho phép deserialize Eloquent Collection và các model trang chủ
 Tài liệu nhà cung cấp: https://render.com/docs/docker, https://render.com/docs/free, https://render.com/docs/custom-domains.
 
 
-## Email trên Render Free
+## Gmail API qua HTTPS trên Render Free
 
-Render Free chặn SMTP cổng 25, 465 và 587. Gmail SMTP ở cổng 587 trong máy không dùng được trên gói này.
-Nguồn: https://render.com/docs/free
+Render Free chặn SMTP Gmail ở cổng 587. Website hỗ trợ gửi nguyên email MIME có QR qua Gmail API trên HTTPS, dùng cùng mẫu vé điện tử hiện có.
 
-Để dùng Brevo SMTP, xác minh sender và kích hoạt transactional email trong Brevo trước. Lưu các biến sau trực tiếp trong Render Environment, không đưa SMTP key lên GitHub hoặc chat:
+1. Trong Google Cloud, chọn dự án CinemaStar và bật Gmail API.
+2. Trong Google Auth Platform, thiết lập Branding (CinemaStar và email hỗ trợ), chọn Audience External. Khi thử đồ án ở chế độ Testing, thêm Gmail gửi vé vào Test users.
+3. Tạo OAuth Client loại Web application. Authorized redirect URI phải đúng URL sau (không thêm dấu / cuối):
 
-```dotenv
-MAIL_MAILER=smtp
-MAIL_SCHEME=smtp
-MAIL_HOST=smtp-relay.brevo.com
-MAIL_PORT=2525
-MAIL_USERNAME=<SMTP login do Brevo cấp>
-MAIL_PASSWORD=<SMTP key, không phải mật khẩu đăng nhập hay API key>
-MAIL_FROM_ADDRESS=<địa chỉ sender đã xác minh>
-MAIL_FROM_NAME=CinemaStar
-MAIL_TIMEOUT=15
+```text
+https://cinemastar-90am.onrender.com/admin/email/gmail/callback
 ```
 
-Xóa giá trị MAIL_URL cũ nếu có vì nó có thể ghi đè SMTP host/user. Không đổi MAIL_MAILER từ log sang smtp trước khi có đủ thông tin thật.
-Gửi thử một email, kiểm tra kết quả trong Brevo và hộp thư nhận (cả Spam). Quản trị viên có thể mở chi tiết đơn đã thanh toán và chọn **Gửi lại email vé**; thao tác này không tạo giao dịch hoặc đổi giá vé.
+4. Lưu GMAIL_CLIENT_ID và GMAIL_CLIENT_SECRET trực tiếp trong Render Environment. Không gửi Client Secret vào chat, không commit file Google JSON. APP_KEY phải giữ nguyên để đọc được refresh token đã mã hóa.
+5. Triển khai các biến đó, đăng nhập quản trị và mở `/admin/email`, chọn **Kết nối Gmail**. Đăng nhập tài khoản gửi vé và tự cấp quyền Google. Phạm vi Gmail chỉ gồm gmail.send; openid/email dùng xác minh tài khoản, không đọc hoặc xóa thư.
+6. Sau khi trang báo **Đã kết nối**, đặt `MAIL_MAILER=gmail_api` trong Render và triển khai lại. Không cần SMTP password hay cổng 587. From được lấy từ tài khoản Google đã cấp quyền, tránh gửi nhầm địa chỉ cấu hình cũ.
+7. Mở chi tiết đơn đã thanh toán, chọn **Gửi lại email vé**. Kiểm tra thư gửi và hộp thư nhận, cả mục Spam. Chỉ xem là gửi thành công khi Gmail API trả về message ID; việc vào Inbox cần kiểm tra ở hộp thư nhận.
 
-Tài liệu Brevo: https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP
+Trong chế độ OAuth Testing, Google có thể hết hạn refresh token sau 7 ngày với quyền Gmail; cần kết nối lại trước buổi trình diễn nếu bị thu hồi/hết hạn. Không tự bỏ qua cảnh báo Google hay chia sẻ token. Kết nối được lưu mã hóa trong MySQL nên tồn tại qua các lần Render khởi động lại. Khóa access token trong cache cũng được mã hóa. Khi đổi OAuth Client ID cần kết nối lại.
+
+Gửi thư không tự retry POST vì timeout có thể xảy ra sau khi Gmail đã nhận thư. Quản trị viên cần kiểm tra Sent trước khi gửi lại trong tình huống chưa rõ kết quả. Callback thanh toán vẫn giữ trạng thái đã thanh toán khi dịch vụ mail gặp lỗi.
+
+Nguồn: https://developers.google.com/workspace/gmail/api/guides/sending
+OAuth: https://developers.google.com/identity/protocols/oauth2/web-server
+Quyền: https://developers.google.com/workspace/gmail/api/auth/scopes

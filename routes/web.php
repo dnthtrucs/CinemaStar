@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CinemaController as AdminCinemaController;
 use App\Http\Controllers\Admin\ConcessionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\GmailConnectionController;
 use App\Http\Controllers\Admin\ManualRefundController;
 use App\Http\Controllers\Admin\MovieController as AdminMovieController;
 use App\Http\Controllers\Admin\ReceiptEmailController;
@@ -83,6 +84,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/showtimes/bulk/create', [AdminShowtimeController::class, 'bulkCreate'])->name('showtimes.bulk.create');
     Route::post('/showtimes/bulk', [AdminShowtimeController::class, 'bulkStore'])->name('showtimes.bulk.store');
     Route::resource('showtimes', AdminShowtimeController::class)->except('show');
+    Route::get('/email', [GmailConnectionController::class, 'index'])->name('email.index');
+    Route::post('/email/gmail/connect', [GmailConnectionController::class, 'connect'])->middleware('throttle:6,1')->name('email.gmail.connect');
+    Route::get('/email/gmail/callback', [GmailConnectionController::class, 'callback'])->name('email.gmail.callback');
     Route::resource('bookings', AdminBookingController::class)->only(['index', 'show']);
     Route::post('/bookings/{booking}/receipt-email', [ReceiptEmailController::class, 'store'])->middleware('throttle:3,1')->name('bookings.receipt-email');
     Route::resource('users', AdminUserController::class)->only(['index', 'update']);
