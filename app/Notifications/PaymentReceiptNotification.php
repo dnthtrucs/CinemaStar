@@ -35,7 +35,7 @@ class PaymentReceiptNotification extends Notification
         $qrPng = $this->makeQrPng($verificationUrl);
 
         $message = (new MailMessage)
-            ->subject('CinemaStar | Vé điện tử '.$booking->code)
+            ->subject('Xác nhận đặt vé '.$booking->code.' - CinemaStar')
             ->view(['html' => 'emails.payment-receipt', 'text' => 'emails.payment-receipt-text'], [
                 'customer' => $notifiable,
                 'booking' => $booking,
@@ -53,7 +53,7 @@ class PaymentReceiptNotification extends Notification
             data: $verificationUrl,
             encoding: new Encoding('UTF-8'),
             errorCorrectionLevel: ErrorCorrectionLevel::Medium,
-            size: 420,
+            size: 240,
             margin: 12,
             roundBlockSizeMode: RoundBlockSizeMode::Margin,
             foregroundColor: new Color(23, 23, 23),
