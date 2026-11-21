@@ -11,6 +11,24 @@ class TicketCheckinTest extends TestCase
 {
     use CreatesCinemaBookings, RefreshDatabase;
 
+    public function test_signed_barcode_checks_in_paid_booking_and_rejects_tampering(): void
+    {
+        $booking = $this->bookingFor();
+        $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
+        $staff = User::factory()->create(['role' => 'staff']);
+        $this->actingAs($staff)->post(route('staff.tickets.scan'), ['ticket_token' => $booking->code.'-'.str_repeat('0', 16)])->assertUnprocessable();
+        $this->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertRedirect();
+        $this->assertSame('checked_in', $booking->fresh()->ticket_status);
+        $this->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertUnprocessable();
+    }
+
+    public function test_customer_cannot_scan_barcode_and_unpaid_barcode_is_rejected(): void
+    {
+        $booking = $this->bookingFor();
+        $this->actingAs($booking->user)->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertForbidden();
+        $this->actingAs(User::factory()->create(['role' => 'staff']))->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertUnprocessable();
+    }
+
     public function test_booking_qr_is_public_and_checks_its_signature(): void
     {
         $booking = $this->bookingFor(User::factory()->create(['phone' => '0901234567']));

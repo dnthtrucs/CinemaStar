@@ -6,18 +6,18 @@
     @if(auth()->user()->isAdmin()) @include('admin.partials.nav') @endif
     <div class="row justify-content-center"><div class="col-lg-7">
         <h1 class="section-title">Check-in vé</h1>
-        <p class="text-muted">Dùng camera điện thoại để quét QR trên vé, hoặc nhập mã đơn <strong>BK...</strong>.</p>
+        <p class="text-muted">Dùng camera điện thoại để quét mã vạch trên vé, hoặc nhập mã đơn <strong>BK...</strong>.</p>
 
         <section class="card shadow-soft p-4 mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="brand-mark"><i class="bi bi-qr-code-scan"></i></span>
-                <div><h2 class="h5 fw-bold mb-1">Quét mã QR bằng camera</h2><p class="small text-muted mb-0">Một mã QR cho toàn bộ đơn. Quét mã, xác nhận vé rồi in tại quầy.</p></div>
+                <div><h2 class="h5 fw-bold mb-1">Quét mã vạch bằng camera</h2><p class="small text-muted mb-0">Một mã vạch cho toàn bộ đơn. Quét mã, xác nhận vé rồi in tại quầy.</p></div>
             </div>
             <div id="qr-reader" class="rounded overflow-hidden d-none"></div>
             <div id="scanner-message" class="small text-muted mb-3">Bấm nút để bật camera sau của điện thoại.</div>
-            <button id="start-scanner" class="btn btn-primary w-100" type="button"><i class="bi bi-camera me-2"></i>Mở camera quét QR</button>
+            <button id="start-scanner" class="btn btn-primary w-100" type="button"><i class="bi bi-camera me-2"></i>Mở camera quét mã vạch</button>
             <div class="mt-3">
-                <label for="qr-file" class="form-label small fw-semibold">Hoặc chụp/chọn ảnh mã QR</label>
+                <label for="qr-file" class="form-label small fw-semibold">Hoặc chụp/chọn ảnh mã vạch</label>
                 <input id="qr-file" type="file" accept="image/*" capture="environment" class="form-control">
                 <div class="form-text">Dùng khi điện thoại không mở được camera trực tiếp trên mạng Wi-Fi.</div>
             </div>

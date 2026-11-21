@@ -3,12 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use Endroid\QrCode\Color\Color;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\RoundBlockSizeMode;
-use Endroid\QrCode\Writer\SvgWriter;
+use App\Services\TicketBarcode;
 use Illuminate\Http\Request;
 
 class BookingTicketController extends Controller
@@ -36,9 +31,7 @@ class BookingTicketController extends Controller
 
         return view('bookings.print', [
             'booking' => $booking,
-            'qrDataUri' => 'data:image/svg+xml;base64,'.base64_encode(
-                $this->makeQrSvg($booking->verificationUrl())
-            ),
+            'barcodeDataUri' => app(TicketBarcode::class)->dataUri($booking),
         ]);
     }
 
@@ -51,21 +44,5 @@ class BookingTicketController extends Controller
             'tickets.seat',
             'concessions',
         ]);
-    }
-
-    private function makeQrSvg(string $url): string
-    {
-        $qrCode = new QrCode(
-            data: $url,
-            encoding: new Encoding('UTF-8'),
-            errorCorrectionLevel: ErrorCorrectionLevel::Medium,
-            size: 420,
-            margin: 12,
-            roundBlockSizeMode: RoundBlockSizeMode::Margin,
-            foregroundColor: new Color(23, 23, 23),
-            backgroundColor: new Color(255, 255, 255),
-        );
-
-        return (new SvgWriter)->write($qrCode)->getString();
     }
 }

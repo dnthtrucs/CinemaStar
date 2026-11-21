@@ -3,12 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Booking;
-use Endroid\QrCode\Color\Color;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\RoundBlockSizeMode;
-use Endroid\QrCode\Writer\PngWriter;
+use App\Services\TicketBarcode;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -30,9 +25,7 @@ class PaymentReceiptNotification extends Notification
         $showtime = $booking->showtime;
         $seatLabels = $booking->tickets->pluck('seat.label')->filter()->join(', ');
 
-        $verificationUrl = $booking->verificationUrl();
-
-        $qrPng = $this->makeQrPng($verificationUrl);
+        $barcodePng = app(TicketBarcode::class)->png($booking);
 
         $message = (new MailMessage)
             ->subject('Xác nhận đặt vé '.$booking->code.' - CinemaStar')
@@ -41,25 +34,9 @@ class PaymentReceiptNotification extends Notification
                 'booking' => $booking,
                 'showtime' => $showtime,
                 'seatLabels' => $seatLabels !== '' ? $seatLabels : 'Đang cập nhật',
-                'qrPng' => $qrPng,
+                'barcodePng' => $barcodePng,
             ]);
 
         return $message;
-    }
-
-    private function makeQrPng(string $verificationUrl): string
-    {
-        $qrCode = new QrCode(
-            data: $verificationUrl,
-            encoding: new Encoding('UTF-8'),
-            errorCorrectionLevel: ErrorCorrectionLevel::Medium,
-            size: 240,
-            margin: 12,
-            roundBlockSizeMode: RoundBlockSizeMode::Margin,
-            foregroundColor: new Color(23, 23, 23),
-            backgroundColor: new Color(255, 255, 255),
-        );
-
-        return (new PngWriter)->write($qrCode)->getString();
     }
 }

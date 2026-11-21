@@ -102,22 +102,21 @@
 
                         <div class="alert alert-success">
                             <i class="bi bi-check-circle-fill me-2"></i>
-                            Đặt vé thành công. Xuất trình mã QR hoặc mã đặt vé tại quầy để nhân viên quét mã và in vé cho bạn.
+                            Đặt vé thành công. Xuất trình mã vạch hoặc mã đặt vé tại quầy để nhân viên quét mã và in vé cho bạn.
                         </div>
 
                         <article class="card border p-4 text-center ticket-qr-card mx-auto mt-4" style="max-width:460px">
-                            <div class="small text-muted">MÃ QR ĐƠN VÉ</div>
+                            <div class="small text-muted">MÃ VẠCH ĐƠN VÉ</div>
                             <div class="fw-bold fs-4 text-brand mb-3">{{ $booking->code }}</div>
                             <div class="ticket-qr-wrap mx-auto">
-                                <canvas class="ticket-qr" data-ticket-qr="{{ $bookingQrUrl }}" aria-label="Mã QR đơn {{ $booking->code }}"></canvas>
-                                <div class="ticket-qr-loading small text-muted">Đang tạo mã QR...</div>
+                                <img src="{{ app(\App\Services\TicketBarcode::class)->dataUri($booking) }}" alt="Mã vạch đơn {{ $booking->code }}" style="width:100%;height:auto;max-width:420px">
                             </div>
                             <div class="mt-3"><strong>Áp dụng cho ghế: {{ $booking->tickets->pluck('seat.label')->join(', ') }}</strong></div>
                             <div class="small text-muted mt-1">Nhân viên quét một lần để check-in toàn bộ ghế của đơn.</div>
                         </article>
 
                         <p class="small text-muted text-center mt-4 mb-0">
-                            Không chia sẻ mã QR công khai. Mã QR chứa đường dẫn xác thực của đơn vé.
+                            Không chia sẻ mã vạch công khai. Mã vạch dùng để xác thực đơn vé.
                         </p>
                     @endif
                 </div>

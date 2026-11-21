@@ -33,8 +33,8 @@
         .concessions { margin: 14px 0; border-top: 1px dashed black; padding-top: 10px; font-size: 10px; }
         .details { margin: 18px 0; font-size: 10px; }
         .details p { margin: 5px 0; }
-        .qr-row { display: flex; align-items: center; gap: 10px; border-top: 1px dashed black; padding-top: 14px; }
-        .qr-row img { width: 30mm; height: 30mm; flex-shrink: 0; image-rendering: pixelated; }
+        .qr-row { display: block; align-items: center; gap: 10px; border-top: 1px dashed black; padding-top: 14px; }
+        .qr-row img { width: 100%; height: auto; flex-shrink: 0; image-rendering: pixelated; }
         .qr-note { font-size: 10px; }
         .thanks { text-align: center; font-size: 10px; margin: 17px 0 0; }
         @media print {
@@ -95,8 +95,8 @@
             <p><strong>Ngày in:</strong> {{ now()->format('d/m/Y H:i') }}</p>
         </div>
         <div class="qr-row">
-            <img src="{{ $qrDataUri }}" alt="QR đơn đặt {{ $booking->code }}">
-            <div class="qr-note"><strong>QUÉT QR KIỂM TRA VÉ</strong><p>Một mã QR cho toàn bộ {{ $booking->tickets->count() }} ghế trong đơn. Xuất trình vé khi vào phòng chiếu.</p></div>
+            <img src="{{ $barcodeDataUri }}" alt="Mã vạch đơn đặt {{ $booking->code }}">
+            <div class="qr-note"><strong>QUÉT MÃ VẠCH KIỂM TRA VÉ</strong><p>Một mã vạch cho toàn bộ {{ $booking->tickets->count() }} ghế trong đơn. Xuất trình vé khi vào phòng chiếu.</p></div>
         </div>
         <p class="thanks">Vui lòng đến trước giờ chiếu 15 phút.<br>Cảm ơn bạn đã chọn CinemaStar!</p>
     </main>

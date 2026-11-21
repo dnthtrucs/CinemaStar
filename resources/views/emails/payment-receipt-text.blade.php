@@ -18,8 +18,8 @@ Bắp nước (giá trước ưu đãi):
 @endif
 Tổng thanh toán: {{ number_format((int) $booking->total_price, 0, ',', '.') }} VNĐ
 
-Bạn có thể đăng nhập CinemaStar, mở Vé của tôi để xem vé và mã QR.
-Đưa mã vé hoặc mã QR cho nhân viên rạp để kiểm tra và in vé.
+Bạn có thể đăng nhập CinemaStar, mở Vé của tôi để xem vé và mã vạch.
+Đưa mã vé hoặc mã vạch cho nhân viên rạp để kiểm tra và in vé.
 Vui lòng đến rạp trước giờ chiếu.
 
 Đây là email xác nhận cho đơn đặt vé của bạn tại CinemaStar.

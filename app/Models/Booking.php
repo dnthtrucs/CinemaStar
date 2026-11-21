@@ -58,6 +58,11 @@ class Booking extends Model
         return hash_hmac('sha256', $this->id.'|'.$this->code, (string) config('app.key'));
     }
 
+    public function barcodeValue(): string
+    {
+        return $this->code.'-'.strtoupper(substr($this->verificationSignature(), 0, 16));
+    }
+
     public function verificationUrl(): string
     {
         return route('bookings.verify', ['booking' => $this->id, 'signature' => $this->verificationSignature()]);

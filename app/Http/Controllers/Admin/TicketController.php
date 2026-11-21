@@ -37,6 +37,13 @@ class TicketController extends Controller
             'ticket_token' => ['required', 'string', 'max:2048'],
         ])['ticket_token'];
 
+        if (preg_match('/^(BK[A-Z0-9]+)-([A-F0-9]{16})$/', $value, $parts)) {
+            $booking = Booking::where('code', $parts[1])->first();
+            abort_unless($booking && hash_equals($booking->barcodeValue(), $value), 422, 'Mã vạch không hợp lệ.');
+            $this->checkInBooking($booking);
+
+            return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])->with('success', 'Đã quét mã vạch. Bạn có thể in vé tại đây.');
+        }
         if ($booking = $this->bookingFromQr($value)) {
             $this->checkInBooking($booking);
 

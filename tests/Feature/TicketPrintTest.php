@@ -27,7 +27,7 @@ class TicketPrintTest extends TestCase
         $this->get(route('bookings.print', $booking).'?preview=1')
             ->assertOk()->assertSee('80mm')->assertSee('A1, C1')->assertSee('190.000 VNĐ')
             ->assertSee('-10.000 VNĐ')->assertSee('-5.000 VNĐ')->assertSee('175.000 VNĐ')
-            ->assertSee('Một mã QR cho toàn bộ 2 ghế')->assertSee('data:image/svg+xml;base64,', false);
+            ->assertSee('Một mã vạch cho toàn bộ 2 ghế')->assertSee('data:image/png;base64,', false);
         $this->actingAs(User::factory()->create())->get(route('bookings.print', $booking))->assertForbidden();
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('bookings.print', $booking))->assertOk();
     }

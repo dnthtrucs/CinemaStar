@@ -1,4 +1,4 @@
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
 const startButton = document.getElementById('start-scanner');
 const reader = document.getElementById('qr-reader');
@@ -20,16 +20,16 @@ startButton?.addEventListener('click', async () => {
     reader.classList.remove('d-none');
     message.classList.remove('text-danger');
     message.textContent = 'Đang khởi động camera...';
-    scanner ??= new Html5Qrcode('qr-reader');
+    scanner ??= new Html5Qrcode('qr-reader', { formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.QR_CODE] });
 
     try {
         await scanner.start(
             { facingMode: 'environment' },
-            { fps: 10, qrbox: { width: 240, height: 240 } },
+            { fps: 10, qrbox: { width: 280, height: 140 } },
             submitDecoded,
             () => {},
         );
-        message.textContent = 'Đưa mã QR vé vào khung hình để check-in.';
+        message.textContent = 'Đưa mã vạch vé vào khung hình để check-in.';
     } catch {
         reader.classList.add('d-none');
         startButton.disabled = false;
@@ -46,15 +46,15 @@ qrFile?.addEventListener('change', async () => {
     qrFile.disabled = true;
     reader.classList.remove('d-none');
     message.classList.remove('text-danger');
-    message.textContent = 'Đang đọc mã QR trong ảnh…';
+    message.textContent = 'Đang đọc mã vạch trong ảnh…';
     try {
-        scanner ??= new Html5Qrcode('qr-reader');
+        scanner ??= new Html5Qrcode('qr-reader', { formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.QR_CODE] });
         if (scanner.isScanning) await scanner.stop();
         await submitDecoded(await scanner.scanFile(file, true));
     } catch (_) {
         reader.classList.add('d-none');
         submitted = false;
-        message.textContent = 'Chưa đọc được mã. Chọn ảnh rõ toàn bộ QR hoặc nhập mã BK ở bên dưới.';
+        message.textContent = 'Chưa đọc được mã. Chọn ảnh rõ toàn bộ mã vạch hoặc nhập mã BK ở bên dưới.';
         message.classList.add('text-danger');
     } finally {
         qrFile.disabled = false;
@@ -64,5 +64,5 @@ qrFile?.addEventListener('change', async () => {
 });
 if (startButton && !window.isSecureContext) {
     startButton.disabled = true;
-    message.textContent = 'Camera trực tiếp cần HTTPS. Hãy chụp/chọn ảnh QR hoặc nhập mã đơn bên dưới.';
+    message.textContent = 'Camera trực tiếp cần HTTPS. Hãy chụp/chọn ảnh mã vạch hoặc nhập mã đơn bên dưới.';
 }
