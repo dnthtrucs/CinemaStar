@@ -36,7 +36,7 @@ class PaymentReceiptNotification extends Notification
 
         $message = (new MailMessage)
             ->subject('CinemaStar | Vé điện tử '.$booking->code)
-            ->view('emails.payment-receipt', [
+            ->view(['html' => 'emails.payment-receipt', 'text' => 'emails.payment-receipt-text'], [
                 'customer' => $notifiable,
                 'booking' => $booking,
                 'showtime' => $showtime,

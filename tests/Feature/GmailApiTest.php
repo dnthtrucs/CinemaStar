@@ -176,7 +176,11 @@ class GmailApiTest extends TestCase
             }
             $mime = base64_decode(strtr($request['raw'], '-_', '+/'));
 
-            return str_contains($mime, 'image/png') && str_contains($mime, $booking->code);
+            return str_contains($mime, 'image/png')
+                && str_contains($mime, $booking->code)
+                && str_contains($mime, 'multipart/alternative')
+                && str_contains($mime, 'text/plain')
+                && str_contains($mime, 'text/html');
         });
         $this->assertSame('paid', $booking->fresh()->payment_status);
     }
