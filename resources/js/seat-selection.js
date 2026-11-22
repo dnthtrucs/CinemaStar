@@ -36,6 +36,7 @@ function update() {
     document.getElementById('totalPrice').textContent = money.format(seatsTotal + (step === 2 ? combosTotal : 0)) + '₫';
     document.getElementById('seatStepTotal').textContent = money.format(seatsTotal) + '₫';
     document.getElementById('nextConcessions').disabled = !checked.length;
+    document.getElementById('mobileNext').disabled = !checked.length;
     const tooMany = selectedCombos.length > 5;
     const error = document.getElementById('comboError');
     if (error) error.hidden = !tooMany;
@@ -64,6 +65,7 @@ update();
 function showStep(next) {
     if (next === 2 && !seats.some(seat => seat.checked)) return;
     step = next;
+    document.getElementById('mobileNext').hidden = step !== 1;
     document.getElementById('seatStep').hidden = step !== 1;
     document.getElementById('concessionStep').hidden = step !== 2;
     document.querySelector('[data-seat-step]').hidden = step !== 1;
@@ -77,3 +79,16 @@ function showStep(next) {
 }
 document.getElementById('nextConcessions').addEventListener('click', () => showStep(2));
 document.getElementById('backSeats').addEventListener('click', () => showStep(1));
+
+document.getElementById('mobileNext').addEventListener('click', () => showStep(2));
+let seatZoom = 1;
+function zoomSeats(delta) {
+    seatZoom = Math.max(0.75, Math.min(1.75, seatZoom + delta));
+    document.getElementById('seatStep').style.setProperty('--seat-zoom', seatZoom);
+}
+document.getElementById('seatZoomOut').addEventListener('click', () => zoomSeats(-0.25));
+document.getElementById('seatZoomIn').addEventListener('click', () => zoomSeats(0.25));
+const summary = document.getElementById('bookingSummary');
+if (window.ResizeObserver) new ResizeObserver(() => {
+    document.querySelector('.booking-page').style.setProperty('--booking-bottom-height', `${summary.getBoundingClientRect().height}px`);
+}).observe(summary);
