@@ -11,15 +11,19 @@ class BookingController extends Controller
 {
     public function __construct(private readonly BookingService $bookingService) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $this->bookingService->expirePendingBookings();
 
+        $filter = $request->validate(['filter' => ['nullable', 'in:upcoming,unpaid,history']])['filter'] ?? null;
         $bookings = Booking::query()
             ->where('user_id', auth()->id())
             ->with(['showtime.movie', 'showtime.room.cinema', 'tickets.seat'])
+            ->when($filter === 'upcoming', fn ($q) => $q->where('payment_status', 'paid')->where('status', 'confirmed')->whereHas('showtime', fn ($s) => $s->where('status', 'scheduled')->where('starts_at', '>', now())))
+            ->when($filter === 'unpaid', fn ($q) => $q->where('status', 'pending')->where('payment_status', 'unpaid'))
+            ->when($filter === 'history', fn ($q) => $q->where(fn ($nested) => $nested->whereIn('status', ['cancelled', 'expired'])->orWhere('payment_status', 'refunded')->orWhereHas('showtime', fn ($s) => $s->where('starts_at', '<=', now())->orWhere('status', '!=', 'scheduled'))))
             ->latest()
-            ->paginate(10);
+            ->paginate(10)->withQueryString();
 
         return view('bookings.index', compact('bookings'));
     }

@@ -1,5 +1,6 @@
+import { suggestAdjacentSeats } from './seat-suggestions.js';
 const form = document.getElementById('seatForm');
-const seats = [...form.querySelectorAll('.seat-input:not(:disabled)')];
+const seats = [...form.querySelectorAll('.seat-input')];
 const combos = [...form.querySelectorAll('.combo-quantity')];
 const voucher = form.querySelector('[name="voucher_code"]');
 const submit = document.getElementById('submitSeats');
@@ -12,7 +13,7 @@ function store(key, value) {
 
 try {
     const savedSeats = JSON.parse(localStorage.getItem(storageKey + 'seats') || '[]');
-    if (Array.isArray(savedSeats)) seats.forEach(seat => { seat.checked = savedSeats.map(String).includes(seat.value); });
+    if (Array.isArray(savedSeats)) seats.forEach(seat => { seat.checked = !seat.disabled && savedSeats.map(String).includes(seat.value); });
     const savedCombos = JSON.parse(localStorage.getItem(storageKey + 'concessions') || '{}');
     if (savedCombos && typeof savedCombos === 'object') combos.forEach(combo => {
         if (Object.hasOwn(savedCombos, combo.dataset.id)) combo.value = savedCombos[combo.dataset.id];
@@ -26,7 +27,7 @@ function quantity(input) {
 
 let step = 1;
 function update() {
-    const checked = seats.filter(seat => seat.checked);
+    const checked = seats.filter(seat => seat.checked && !seat.disabled);
     const selectedCombos = combos.filter(combo => quantity(combo) > 0);
     combos.forEach(combo => { combo.value = quantity(combo); });
     document.getElementById('selectedSeats').textContent = checked.length ? checked.map(seat => seat.dataset.label).join(', ') : 'Chưa chọn ghế';
@@ -55,7 +56,7 @@ form.querySelectorAll('[data-combo-step]').forEach(button => button.addEventList
 voucher.addEventListener('input', () => store('voucher', voucher.value));
 form.addEventListener('submit', event => {
     if (step !== 2) { event.preventDefault(); return; }
-    if (!seats.some(seat => seat.checked) || combos.filter(combo => quantity(combo) > 0).length > 5) {
+    if (!seats.some(seat => seat.checked && !seat.disabled) || combos.filter(combo => quantity(combo) > 0).length > 5) {
         event.preventDefault();
         return;
     }
@@ -63,7 +64,7 @@ form.addEventListener('submit', event => {
 update();
 
 function showStep(next) {
-    if (next === 2 && !seats.some(seat => seat.checked)) return;
+    if (next === 2 && !seats.some(seat => seat.checked && !seat.disabled)) return;
     step = next;
     document.getElementById('mobileNext').hidden = step !== 1;
     document.getElementById('seatStep').hidden = step !== 1;
@@ -92,3 +93,48 @@ const summary = document.getElementById('bookingSummary');
 if (window.ResizeObserver) new ResizeObserver(() => {
     document.querySelector('.booking-page').style.setProperty('--booking-bottom-height', `${summary.getBoundingClientRect().height}px`);
 }).observe(summary);
+
+const liveStatus = document.getElementById('seatLiveStatus');
+let refreshing = false;
+let bookingOpen = true;
+async function refreshSeats() {
+    if (refreshing || document.hidden) return;
+    refreshing = true;
+    try {
+        const response = await fetch(form.dataset.availabilityUrl, { cache: 'no-store', headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('availability');
+        const state = await response.json();
+        bookingOpen = state.open;
+        const unavailable = new Set([...state.unavailable, ...state.inactive].map(String));
+        const removed = [];
+        seats.forEach(seat => {
+            const blocked = !state.open || seat.dataset.inactive === '1' || seat.dataset.seatIds.split(',').some(id => unavailable.has(id));
+            if (blocked && seat.checked) { removed.push(seat.dataset.label); seat.checked = false; }
+            seat.disabled = blocked;
+            seat.nextElementSibling.classList.toggle('booked', blocked);
+        });
+        update();
+        liveStatus.textContent = !state.open ? 'Suất chiếu đã ngừng nhận đặt vé. Vui lòng đổi suất.'
+            : removed.length ? `Ghế ${removed.join(', ')} vừa hết chỗ và đã bỏ khỏi lựa chọn. Vui lòng chọn lại.`
+            : 'Đã cập nhật ghế · ' + new Date().toLocaleTimeString('vi-VN');
+        return true;
+    } catch {
+        liveStatus.textContent = 'Chưa cập nhật được ghế. Kiểm tra kết nối; máy chủ sẽ kiểm tra lại trước khi tạo đơn.';
+        return false;
+    } finally { refreshing = false; }
+}
+document.getElementById('suggestSeats').addEventListener('click', async () => {
+    if (!await refreshSeats() || !bookingOpen) return;
+    const chosen = suggestAdjacentSeats(seats.map(seat => ({
+        id: seat.value, row: seat.dataset.row, number: Number(seat.dataset.number),
+        capacity: Number(seat.dataset.capacity), unavailable: seat.disabled,
+    })), Number(document.getElementById('partySize').value));
+    if (!chosen.length) { liveStatus.textContent = 'Không còn đủ ghế liền nhau cho nhóm này. Hãy giảm số người hoặc đổi suất.'; return; }
+    seats.forEach(seat => { seat.checked = chosen.includes(seat.value); });
+    update();
+    liveStatus.textContent = 'Đã gợi ý nhóm ghế liền nhau gần giữa phòng. Bạn có thể đổi ghế trước khi tiếp tục.';
+});
+setInterval(refreshSeats, 5000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSeats(); });
+window.addEventListener('pageshow', refreshSeats);
+refreshSeats();

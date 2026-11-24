@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AccessibleSeatController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
@@ -19,13 +20,16 @@ use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingExchangeController;
 use App\Http\Controllers\BookingTicketController;
 use App\Http\Controllers\CinemaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieReviewController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RefundController;
 use App\Http\Controllers\ShowtimeController;
@@ -39,6 +43,7 @@ Route::get('/movies/{movie}', [MovieController::class, 'show'])->name('movies.sh
 Route::get('/cinemas', [CinemaController::class, 'index'])->name('cinemas.index');
 Route::get('/cinemas/{cinema}', [CinemaController::class, 'show'])->name('cinemas.show');
 Route::get('/ho-tro', [SupportController::class, 'index'])->name('support.index');
+Route::get('/showtimes/{showtime}/availability', [ShowtimeController::class, 'availability'])->middleware('throttle:60,1')->name('showtimes.availability');
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
 Route::get('/verify-ticket/{booking}', [BookingTicketController::class, 'verify'])->name('bookings.verify');
 Route::get('/tickets/verify/{qrToken}', [TicketVerificationController::class, 'show'])
@@ -46,6 +51,14 @@ Route::get('/tickets/verify/{qrToken}', [TicketVerificationController::class, 's
     ->name('tickets.verify');
 
 Route::middleware('auth')->group(function () {
+    Route::patch('/preferences', [PreferenceController::class, 'update'])->name('preferences.update');
+    Route::post('/booking-exchanges/{exchange}/withdraw', [BookingExchangeController::class, 'withdraw'])->middleware('throttle:10,1')->name('exchanges.withdraw');
+    Route::get('/bookings/{booking}/exchange', [BookingExchangeController::class, 'create'])->name('exchanges.create');
+    Route::post('/bookings/{booking}/exchange', [BookingExchangeController::class, 'store'])->middleware('throttle:6,1')->name('exchanges.store');
+    Route::get('/notifications/feed', [NotificationController::class, 'feed'])->middleware('throttle:30,1')->name('notifications.feed');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
@@ -75,6 +88,9 @@ Route::post('/payments/sepay/webhook', [PaymentController::class, 'sepayWebhook'
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/exchanges', [BookingExchangeController::class, 'index'])->name('exchanges.index');
+    Route::patch('/exchanges/{exchange}', [BookingExchangeController::class, 'resolve'])->name('exchanges.resolve');
+    Route::patch('/rooms/{room}/accessibility', [AccessibleSeatController::class, 'update'])->name('rooms.accessibility');
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::resource('movies', AdminMovieController::class)->except('show');
     Route::resource('banners', AdminBannerController::class)->except('show');

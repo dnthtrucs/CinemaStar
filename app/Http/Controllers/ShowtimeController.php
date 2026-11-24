@@ -8,6 +8,19 @@ use App\Services\BookingService;
 
 class ShowtimeController extends Controller
 {
+    public function availability(Showtime $showtime, BookingService $bookingService)
+    {
+        $bookingService->expirePendingBookings($showtime->id);
+        $open = $showtime->status === 'scheduled' && $showtime->starts_at->isFuture()
+            && $showtime->movie->status !== 'stopped';
+
+        return response()->json([
+            'open' => $open,
+            'unavailable' => $showtime->tickets()->pluck('seat_id')->map(fn ($id) => (int) $id)->values(),
+            'inactive' => $showtime->room->seats()->where('is_active', false)->pluck('id'),
+        ])->header('Cache-Control', 'no-store, private');
+    }
+
     public function show(Showtime $showtime, BookingService $bookingService)
     {
         abort_if($showtime->status !== 'scheduled' || $showtime->movie->status === 'stopped', 404);

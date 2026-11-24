@@ -30,7 +30,7 @@
         <div class="row align-items-center g-5"><div class="col-lg-7">
             <span class="badge rounded-pill bg-brand px-3 py-2 mb-3">TRẢI NGHIỆM ĐIỆN ẢNH</span>
             <h1 class="display-4 fw-bold mb-3">Chọn phim hay.<br><span class="text-gold">Đặt ghế trong vài giây.</span></h1>
-            <p class="lead text-white-50 mb-4">Lịch chiếu cập nhật theo thời gian thực, chọn đúng ghế yêu thích và thanh toán an toàn qua MoMo hoặc VNPAY.</p>
+            <p class="lead text-white-50 mb-4">Lịch chiếu cập nhật theo thời gian thực, chọn đúng ghế yêu thích và thanh toán bằng chuyển khoản ngân hàng.</p>
             <a href="#lich-chieu" class="btn btn-primary btn-lg px-4">Đặt vé ngay <i class="bi bi-arrow-right ms-2"></i></a>
             <a href="{{ route('movies.index') }}" class="btn btn-outline-light btn-lg px-4 ms-2">Xem tất cả phim</a>
         </div></div>
@@ -49,6 +49,10 @@
 
 </style>
 @endpush
+
+@if($recommendedMovies->isNotEmpty())
+<section class="container mb-5" aria-labelledby="recommendHeading"><h2 id="recommendHeading" class="section-title">{{ auth()->check() ? 'Dành cho bạn' : 'Khám phá phim' }}</h2><p class="text-muted">@auth Gợi ý từ thể loại yêu thích, lịch sử đặt vé và đánh giá của riêng bạn. <a href="{{ route('profile.edit') }}#preferences">Chỉnh sở thích</a>@else Khám phá thông tin phim; lịch chiếu được ghi rõ trên từng gợi ý.@endauth</p><div class="row g-3">@foreach($recommendedMovies as $movie)<div class="col-6 col-lg-3"><article class="card h-100 shadow-soft"><a href="{{ route('movies.show', $movie) }}"><img class="movie-poster w-100" src="{{ $movie->poster ?: asset('images/app-icon-512.png') }}" alt="{{ $movie->title }}" loading="lazy"></a><div class="card-body"><h3 class="h6"><a href="{{ route('movies.show', $movie) }}">{{ $movie->title }}</a></h3><p class="small text-muted mb-0">{{ $movie->recommendation_reason }}</p></div></article></div>@endforeach</div></section>
+@endif
 
 <section class="container mb-5">
     <div class="d-flex justify-content-between align-items-end mb-4"><div><div class="text-brand fw-semibold">ĐANG CHIẾU</div><h2 class="section-title mb-0">Phim nổi bật</h2></div><a href="{{ route('movies.index') }}" class="text-decoration-none">Xem tất cả <i class="bi bi-chevron-right"></i></a></div>

@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { suggestAdjacentSeats } from '../../resources/js/seat-suggestions.js';
+const row = Array.from({length: 7}, (_,i) => ({id:String(i+1),row:'A',number:i+1,capacity:1,unavailable:false}));
+assert.deepEqual(suggestAdjacentSeats(row,3),['3','4','5']);
+row[3].unavailable=true;
+assert.deepEqual(suggestAdjacentSeats(row,3),['1','2','3']);
+assert.deepEqual(suggestAdjacentSeats(row,4),[]);
+assert.deepEqual(suggestAdjacentSeats([{id:'pair',row:'H',number:1,capacity:2}],1),[]);
+assert.deepEqual(suggestAdjacentSeats([{id:'pair',row:'H',number:1,capacity:2}],2),['pair']);
+assert.deepEqual(suggestAdjacentSeats([],2),[]);
+assert.deepEqual(suggestAdjacentSeats(row,11),[]);
+console.log('7 seat suggestion checks passed');

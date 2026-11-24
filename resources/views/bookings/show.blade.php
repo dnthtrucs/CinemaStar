@@ -27,6 +27,7 @@
                 </div>
 
                 <div class="p-4 p-md-5">
+                    @if(app(\App\Services\BookingExchangeService::class)->eligible($booking) || \App\Models\BookingExchange::where('booking_id',$booking->id)->exists())<div class="mb-3"><a class="btn btn-outline-primary" href="{{ route('exchanges.create',$booking) }}">Đổi suất / theo dõi yêu cầu</a><small class="d-block text-muted mt-1">Cùng phim, cùng rạp; trước giờ chiếu hơn 60 phút.</small></div>@endif
                     <div class="row g-4">
                         <div class="col-md-8">
                             <h3 class="fw-bold">{{ $booking->showtime->movie->title }}</h3>

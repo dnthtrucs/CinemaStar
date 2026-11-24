@@ -84,3 +84,10 @@ footer { background:linear-gradient(105deg,#06172c,#12365b); border-top:2px soli
     .qr-frame { max-width:100%!important; }
     footer { padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))!important; }
 }
+
+.skip-link{position:absolute;top:-100px;left:16px;z-index:2000;background:#fff;color:#111;padding:12px}
+.skip-link:focus{top:8px}
+.seat-input:focus-visible + .seat{outline:3px solid #12365b;outline-offset:3px}
+.accessible-seat{border:2px solid #095a46!important}
+html.readable-mode{font-size:120%} html.readable-mode .text-muted{color:#444!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

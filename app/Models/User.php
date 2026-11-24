@@ -23,7 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'phone',
+        'phone', 'favorite_genres',
         'role',
         'is_active',
         'loyalty_points',
@@ -52,6 +52,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'lifetime_points' => 'integer',
+            'favorite_genres' => 'array',
         ];
     }
 

@@ -6,6 +6,7 @@ use App\Models\Banner;
 use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Showtime;
+use App\Services\MovieRecommendationService;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -40,6 +41,10 @@ class HomeController extends Controller
                     ->get(),
             ];
         });
+
+        $homeData['recommendedMovies'] = auth()->check()
+            ? app(MovieRecommendationService::class)->forUser(auth()->user())
+            : Cache::remember('home-public-recommendations:v1', now()->addMinute(), fn () => app(MovieRecommendationService::class)->forUser(null));
 
         return view('welcome', $homeData);
     }

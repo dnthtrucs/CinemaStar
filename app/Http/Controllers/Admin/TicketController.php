@@ -99,12 +99,14 @@ class TicketController extends Controller
 
     private function checkInBooking(Booking $booking): void
     {
-        DB::transaction(function () use ($booking) {
+        $expectedCode = $booking->code;
+        DB::transaction(function () use ($booking, $expectedCode) {
             $booking = Booking::query()
                 ->with(['showtime', 'tickets'])
                 ->lockForUpdate()
                 ->findOrFail($booking->id);
 
+            abort_unless(hash_equals($booking->code, $expectedCode), 422, 'Vé đã được đổi suất. Vui lòng quét mã vé mới.');
             abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
             abort_unless($booking->showtime?->status === 'scheduled', 422, self::CANCELLED_SHOWTIME_MESSAGE);
             abort_if($booking->showtime?->ends_at?->isPast(), 422, 'Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.');

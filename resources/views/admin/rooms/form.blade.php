@@ -56,6 +56,7 @@
                         <a class="btn btn-light" href="{{ route('admin.rooms.index') }}">Hủy</a>
                     </div>
                 </form>
+                @if($room->exists)<section class="card p-4 mt-4"><h2 class="h5">Vị trí hỗ trợ xe lăn</h2><p class="small text-muted">Chỉ đánh dấu vị trí đã kiểm tra lối tiếp cận thực tế tại rạp. Không tự chuyển một ghế thường thành chỗ cho xe lăn.</p><form method="POST" action="{{ route('admin.rooms.accessibility', $room) }}">@csrf @method('PATCH')<div class="d-flex flex-wrap gap-3">@foreach($room->seats()->where('type','!=','couple')->orderBy('row')->orderBy('number')->get() as $seat)<label><input type="checkbox" name="seats[]" value="{{ $seat->id }}" @checked($seat->is_accessible)> {{ $seat->label }}</label>@endforeach</div><button class="btn btn-primary mt-3">Lưu vị trí đã xác nhận</button></form></section>@endif
             </div>
         </div>
     </div>

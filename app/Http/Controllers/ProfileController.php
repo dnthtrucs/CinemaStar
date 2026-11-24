@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\BookingExchange;
 use App\Models\RefundRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -62,6 +63,7 @@ class ProfileController extends Controller
                 ->orWhereHas('payments'))->exists()
                 || RefundRequest::where('requested_by', $user->id)->exists()
                 || $user->bookings()->whereHas('refundRequest')->exists();
+            $hasFinancialRecords = $hasFinancialRecords || BookingExchange::whereIn('booking_id', $user->bookings()->select('id'))->exists();
             if ($hasFinancialRecords) {
                 return false;
             }

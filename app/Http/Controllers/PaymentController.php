@@ -463,6 +463,16 @@ class PaymentController extends Controller
                     }
                 }
 
+                $booking->user->notifications()->create([
+                    'id' => (string) Str::uuid(),
+                    'type' => 'booking.confirmed',
+                    'data' => [
+                        'title' => 'Thanh toán thành công — vé đã sẵn sàng',
+                        'message' => 'Đơn '.$booking->code.' đã được xác nhận. Mở vé để nhân viên quét mã tại rạp.',
+                        'booking_id' => $booking->id,
+                    ],
+                ]);
+
                 // Gửi email chỉ sau khi giao dịch đã được lưu thành công. Áp dụng cho
                 // thanh toán trực tiếp và callback IPN từ cổng thanh toán.
                 DB::afterCommit(function () use ($booking) {

@@ -10,14 +10,14 @@ class Seat extends Model
     use HasFactory;
 
     protected $fillable = [
-        'room_id', 'row', 'number', 'type', 'price_surcharge', 'is_active',
+        'room_id', 'row', 'number', 'type', 'price_surcharge', 'is_active', 'is_accessible',
     ];
 
     protected function casts(): array
     {
         return [
             'price_surcharge' => 'decimal:0',
-            'is_active' => 'boolean',
+            'is_active' => 'boolean', 'is_accessible' => 'boolean',
         ];
     }
 
