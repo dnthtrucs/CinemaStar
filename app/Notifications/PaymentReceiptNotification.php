@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notification;
 
 class PaymentReceiptNotification extends Notification
 {
-    public function __construct(public Booking $booking) {}
+    public function __construct(public Booking $booking, public ?string $previousCode = null) {}
 
     public function via(object $notifiable): array
     {
@@ -28,9 +28,10 @@ class PaymentReceiptNotification extends Notification
         $barcodePng = app(TicketBarcode::class)->png($booking);
 
         $message = (new MailMessage)
-            ->subject('Xác nhận đặt vé '.$booking->code.' - CinemaStar')
+            ->subject(($this->previousCode ? 'Vé mới sau đổi suất ' : 'Xác nhận đặt vé ').$booking->code.' - CinemaStar')
             ->view(['html' => 'emails.payment-receipt', 'text' => 'emails.payment-receipt-text'], [
                 'customer' => $notifiable,
+                'previousCode' => $this->previousCode,
                 'booking' => $booking,
                 'showtime' => $showtime,
                 'seatLabels' => $seatLabels !== '' ? $seatLabels : 'Đang cập nhật',

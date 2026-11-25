@@ -15,7 +15,7 @@
 4. Gửi lý do. Vé cũ vẫn còn hiệu lực trong khi chờ. Ghế mới chưa được giữ ở bước yêu cầu.
 5. Quản trị → Đổi suất: kiểm tra ghế và chứng từ thu bù/hoàn thực tế. Khi có chênh lệch phải nhập mã chứng từ chưa được dùng và đánh dấu xác nhận. Nút duyệt chỉ ghi nhận nghiệp vụ đã đối soát; không tự chuyển tiền hay tự thu tiền của khách.
 6. Khi duyệt, hệ thống khóa và kiểm tra lại đơn, suất, giá, ghế; từ chối thay đổi nếu vé đã dùng, hết hạn điều kiện, đang hoàn, giá thay đổi hay ghế đã bị mua. Vé cũ không bị mất trong các trường hợp này. Quản trị từ chối yêu cầu và hướng dẫn lập lại khi cần.
-7. Duyệt thành công giải phóng ghế cũ, tạo vé mới, xoay mã đặt vé/mã vạch để vô hiệu mã cũ, lưu nhật ký và thông báo mở vé mới. Nếu cần gửi lại email, dùng chức năng gửi vé của quản trị hiện có.
+7. Duyệt thành công giải phóng ghế cũ, tạo vé mới, xoay mã đặt vé/mã vạch để vô hiệu mã cũ, lưu nhật ký và thông báo mở vé mới. Email vé mới được tự động gửi sau khi giao dịch đổi suất đã lưu thành công. Nếu cần gửi lại, dùng chức năng gửi vé của quản trị hiện có.
 
 Giữ nguyên ưu đãi voucher/điểm đã dùng và combo chụp tại đơn; không cộng thêm điểm cho lần đổi. Biên lai gốc được giữ; chênh lệch có chứng từ được ghi thêm vào payments với provider exchange_adjustment (dương = thu bù, âm = đã hoàn). Báo cáo cộng theo số tiền thực ghi nhận. Không sửa số tiền biên lai ngân hàng gốc.
 
@@ -45,3 +45,11 @@ Migration 2026_11_24_000001_add_customer_experience thêm favorite_genres, is_ac
 - Sau thời hạn đổi suất, khách vẫn xem được lịch sử và rút yêu cầu đang chờ; không còn biểu mẫu lập yêu cầu mới.
 - Quản trị → Đổi suất: mặc định chỉ hiện Chờ xử lý, có số lượng từng trạng thái và các mục Đã đổi / Từ chối / Khách đã rút / Tất cả. Hiện ghế cũ/mới, tổng cũ/mới, lý do, người xử lý và thời gian.
 - Duyệt mới yêu cầu xác nhận kiểm tra chứng từ. Từ chối không yêu cầu quản trị đánh dấu rằng đã có giao dịch tiền.
+
+
+## Vé cũ và email sau đổi suất
+
+- Quét mã vạch cũ/sai trong giao diện nhân viên sẽ quay về trang quét và hiện thông báo tiếng Việt. API yêu cầu JSON vẫn nhận HTTP 422 để nhận biết mã bị từ chối. Mã cũ không được dùng để check-in vé mới.
+- Sau khi duyệt đổi suất, email được gửi một lần sau commit, có mã mới, giờ/ngày mới, ghế mới và mã vạch mới; nêu rõ mã cũ đã hết hiệu lực. Từ chối hoặc gửi lặp yêu cầu duyệt không gửi thêm vé.
+- Lỗi gửi mail được ghi nhật ký, không hủy kết quả đổi suất và không tự gửi lặp khi timeout. Dịch vụ nhận email không đồng nghĩa thư chắc chắn vào Hộp thư đến.
+- Với yêu cầu đã đổi trước bản sửa hoặc cần gửi lại: Quản trị → Đơn vé → chi tiết đơn → Gửi lại email vé. Chức năng gửi lại cũng dùng nội dung vé mới sau đổi suất.

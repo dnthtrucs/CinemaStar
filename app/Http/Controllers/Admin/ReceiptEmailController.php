@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\BookingExchange;
 use App\Notifications\PaymentReceiptNotification;
 use Throwable;
 
@@ -17,7 +18,9 @@ class ReceiptEmailController extends Controller
         }
         try {
             $booking->loadMissing('user');
-            $booking->user->notify(new PaymentReceiptNotification($booking));
+            $exchange = BookingExchange::where('booking_id', $booking->id)->where('status', 'approved')->latest('id')->first();
+            $previousCode = $exchange && $exchange->to_showtime_id === $booking->showtime_id ? $exchange->snapshot['code'] : null;
+            $booking->user->notify(new PaymentReceiptNotification($booking, $previousCode));
         } catch (Throwable $exception) {
             report($exception);
 

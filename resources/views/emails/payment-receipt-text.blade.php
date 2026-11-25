@@ -1,8 +1,12 @@
-CinemaStar - Xác nhận thanh toán
+CinemaStar - {{ !empty($previousCode) ? 'Vé mới sau đổi suất' : 'Xác nhận thanh toán' }}
 
 Xin chào {!! $customer->name !!},
 
+@if(!empty($previousCode))
+Đã đổi suất cho đơn {!! $previousCode !!}. Mã vé cũ đã hết hiệu lực. Vui lòng dùng vé mới {!! $booking->code !!} và mã vạch mới.
+@else
 Thanh toán cho đơn {!! $booking->code !!} đã hoàn tất.
+@endif
 
 Mã vé: {!! $booking->code !!}
 Phim: {!! $showtime->movie->title !!}

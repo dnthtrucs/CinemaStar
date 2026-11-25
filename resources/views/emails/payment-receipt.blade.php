@@ -4,7 +4,11 @@
 <body style="margin:0;padding:20px;background:#ffffff;color:#222222;font-family:Arial,sans-serif;font-size:15px;line-height:1.6">
   <div style="max-width:600px;margin:0 auto">
     <p>Xin chào {{ $customer->name }},</p>
+    @if(!empty($previousCode))
+    <p>CinemaStar xác nhận đã đổi suất cho đơn <strong>{{ $previousCode }}</strong>. Vé mới có mã <strong>{{ $booking->code }}</strong>; mã vé cũ đã hết hiệu lực. Vui lòng dùng mã vạch mới bên dưới khi đến rạp.</p>
+    @else
     <p>CinemaStar xác nhận đã nhận thanh toán cho đơn <strong>{{ $booking->code }}</strong>. Thông tin vé của bạn:</p>
+    @endif
     <table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px">
       <tr><td style="padding:6px 0">Mã vé</td><td style="padding:6px 0">{{ $booking->code }}</td></tr>
       <tr><td style="padding:6px 0">Phim</td><td style="padding:6px 0">{{ $showtime->movie->title }}</td></tr>

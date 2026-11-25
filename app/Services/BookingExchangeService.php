@@ -8,9 +8,11 @@ use App\Models\BookingExchange;
 use App\Models\Payment;
 use App\Models\Showtime;
 use App\Models\User;
+use App\Notifications\PaymentReceiptNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class BookingExchangeService
 {
@@ -143,6 +145,30 @@ class BookingExchangeService
                 'title' => $approve ? 'Đổi suất thành công — mở vé mới' : 'Yêu cầu đổi suất chưa được chấp nhận',
                 'message' => $approve ? 'Vé cũ đã hết hiệu lực. Vui lòng mở mã vé mới trong tài khoản.' : $note, 'booking_id' => $booking->id]]);
             ActivityLog::record('booking.exchange.'.$exchange->status, 'Xử lý đổi suất', $booking, ['exchange_id' => $exchange->id, 'difference' => $exchange->difference, 'reference' => $reference]);
+            if ($approve) {
+                $bookingId = $booking->id;
+                $newCode = $booking->code;
+                $previousCode = $exchange->snapshot['code'];
+                $exchangeId = $exchange->id;
+                DB::afterCommit(function () use ($bookingId, $newCode, $previousCode, $exchangeId) {
+                    $current = Booking::with(['user', 'showtime.movie', 'showtime.room.cinema', 'tickets.seat', 'concessions'])->find($bookingId);
+                    if (! $current || $current->code !== $newCode || $current->payment_status !== 'paid') {
+                        return;
+                    }
+                    try {
+                        if (in_array(config('mail.default'), ['log', 'array'], true)) {
+                            ActivityLog::record('booking.exchange.email_unconfigured', 'Chưa cấu hình gửi email vé mới sau đổi suất', $current, ['exchange_id' => $exchangeId]);
+
+                            return;
+                        }
+                        $current->user->notify(new PaymentReceiptNotification($current, $previousCode));
+                        ActivityLog::record('booking.exchange.email_sent', 'Dịch vụ email đã nhận vé mới sau đổi suất', $current, ['exchange_id' => $exchangeId]);
+                    } catch (Throwable $exception) {
+                        report($exception);
+                        ActivityLog::record('booking.exchange.email_failed', 'Chưa gửi được email vé mới; có thể gửi lại từ chi tiết đơn', $current, ['exchange_id' => $exchangeId]);
+                    }
+                });
+            }
         });
     }
 }

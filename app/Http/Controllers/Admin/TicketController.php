@@ -39,7 +39,13 @@ class TicketController extends Controller
 
         if (preg_match('/^(BK[A-Z0-9]+)-([A-F0-9]{16})$/', $value, $parts)) {
             $booking = Booking::where('code', $parts[1])->first();
-            abort_unless($booking && hash_equals($booking->barcodeValue(), $value), 422, 'Mã vạch không hợp lệ.');
+            if (! $booking || ! hash_equals($booking->barcodeValue(), $value)) {
+                if (! $request->expectsJson()) {
+                    return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index')
+                        ->with('error', 'Mã vé không hợp lệ hoặc đã được thay thế sau khi đổi suất. Vui lòng quét mã vé mới.');
+                }
+                abort(422, 'Mã vé không hợp lệ hoặc đã được thay thế sau khi đổi suất. Vui lòng quét mã vé mới.');
+            }
             if ($request->input('intent') === 'preview') {
                 return $this->previewBooking($request, $booking);
             }

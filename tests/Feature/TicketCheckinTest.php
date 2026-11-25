@@ -16,7 +16,7 @@ class TicketCheckinTest extends TestCase
         $booking = $this->bookingFor();
         $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
         $staff = User::factory()->create(['role' => 'staff']);
-        $this->actingAs($staff)->post(route('staff.tickets.scan'), ['ticket_token' => $booking->code.'-'.str_repeat('0', 16)])->assertUnprocessable();
+        $this->actingAs($staff)->postJson(route('staff.tickets.scan'), ['ticket_token' => $booking->code.'-'.str_repeat('0', 16)])->assertUnprocessable();
         $this->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertRedirect();
         $this->assertSame('checked_in', $booking->fresh()->ticket_status);
         $this->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertUnprocessable();

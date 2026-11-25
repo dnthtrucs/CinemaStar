@@ -29,7 +29,7 @@ class ScanPreviewTest extends TestCase
     {
         $b = $this->bookingFor();
         $this->actingAs($b->user)->post(route('staff.tickets.scan'), ['ticket_token' => $b->barcodeValue(), 'intent' => 'preview'])->assertForbidden();
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->post(route('staff.tickets.scan'), ['ticket_token' => $b->code.'-0000000000000000', 'intent' => 'preview'])->assertUnprocessable();
+        $this->actingAs(User::factory()->create(['role' => 'staff']))->post(route('staff.tickets.scan'), ['ticket_token' => $b->code.'-0000000000000000', 'intent' => 'preview'])->assertRedirect(route('staff.tickets.index'))->assertSessionHas('error');
         $this->assertDatabaseCount('ticket_checkins', 0);
     }
 }
