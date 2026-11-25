@@ -52,6 +52,11 @@ jobs:
       - name: Build front-end assets
         run: npm run build
 
+      - name: Check barcode decoder and camera flow
+        run: |
+          node tests/js/ticket-decoder.test.mjs
+          node tests/js/checkin-workflow.test.mjs
+
       - name: Run tests
         env:
           DB_HOST: 127.0.0.1

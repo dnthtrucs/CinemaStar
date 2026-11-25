@@ -2,6 +2,7 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { decodeTicketCanvas, decodeTicketImage, cameraErrorMessage, preferredCameraConfig } from './ticket-decoder';
 
 const startButton = document.getElementById('start-scanner');
+const frameButton = document.getElementById('read-scanner-frame');
 const stopButton = document.getElementById('stop-scanner');
 const cameraSelect = document.getElementById('scanner-camera');
 const torchButton = document.getElementById('scanner-torch');
@@ -30,10 +31,13 @@ function getScanner() {
 async function stopCamera() {
     generation++;
     clearTimeout(scanTimer);
-    if (scanner?.isScanning) {
+    const tracks = reader.querySelector('video')?.srcObject?.getTracks() ?? [];
+    tracks.forEach(track => track.stop());
+    if (scanner) {
         try { await scanner.stop(); } catch { /* A decoded ticket must still submit if camera cleanup fails. */ }
     }
     stopButton.hidden = true;
+    frameButton.hidden = true;
     torchButton.hidden = true;
     torch = false;
     torchButton.textContent = 'Bật đèn pin';
@@ -42,17 +46,27 @@ async function stopCamera() {
 async function submitDecoded(decodedText) {
     if (submitted || !decodedText?.trim()) return;
     submitted = true;
-    status('Đã đọc được mã. Đang xác thực vé...');
-    await stopCamera();
-    tokenInput.value = decodedText.trim();
+    const value = decodedText.trim();
+    tokenInput.value = value;
+    const code = value.match(/^(BK[A-Z0-9]+)(?:-|$)/i)?.[1]?.toUpperCase();
+    const lookup = document.getElementById('lookup-code');
+    if (code && lookup) lookup.value = code;
+    document.getElementById('decoded-code').textContent = code || 'Đã nhận mã vé';
+    document.getElementById('decoded-result').hidden = false;
+    form.hidden = false;
+    status('Đã đọc được mã. Đang mở thông tin vé để xác nhận check-in...');
+    // iOS camera stop can remain pending; it must not block displaying a code
+    // or navigating to the lookup result. Navigation also releases the stream.
+    void stopCamera();
     form.requestSubmit();
 }
 function scanHighResolution() {
     const run = ++generation;
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d', { willReadFrequently: true });
+    let frames = 0;
     const tick = () => {
-        if (run !== generation || submitted || !scanner?.isScanning) return;
+        if (run !== generation || submitted) return;
         const video = reader.querySelector('video');
         if (!document.hidden && video?.videoWidth && video.readyState >= 2) {
             // Decode at camera resolution, independently of the narrow phone preview.
@@ -63,7 +77,10 @@ function scanHighResolution() {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const value = decodeTicketCanvas(canvas);
                 if (run === generation) { void submitDecoded(value); return; }
-            } catch { /* No readable code in this frame; keep scanning. */ }
+            } catch {
+                frames++;
+                if (frames % 6 === 0) status('Camera đang nhận hình nhưng chưa đọc được mã. Giữ mã ở giữa hoặc bấm Đọc khung hình hiện tại để thử ảnh rõ hơn.');
+            }
         }
         scanTimer = setTimeout(tick, 350);
     };
@@ -116,6 +133,7 @@ async function startCamera(deviceId) {
             torchButton.hidden = !caps.torch;
         } catch { /* Focus and torch are not available on every phone. */ }
         stopButton.hidden = false;
+        frameButton.hidden = false;
         status('Giữ toàn bộ mã vạch trong hình, ngang hoặc dọc đều được; không cắt hai đầu. Giữ máy ổn định; tăng sáng màn hình vé và tránh phản chiếu.');
         scanHighResolution();
         await listCameras();
@@ -135,6 +153,22 @@ stopButton?.addEventListener('click', async () => {
     if (busy) return;
     await stopCamera(); reader.classList.add('d-none');
     status('Đã tắt camera. Bạn có thể mở lại hoặc chọn ảnh mã vạch.');
+});
+frameButton?.addEventListener('click', async () => {
+    if (submitted || busy) return;
+    const video = reader.querySelector('video');
+    if (!video?.videoWidth || video.readyState < 2) { status('Camera chưa có hình. Hãy tắt rồi mở lại camera.', true); return; }
+    frameButton.disabled = true;
+    status('Đang đọc ảnh từ camera...');
+    try {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, 2200 / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * scale);
+        canvas.height = Math.round(video.videoHeight * scale);
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        await submitDecoded(decodeTicketCanvas(canvas));
+    } catch { status('Ảnh chưa đủ rõ để đọc mã. Đưa mã gần hơn, chọn camera sau chính hoặc chụp/chọn ảnh mã vạch.', true); }
+    finally { frameButton.disabled = false; }
 });
 cameraSelect?.addEventListener('change', () => startCamera(cameraSelect.value));
 torchButton?.addEventListener('click', async () => {

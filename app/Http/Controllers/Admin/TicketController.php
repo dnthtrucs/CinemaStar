@@ -40,11 +40,17 @@ class TicketController extends Controller
         if (preg_match('/^(BK[A-Z0-9]+)-([A-F0-9]{16})$/', $value, $parts)) {
             $booking = Booking::where('code', $parts[1])->first();
             abort_unless($booking && hash_equals($booking->barcodeValue(), $value), 422, 'Mã vạch không hợp lệ.');
+            if ($request->input('intent') === 'preview') {
+                return $this->previewBooking($request, $booking);
+            }
             $this->checkInBooking($booking);
 
             return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])->with('success', 'Đã quét mã vạch. Bạn có thể in vé tại đây.');
         }
         if ($booking = $this->bookingFromQr($value)) {
+            if ($request->input('intent') === 'preview') {
+                return $this->previewBooking($request, $booking);
+            }
             $this->checkInBooking($booking);
 
             return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])
@@ -61,10 +67,19 @@ class TicketController extends Controller
             return back()->with('error', 'Không tìm thấy vé tương ứng với mã QR này.');
         }
 
+        if ($request->input('intent') === 'preview') {
+            return $this->previewBooking($request, $ticket->booking);
+        }
         $this->checkInTicket($ticket);
 
         return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $ticket->booking->code])
             ->with('success', "Check-in thành công vé {$ticket->fresh()->code}.");
+    }
+
+    private function previewBooking(Request $request, Booking $booking)
+    {
+        return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])
+            ->with('success', 'Đã đọc mã vé '.$booking->code.'. Kiểm tra thông tin và bấm Xác nhận check-in.');
     }
 
     private function checkInTicket(Ticket $ticket): void
