@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Showtime;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use App\Notifications\PaymentReceiptNotification;
@@ -367,6 +368,7 @@ class PaymentController extends Controller
     {
         try {
             return DB::transaction(function () use ($payment, $transactionId, $payload) {
+                $lockedShowtime = Showtime::whereKey($payment->booking->showtime_id)->lockForUpdate()->firstOrFail();
                 $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
                 if ($payment->transaction_id === $transactionId) {
@@ -400,11 +402,13 @@ class PaymentController extends Controller
                 $voucherId = $payment->booking()->value('voucher_id');
                 $voucher = $voucherId ? Voucher::query()->lockForUpdate()->findOrFail($voucherId) : null;
                 $booking = $payment->booking()->lockForUpdate()->firstOrFail();
+                $booking->setRelation('showtime', $lockedShowtime);
                 // Giữ số tiền phải trả trước khi hoàn điểm của đơn hết hạn.
                 $amountMatches = (int) $payment->amount === (int) $booking->total_price;
                 app(BookingService::class)->expirePendingBooking($booking->id);
                 $booking->refresh();
-                $ticketsAreHeld = $booking->tickets()->count() === $booking->quantity;
+                $booking->setRelation('showtime', $lockedShowtime);
+                $ticketsAreHeld = $booking->tickets()->lockForUpdate()->get(['id'])->count() === $booking->quantity;
                 if (! $booking->isPayable() || ! $amountMatches || ! $ticketsAreHeld) {
                     // Callback đã kiểm tra số tiền theo payment, nên tiền thật đã đến: không được để mất dấu.
                     // Đơn hủy/hết hạn có thể đã được hoàn điểm.

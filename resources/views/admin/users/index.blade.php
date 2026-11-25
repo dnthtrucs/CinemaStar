@@ -15,7 +15,7 @@
                     <thead>
                         <tr>
                             <th>Người dùng</th>
-                            <th>Vai trò</th>
+                            <th>Vai trò / Rạp phụ trách</th>
                             <th>Hạng</th>
                             <th>Trạng thái</th>
                             <th>Cập nhật</th>
@@ -33,6 +33,10 @@
                                         <option value="customer" @selected($user->role==='customer')>Khách hàng</option>
                                         <option value="staff" @selected($user->role==='staff')>Nhân viên</option>
                                         <option value="admin" @selected($user->role==='admin')>Quản trị</option>
+                                    </select>
+                                    <select class="form-select form-select-sm mt-2" name="cinema_id" form="update-user-{{ $user->id }}" aria-label="Rạp phụ trách" @disabled($user->is(auth()->user()))>
+                                        <option value="">Chưa phân công rạp</option>
+                                        @foreach($cinemas as $cinema)<option value="{{ $cinema->id }}" @selected($user->cinema_id === $cinema->id)>{{ $cinema->name }}</option>@endforeach
                                     </select>
                                 </td>
                                 <td>{{ $user->membershipTier()['label'] }}</td>

@@ -113,7 +113,8 @@ class ConcessionTest extends TestCase
         $this->assertSame(12, $booking->fresh()->points_earned);
         $this->assertSame(12, (int) $user->fresh()->loyalty_points);
         $this->post(route('refunds.store', $booking), ['reason' => 'Đổi lịch'])->assertRedirect();
-        $refund = RefundRequest::firstOrFail();
+        // A historical request created before the customer request feature was retired.
+        $refund = RefundRequest::create(['booking_id' => $booking->id, 'requested_by' => $user->id, 'reason' => 'Hồ sơ cũ', 'amount' => $booking->fresh()->total_price]);
         $this->assertSame(120000, (int) $refund->amount);
         $this->actingAs(User::factory()->create(['role' => 'admin']))->patch(route('admin.refunds.update', $refund), ['status' => 'approved'])->assertRedirect();
         $this->patch(route('admin.refunds.update', $refund), ['status' => 'refunded'])->assertRedirect();
@@ -154,7 +155,7 @@ class ConcessionTest extends TestCase
         $this->get(route('payments.show', $booking))->assertOk()->assertSee($combo->name);
         $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
         $this->get(route('bookings.print', $booking))->assertForbidden();
-        $this->actingAs(User::factory()->create(['role' => 'staff']))
+        $this->actingAs(User::factory()->create(['role' => 'staff', 'cinema_id' => $booking->showtime->room->cinema_id]))
             ->post(route('staff.tickets.scan'), ['ticket_token' => $booking->verificationUrl()])->assertRedirect();
         $this->get(route('bookings.print', $booking))->assertOk()->assertSee($combo->name)->assertSee('100.000');
         $this->get($booking->verificationUrl())->assertOk()->assertSee($combo->name);

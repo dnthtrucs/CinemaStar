@@ -15,7 +15,7 @@ class TicketCheckinTest extends TestCase
     {
         $booking = $this->bookingFor();
         $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
-        $staff = User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->create(['role' => 'staff', 'cinema_id' => $booking->showtime->room->cinema_id]);
         $this->actingAs($staff)->postJson(route('staff.tickets.scan'), ['ticket_token' => $booking->code.'-'.str_repeat('0', 16)])->assertUnprocessable();
         $this->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertRedirect();
         $this->assertSame('checked_in', $booking->fresh()->ticket_status);
@@ -26,7 +26,7 @@ class TicketCheckinTest extends TestCase
     {
         $booking = $this->bookingFor();
         $this->actingAs($booking->user)->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertForbidden();
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertUnprocessable();
+        $this->actingAs(User::factory()->create(['role' => 'staff', 'cinema_id' => $booking->showtime->room->cinema_id]))->post(route('staff.tickets.scan'), ['ticket_token' => $booking->barcodeValue()])->assertUnprocessable();
     }
 
     public function test_booking_qr_is_public_and_checks_its_signature(): void

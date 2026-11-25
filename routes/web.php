@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AccessibleSeatController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\BulkCancellationController;
 use App\Http\Controllers\Admin\CinemaController as AdminCinemaController;
 use App\Http\Controllers\Admin\ConcessionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Admin\GmailConnectionController;
 use App\Http\Controllers\Admin\ManualRefundController;
 use App\Http\Controllers\Admin\MovieController as AdminMovieController;
 use App\Http\Controllers\Admin\ReceiptEmailController;
+use App\Http\Controllers\Admin\ReconciliationController;
 use App\Http\Controllers\Admin\RefundController as AdminRefundController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\ReviewController;
@@ -36,6 +38,7 @@ use App\Http\Controllers\RefundController;
 use App\Http\Controllers\ShowtimeController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TicketVerificationController;
+use App\Http\Controllers\VoucherSuggestionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -53,6 +56,7 @@ Route::get('/tickets/verify/{qrToken}', [TicketVerificationController::class, 's
     ->name('tickets.verify');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/vouchers/suggestions', VoucherSuggestionController::class)->middleware('throttle:30,1')->name('vouchers.suggestions');
     Route::patch('/preferences', [PreferenceController::class, 'update'])->name('preferences.update');
     Route::post('/booking-exchanges/{exchange}/withdraw', [BookingExchangeController::class, 'withdraw'])->middleware('throttle:10,1')->name('exchanges.withdraw');
     Route::get('/bookings/{booking}/exchange', [BookingExchangeController::class, 'create'])->name('exchanges.create');
@@ -99,6 +103,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('concessions', ConcessionController::class)->except('show');
     Route::resource('cinemas', AdminCinemaController::class)->except('show');
     Route::resource('rooms', AdminRoomController::class)->except('show');
+    Route::post('/showtimes/cancel-preview', [BulkCancellationController::class, 'preview'])->name('showtimes.cancel-preview');
+    Route::post('/showtimes/cancel-bulk', [BulkCancellationController::class, 'store'])->name('showtimes.cancel-bulk');
+    Route::get('/reconciliation', [ReconciliationController::class, 'index'])->name('reconciliation.index');
+    Route::post('/reconciliation/{payment}/probe', [ReconciliationController::class, 'probe'])->middleware('throttle:10,1')->name('reconciliation.probe');
+    Route::post('/reconciliation/{payment}/resolve', [ReconciliationController::class, 'resolve'])->name('reconciliation.resolve');
     Route::get('/showtimes/bulk/create', [AdminShowtimeController::class, 'bulkCreate'])->name('showtimes.bulk.create');
     Route::post('/showtimes/bulk', [AdminShowtimeController::class, 'bulkStore'])->name('showtimes.bulk.store');
     Route::resource('showtimes', AdminShowtimeController::class)->except('show');

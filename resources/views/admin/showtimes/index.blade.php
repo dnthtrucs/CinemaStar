@@ -10,12 +10,13 @@
                 <a href="{{ route('admin.showtimes.create') }}" class="btn btn-primary">Thêm suất chiếu</a>
             </div>
         </div>
+        <form id="bulkCancelForm" method="POST" action="{{ route('admin.showtimes.cancel-preview') }}" class="card p-3 mb-3">@csrf<label for="cancelReason" class="form-label">Hủy nhiều suất: chọn các ô bên dưới và nhập lý do</label><div class="d-flex gap-2"><input id="cancelReason" class="form-control" name="reason" minlength="5" maxlength="500" required placeholder="Ví dụ: phòng chiếu cần bảo trì"><button class="btn btn-outline-danger text-nowrap">Xem trước hủy suất</button></div></form>
         <div class="card shadow-soft p-3">
             <div class="table-responsive">
                 <table class="table align-middle">
                     <thead>
                         <tr>
-                            <th>Thời gian</th>
+                            <th>Chọn hủy</th><th>Thời gian</th>
                             <th>Phim</th>
                             <th>Rạp / Phòng</th>
                             <th>Giá</th>
@@ -26,6 +27,7 @@
                     <tbody>
                         @forelse($showtimes as $showtime)
                             <tr>
+                                <td>@if($showtime->status === 'scheduled' && $showtime->starts_at->isFuture())<input type="checkbox" name="showtime_ids[]" value="{{ $showtime->id }}" form="bulkCancelForm" aria-label="Chọn hủy suất {{ $showtime->id }}">@endif</td>
                                 <td>
                                     <strong>{{ $showtime->starts_at->format('H:i') }}</strong>
                                     <div class="small text-muted">{{ $showtime->starts_at->format('d/m/Y') }}</div>

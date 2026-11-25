@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Check-in vé')
 @section('content')
+@if(auth()->user()->role === 'staff')<div class="container mt-3"><div class="alert alert-info">Rạp phụ trách: {{ auth()->user()->cinema?->name ?? 'Chưa được phân công. Liên hệ quản trị viên trước khi check-in.' }}</div></div>@endif
 @php($scanRoute = auth()->user()->isAdmin() ? route('admin.tickets.scan') : route('staff.tickets.scan'))
 <div class="container py-4">
     @if(auth()->user()->isAdmin()) @include('admin.partials.nav') @endif

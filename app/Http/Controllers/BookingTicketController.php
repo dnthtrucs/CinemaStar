@@ -24,6 +24,7 @@ class BookingTicketController extends Controller
                 && in_array($request->user()->role, ['admin', 'staff'], true),
             403,
         );
+        abort_unless($request->user()->canOperateCinema((int) $booking->showtime->room->cinema_id), 403, 'Bạn không phụ trách rạp này.');
         abort_unless($booking->status === 'confirmed' && $booking->payment_status === 'paid', 422, 'Đơn vé chưa được thanh toán.');
 
         $booking = $this->loadBooking($booking);

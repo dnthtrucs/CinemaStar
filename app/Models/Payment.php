@@ -55,6 +55,11 @@ class Payment extends Model
         ];
     }
 
+    public function reconciliation()
+    {
+        return $this->hasOne(PaymentReconciliation::class);
+    }
+
     public function booking()
     {
         return $this->belongsTo(Booking::class);

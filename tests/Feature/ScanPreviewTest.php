@@ -15,7 +15,7 @@ class ScanPreviewTest extends TestCase
     {
         $b = $this->bookingFor();
         $b->update(['status' => 'confirmed', 'payment_status' => 'paid']);
-        $staff = User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->create(['role' => 'staff', 'cinema_id' => $b->showtime->room->cinema_id]);
         $this->actingAs($staff)->post(route('staff.tickets.scan'), ['ticket_token' => $b->barcodeValue(), 'intent' => 'preview'])->assertRedirect(route('staff.tickets.index', ['code' => $b->code]));
         $this->assertDatabaseMissing('tickets', ['booking_id' => $b->id, 'status' => 'used']);
         $this->assertDatabaseCount('ticket_checkins', 0);
@@ -29,7 +29,7 @@ class ScanPreviewTest extends TestCase
     {
         $b = $this->bookingFor();
         $this->actingAs($b->user)->post(route('staff.tickets.scan'), ['ticket_token' => $b->barcodeValue(), 'intent' => 'preview'])->assertForbidden();
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->post(route('staff.tickets.scan'), ['ticket_token' => $b->code.'-0000000000000000', 'intent' => 'preview'])->assertRedirect(route('staff.tickets.index'))->assertSessionHas('error');
+        $this->actingAs(User::factory()->create(['role' => 'staff', 'cinema_id' => $b->showtime->room->cinema_id]))->post(route('staff.tickets.scan'), ['ticket_token' => $b->code.'-0000000000000000', 'intent' => 'preview'])->assertRedirect(route('staff.tickets.index'))->assertSessionHas('error');
         $this->assertDatabaseCount('ticket_checkins', 0);
     }
 }

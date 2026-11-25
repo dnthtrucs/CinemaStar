@@ -24,7 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone', 'favorite_genres',
-        'role',
+        'role', 'cinema_id',
         'is_active',
         'loyalty_points',
         'lifetime_points',
@@ -54,6 +54,16 @@ class User extends Authenticatable
             'lifetime_points' => 'integer',
             'favorite_genres' => 'array',
         ];
+    }
+
+    public function cinema()
+    {
+        return $this->belongsTo(Cinema::class);
+    }
+
+    public function canOperateCinema(int $cinemaId): bool
+    {
+        return $this->isAdmin() || ($this->role === 'staff' && $this->cinema_id !== null && (int) $this->cinema_id === $cinemaId);
     }
 
     public function bookings()

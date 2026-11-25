@@ -16,6 +16,9 @@ class ActivityLogService
 {
     public const GROUPS = [
         'payment' => 'Thanh toán',
+        'catalog' => 'Dữ liệu quản trị',
+        'showtime' => 'Suất chiếu',
+        'user' => 'Phân quyền',
         'refund' => 'Hoàn tiền',
         'ticket' => 'Vé',
         'booking' => 'Đơn vé',

@@ -40,7 +40,7 @@ class ConcessionNameSnapshotTest extends TestCase
 
         $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
         $this->get(route('bookings.print', $booking))->assertForbidden();
-        $this->actingAs(User::factory()->create(['role' => 'staff']))
+        $this->actingAs(User::factory()->create(['role' => 'staff', 'cinema_id' => $booking->showtime->room->cinema_id]))
             ->post(route('staff.tickets.scan'), ['ticket_token' => $booking->verificationUrl()])->assertRedirect();
         $this->get(route('bookings.print', $booking))->assertOk()->assertSeeText('Combo vé cũ')
             ->assertSeeText('50.000')->assertSeeText('100.000')->assertDontSeeText('Combo tên mới');

@@ -13,13 +13,13 @@ class RefundTest extends TestCase
 {
     use CreatesCinemaBookings, RefreshDatabase;
 
-    public function test_duplicate_request_redirects_with_a_friendly_error(): void
+    public function test_retired_customer_request_never_creates_a_refund_record(): void
     {
         $booking = $this->bookingFor();
         $booking->update(['status' => 'confirmed', 'payment_status' => 'paid']);
         $this->actingAs($booking->user)->post(route('refunds.store', $booking), ['reason' => 'Đổi lịch'])->assertRedirect();
         $this->actingAs($booking->user)->post(route('refunds.store', $booking), ['reason' => 'Đổi lịch'])->assertRedirect()->assertSessionHas('error');
-        $this->assertDatabaseCount('refund_requests', 1);
+        $this->assertDatabaseCount('refund_requests', 0);
     }
 
     public function test_checked_in_or_started_bookings_cannot_request_refunds(): void

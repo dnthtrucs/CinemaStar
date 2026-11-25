@@ -25,7 +25,12 @@ class MembershipConcurrencyTest extends TestCase
         $showtime->save();
         $seats = $showtime->room->seats;
         $seats->each(fn ($seat) => $seat->update(['price_surcharge' => 0]));
-        $bookings = $seats->map(fn ($seat) => app(BookingService::class)->create($user, $showtime, [$seat->id]));
+        // Different showtimes exercise concurrent tier awards without being serialized by the showtime lock.
+        $secondShowtime = $showtime->replicate();
+        $secondShowtime->starts_at = now()->addDays(3);
+        $secondShowtime->ends_at = now()->addDays(3)->addMinutes(135);
+        $secondShowtime->save();
+        $bookings = $seats->map(fn ($seat, $index) => app(BookingService::class)->create($user, $index === 0 ? $showtime : $secondShowtime, [$seat->id]));
         $payments = $bookings->map(fn ($booking, $index) => Payment::create([
             'booking_id' => $booking->id, 'provider' => 'sepay',
             'request_id' => 'PAY261024000000'.($index === 0 ? 'ABCDEF' : 'UVWXYZ'),

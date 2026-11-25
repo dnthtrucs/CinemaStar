@@ -58,6 +58,7 @@ class CustomerExperienceTest extends TestCase
         $svc = app(BookingExchangeService::class);
         $ex = $svc->request($b, $s, $ids, 'Đổi lịch');
         $svc->resolve($ex, $admin, true, 'Kiểm tra điều kiện', null);
+        $this->actingAs($admin);
         $method = new \ReflectionMethod(TicketController::class, 'checkInBooking');
         try {
             $method->invoke(app(TicketController::class), $b);

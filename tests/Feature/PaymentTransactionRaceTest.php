@@ -21,7 +21,14 @@ class PaymentTransactionRaceTest extends TestCase
         [$showtime, $seats] = $this->showtimeWithSeats();
         $seats[1]->update(['price_surcharge' => 0]);
         $payments = $seats->map(function ($seat, $index) use ($user, $showtime) {
-            $booking = app(BookingService::class)->create($user, $showtime, [$seat->id]);
+            $target = $showtime;
+            if ($index === 1) {
+                $target = $showtime->replicate();
+                $target->starts_at = now()->addDays(2);
+                $target->ends_at = now()->addDays(2)->addHours(2);
+                $target->save();
+            }
+            $booking = app(BookingService::class)->create($user, $target, [$seat->id]);
 
             return Payment::create([
                 'booking_id' => $booking->id, 'provider' => 'sepay',
@@ -57,6 +64,43 @@ class PaymentTransactionRaceTest extends TestCase
                 unlink($file);
             }
             rmdir($barrier);
+        }
+    }
+
+    public function test_cancellation_racing_with_bank_confirmation_never_loses_the_transfer(): void
+    {
+        $b = $this->bookingFor();
+        $payment = Payment::create(['booking_id' => $b->id, 'provider' => 'sepay', 'request_id' => 'PAY261126000000ABCDEF', 'amount' => 80000, 'status' => 'pending']);
+        $dir = storage_path('framework/testing/cancel-race-'.bin2hex(random_bytes(8)));
+        mkdir($dir, 0777, true);
+        $env = ['APP_ENV' => 'testing', 'DB_CONNECTION' => 'mysql', 'DB_DATABASE' => 'cinema_test', 'DB_URL' => '', 'MAIL_MAILER' => 'array'];
+        $processes = [];
+        foreach (['payment-transaction-worker.php', 'cancellation-race-worker.php'] as $i => $script) {
+            $processes[] = new Process([PHP_BINARY, base_path('tests/Support/'.$script), $payment->id, $dir.'/'.$i, $dir.'/'.(1 - $i)], base_path(), $env, null, 30);
+        }
+        try {
+            foreach ($processes as $process) {
+                $process->start();
+            }
+            foreach ($processes as $process) {
+                $process->wait();
+                $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
+            }
+            $this->assertSame('cancelled', $b->showtime->fresh()->status);
+            $this->assertSame('SAME-BANK-TRANSFER', $payment->fresh()->transaction_id);
+            $this->assertTrue($payment->fresh()->status === 'success' || $payment->fresh()->needsManualRefund());
+            $this->assertSame(1, Payment::where('transaction_id', 'SAME-BANK-TRANSFER')->count());
+            $this->actingAs(User::factory()->create(['role' => 'admin']))->patch(route('admin.tickets.update', $b))->assertUnprocessable();
+        } finally {
+            foreach ($processes as $process) {
+                if ($process->isRunning()) {
+                    $process->stop();
+                }
+            }
+            foreach (glob($dir.'/*') as $file) {
+                unlink($file);
+            }
+            rmdir($dir);
         }
     }
 }

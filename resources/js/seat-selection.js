@@ -1,4 +1,5 @@
 import { suggestAdjacentSeats } from './seat-suggestions.js';
+import { initVoucherSuggestions } from './voucher-suggestions.js';
 const form = document.getElementById('seatForm');
 const seats = [...form.querySelectorAll('.seat-input')];
 const combos = [...form.querySelectorAll('.combo-quantity')];
@@ -25,6 +26,7 @@ function quantity(input) {
     return Math.max(0, Math.min(10, Math.trunc(Number(input.value) || 0)));
 }
 
+const refreshVoucherSuggestions = initVoucherSuggestions(form, voucher, store, money);
 let step = 1;
 function update() {
     const checked = seats.filter(seat => seat.checked && !seat.disabled);
@@ -42,6 +44,7 @@ function update() {
     const error = document.getElementById('comboError');
     if (error) error.hidden = !tooMany;
     if (submit) submit.disabled = !checked.length || tooMany;
+    refreshVoucherSuggestions();
     store('seats', JSON.stringify(checked.map(seat => seat.value)));
     store('concessions', JSON.stringify(Object.fromEntries(selectedCombos.map(combo => [combo.dataset.id, quantity(combo)]))));
 }

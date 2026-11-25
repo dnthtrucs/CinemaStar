@@ -51,7 +51,9 @@
                         @endif
                     </td>
                     <td><span class="badge text-bg-secondary">{{ $log->action }}</span></td>
-                    <td>{{ $log->description }}</td>
+                    <td>{{ $log->description }}
+                        @if($log->properties)<details class="small mt-1"><summary>Chi tiết thay đổi</summary><pre class="text-wrap mb-0">{{ json_encode($log->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre></details>@endif
+                    </td>
                     <td>
                         <div class="small text-muted">{{ $context['label'] }}</div>
                         @if($context['booking'])

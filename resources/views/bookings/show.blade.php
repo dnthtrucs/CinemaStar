@@ -75,10 +75,8 @@
                     @include('bookings.concessions')
                     <hr class="my-4">
 
-                    @if($booking->refundRequest)
-                        <div class="alert alert-info">Yêu cầu hoàn tiền: {{ match($booking->refundRequest->status) {'requested' => 'Chờ xử lý', 'approved' => 'Đã duyệt', 'refunded' => 'Đã hoàn tiền', 'rejected' => 'Đã từ chối'} }}</div>
-                    @elseif($booking->canRequestRefund())
-                        <a href="{{ route('refunds.create', $booking) }}" class="btn btn-outline-danger mb-3">Yêu cầu hoàn tiền</a>
+                    @if($booking->showtime->status === 'cancelled')
+                        <div class="alert alert-warning">Suất chiếu đã hủy. Rạp sẽ liên hệ để xử lý khoản thanh toán. Vé không còn hiệu lực.</div>
                     @endif
 
                     @if($booking->payment_status === 'paid' && $booking->points_earned > 0)

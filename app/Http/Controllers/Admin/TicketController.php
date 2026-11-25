@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Booking;
+use App\Models\Showtime;
 use App\Models\Ticket;
 use App\Models\TicketCheckin;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
 {
-    private const CANCELLED_SHOWTIME_MESSAGE = 'Suất chiếu đã bị hủy nên vé không còn hiệu lực. Hướng dẫn khách gửi yêu cầu hoàn tiền.';
+    private const CANCELLED_SHOWTIME_MESSAGE = 'Suất chiếu đã bị hủy nên vé không còn hiệu lực. Liên hệ quản trị viên để xử lý đối soát.';
 
     public function index(Request $request)
     {
@@ -20,6 +21,10 @@ class TicketController extends Controller
             ? Booking::with(['user', 'showtime.movie', 'showtime.room.cinema', 'tickets.seat', 'concessions'])
                 ->where('code', strtoupper(trim($request->string('code')->toString())))->first()
             : null;
+
+        if ($booking) {
+            $this->authorizeCinema($booking);
+        }
 
         return view('admin.tickets.index', compact('booking'));
     }
@@ -84,13 +89,17 @@ class TicketController extends Controller
 
     private function previewBooking(Request $request, Booking $booking)
     {
+        $this->authorizeCinema($booking);
+
         return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])
             ->with('success', 'Đã đọc mã vé '.$booking->code.'. Kiểm tra thông tin và bấm Xác nhận check-in.');
     }
 
     private function checkInTicket(Ticket $ticket): void
     {
+        $this->authorizeCinema($ticket->booking);
         DB::transaction(function () use ($ticket) {
+            Showtime::whereKey($ticket->showtime_id)->lockForUpdate()->firstOrFail();
             $booking = Booking::query()->lockForUpdate()->findOrFail($ticket->booking_id);
             $ticket = Ticket::query()
                 ->with(['booking.showtime', 'showtime'])
@@ -120,8 +129,10 @@ class TicketController extends Controller
 
     private function checkInBooking(Booking $booking): void
     {
+        $this->authorizeCinema($booking);
         $expectedCode = $booking->code;
         DB::transaction(function () use ($booking, $expectedCode) {
+            Showtime::whereKey($booking->showtime_id)->lockForUpdate()->firstOrFail();
             $booking = Booking::query()
                 ->with(['showtime', 'tickets'])
                 ->lockForUpdate()
@@ -141,6 +152,11 @@ class TicketController extends Controller
 
             ActivityLog::record('booking.checked_in', "Check-in đơn {$booking->code}", $booking);
         });
+    }
+
+    private function authorizeCinema(Booking $booking): void
+    {
+        abort_unless(auth()->user()?->canOperateCinema((int) $booking->showtime->room->cinema_id), 403, 'Bạn chưa được phân công làm việc tại rạp của vé này.');
     }
 
     private function bookingFromQr(string $value): ?Booking

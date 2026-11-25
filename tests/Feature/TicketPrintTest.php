@@ -20,7 +20,7 @@ class TicketPrintTest extends TestCase
         $booking->update(['status' => 'confirmed', 'payment_status' => 'paid', 'discount' => 10000, 'points_used' => 5, 'total_price' => 175000]);
         $this->actingAs($user)->get(route('bookings.print', $booking))->assertForbidden();
         $this->get(route('bookings.show', $booking))->assertOk()->assertDontSee('>In vé</a>', false)->assertSee('nhân viên quét mã và in vé');
-        $staff = User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->create(['role' => 'staff', 'cinema_id' => $booking->showtime->room->cinema_id]);
         $this->actingAs($staff)->get(route('bookings.print', $booking))->assertUnprocessable();
         $this->post(route('staff.tickets.scan'), ['ticket_token' => $booking->verificationUrl()])->assertRedirect(route('staff.tickets.index', ['code' => $booking->code]));
         $this->get(route('staff.tickets.index', ['code' => $booking->code]))->assertOk()->assertSee('In vé tại quầy');
@@ -35,6 +35,6 @@ class TicketPrintTest extends TestCase
     public function test_unpaid_booking_cannot_be_printed(): void
     {
         $booking = $this->bookingFor();
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('bookings.print', $booking))->assertUnprocessable();
+        $this->actingAs(User::factory()->create(['role' => 'staff', 'cinema_id' => $booking->showtime->room->cinema_id]))->get(route('bookings.print', $booking))->assertUnprocessable();
     }
 }

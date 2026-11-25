@@ -1,0 +1,42 @@
+<?php
+
+use App\Models\Payment;
+use App\Services\ShowtimeCancellationService;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Http\Request;
+
+require dirname(__DIR__, 2).'/vendor/autoload.php';
+$app = require dirname(__DIR__, 2).'/bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
+if ($app['db']->connection()->getDatabaseName() !== 'cinema_test') {
+    throw new RuntimeException('Payment transaction workers must use cinema_test.');
+}
+config(['mail.default' => 'array', 'cinema.sepay.api_key' => 'race-key', 'cinema.sepay.account_number' => '123', 'cinema.sepay.bank_code' => 'MBBank']);
+[$script, $paymentId, $readyFile, $otherReadyFile] = $argv;
+try {
+    $payment = Payment::findOrFail($paymentId);
+    $request = Request::create('/payments/sepay/webhook', 'POST', [
+        'accountNumber' => '123', 'transferType' => 'in', 'transferAmount' => (int) $payment->amount,
+        'content' => $payment->request_id, 'referenceCode' => 'SAME-BANK-TRANSFER',
+    ]);
+    $request->headers->set('Authorization', 'Apikey race-key');
+    $app->instance('request', $request);
+    touch($readyFile);
+    $deadline = microtime(true) + 10;
+    do {
+        clearstatcache(true, $otherReadyFile);
+        if (is_file($otherReadyFile)) {
+            break;
+        }
+        usleep(20000);
+    } while (microtime(true) < $deadline);
+    if (! is_file($otherReadyFile)) {
+        throw new RuntimeException('Concurrent callback barrier timed out.');
+    }
+    app(ShowtimeCancellationService::class)->cancel([$payment->booking->showtime_id], 'Sự cố phòng chiếu');
+    $response = response()->json(['cancelled' => true]);
+    echo json_encode(['status' => $response->getStatusCode()]), "\n";
+} catch (Throwable $exception) {
+    fwrite(STDERR, $exception::class.': '.$exception->getMessage()."\n");
+    exit(1);
+}

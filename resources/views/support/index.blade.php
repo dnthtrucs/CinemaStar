@@ -34,7 +34,7 @@
                     ['Ghế VIP và ghế đôi được tính giá như thế nào?', 'Ghế VIP hàng E, F, G phụ thu 30.000₫ mỗi ghế. Ghế đôi hàng H được chọn theo cặp; giá một cặp là 2 × (giá ghế cơ bản + 30.000₫) + 30.000₫.'],
                     ['Tôi thanh toán SePay xong bao lâu thì nhận được vé?', 'Sau khi SePay gửi giao dịch hợp lệ về hệ thống, đơn tự chuyển sang Đã thanh toán, QR được phát hành và email xác nhận được gửi.'],
                     ['Một đơn nhiều ghế dùng QR nào để vào rạp?', 'Mỗi đơn chỉ có một QR. Nhân viên quét QR này một lần để check-in toàn bộ ghế trong đơn.'],
-                    ['Tôi có thể hủy hoặc hoàn tiền vé không?', 'Bạn có thể gửi yêu cầu hoàn tiền từ chi tiết đơn nếu vé còn thỏa điều kiện. Quản trị viên sẽ duyệt hoặc từ chối theo chính sách rạp.'],
+                    ['Tôi có thể hủy hoặc hoàn tiền vé không?', 'Bạn có thể hủy đơn chưa thanh toán. Khi suất bị hủy hoặc có sai lệch chuyển khoản, rạp sẽ kiểm tra và liên hệ xử lý qua bộ phận đối soát.'],
                 ] as $index => $item)
                     <div class="accordion-item support-item" data-search="{{ strtolower($item[0].' '.$item[1]) }}">
                         <h2 class="accordion-header"><button class="accordion-button {{ $index ? 'collapsed' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#supportAnswer{{ $index }}">{{ $item[0] }}</button></h2>
@@ -67,7 +67,7 @@
         <section class="tab-pane fade" id="contact">
             <div class="row g-4">
                 <div class="col-md-6"><div class="card shadow-soft p-4 h-100"><i class="bi bi-envelope fs-2 text-brand"></i><h4 class="fw-bold mt-3">Email hỗ trợ</h4><p class="text-muted">Gửi mã đơn BK và mô tả vấn đề để được hỗ trợ nhanh hơn.</p><a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a></div></div>
-                <div class="col-md-6"><div class="card shadow-soft p-4 h-100"><i class="bi bi-receipt fs-2 text-brand"></i><h4 class="fw-bold mt-3">Yêu cầu hoàn tiền</h4><p class="text-muted">Đăng nhập, mở đơn vé và chọn yêu cầu hoàn tiền nếu đơn đủ điều kiện.</p>@auth<a class="btn btn-outline-danger" href="{{ route('bookings.index') }}">Mở Vé của tôi</a>@else<a class="btn btn-outline-danger" href="{{ route('login') }}">Đăng nhập</a>@endauth</div></div>
+                <div class="col-md-6"><div class="card shadow-soft p-4 h-100"><i class="bi bi-receipt fs-2 text-brand"></i><h4 class="fw-bold mt-3">Hỗ trợ thanh toán</h4><p class="text-muted">Cung cấp mã đơn và mã giao dịch ngân hàng để rạp kiểm tra sai lệch thanh toán.</p>@auth<a class="btn btn-outline-danger" href="{{ route('bookings.index') }}">Mở Vé của tôi</a>@else<a class="btn btn-outline-danger" href="{{ route('login') }}">Đăng nhập</a>@endauth</div></div>
             </div>
         </section>
     </div>
