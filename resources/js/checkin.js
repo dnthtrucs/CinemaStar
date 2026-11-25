@@ -1,5 +1,5 @@
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-import { decodeTicketCanvas, cameraErrorMessage, preferredCameraConfig } from './ticket-decoder';
+import { decodeTicketCanvas, decodeTicketImage, cameraErrorMessage, preferredCameraConfig } from './ticket-decoder';
 
 const startButton = document.getElementById('start-scanner');
 const stopButton = document.getElementById('stop-scanner');
@@ -116,7 +116,7 @@ async function startCamera(deviceId) {
             torchButton.hidden = !caps.torch;
         } catch { /* Focus and torch are not available on every phone. */ }
         stopButton.hidden = false;
-        status('Giữ toàn bộ mã vạch nằm ngang trong hình, không cắt hai đầu. Giữ máy ổn định; tăng sáng màn hình vé và tránh phản chiếu.');
+        status('Giữ toàn bộ mã vạch trong hình, ngang hoặc dọc đều được; không cắt hai đầu. Giữ máy ổn định; tăng sáng màn hình vé và tránh phản chiếu.');
         scanHighResolution();
         await listCameras();
     } catch (error) {
@@ -156,7 +156,10 @@ qrFile?.addEventListener('change', async () => {
     status('Đang đọc mã vạch trong ảnh…');
     try {
         await stopCamera();
-        await submitDecoded(await getScanner().scanFile(file, true));
+        let value;
+        try { value = await getScanner().scanFile(file, true); }
+        catch { value = await decodeTicketImage(file); }
+        await submitDecoded(value);
     } catch {
         status('Chưa đọc được mã. Chọn ảnh gốc rõ toàn bộ mã vạch, không cắt hai đầu; hoặc nhập mã BK bên dưới.', true);
     } finally {
