@@ -10,7 +10,7 @@
 ## Đổi suất có điều kiện
 
 1. Vào chi tiết đơn đã thanh toán → Đổi suất có điều kiện.
-2. Vé chưa dùng, chưa yêu cầu hoàn; suất cũ và suất mới còn hơn 60 phút. Chỉ đổi cùng phim, cùng rạp, giữ số vị trí và combo.
+2. Vé chưa dùng, chưa yêu cầu hoàn; suất cũ và suất mới còn ít nhất 12 tiếng. Chỉ đổi cùng phim, cùng rạp, giữ số vị trí và combo.
 3. Chọn đủ vị trí; ghế đôi phải đủ cặp. Xem tổng mới dự kiến và phần cần bù/hoàn. Máy chủ tính lại, không tin giá gửi từ trình duyệt.
 4. Gửi lý do. Vé cũ vẫn còn hiệu lực trong khi chờ. Ghế mới chưa được giữ ở bước yêu cầu.
 5. Quản trị → Đổi suất: kiểm tra ghế và chứng từ thu bù/hoàn thực tế. Khi có chênh lệch phải nhập mã chứng từ chưa được dùng và đánh dấu xác nhận. Nút duyệt chỉ ghi nhận nghiệp vụ đã đối soát; không tự chuyển tiền hay tự thu tiền của khách.

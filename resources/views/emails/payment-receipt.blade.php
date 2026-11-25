@@ -17,7 +17,7 @@
       <tr><td style="padding:6px 0">Đã thanh toán</td><td style="padding:6px 0"><strong>{{ number_format((int) $booking->total_price, 0, ',', '.') }} VNĐ</strong></td></tr>
     </table>
     <p>Đưa mã vé ở trên hoặc mã vạch dưới đây cho nhân viên rạp để kiểm tra và in vé.</p>
-    <p><img src="{{ $message->embedData($barcodePng, 'CinemaStar-Barcode-'.$booking->code.'.png', 'image/png') }}" width="420" height="80" alt="Mã QR vé {{ $booking->code }}" style="display:block;max-width:100%;width:420px;height:auto"></p>
+    <p><img src="{{ $message->embedData($barcodePng, 'CinemaStar-Barcode-'.$booking->code.'.png', 'image/png') }}" width="420" height="80" alt="Mã vạch vé {{ $booking->code }}" style="display:block;max-width:100%;width:420px;height:auto"></p>
     <p>Bạn cũng có thể đăng nhập CinemaStar và mở mục Vé của tôi để xem lại vé. Vui lòng đến rạp trước giờ chiếu.</p>
     <p>Cảm ơn bạn,<br>CinemaStar</p>
     <p style="font-size:12px;color:#555555">Đây là thư xác nhận cho giao dịch đặt vé của bạn.</p>

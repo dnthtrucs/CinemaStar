@@ -27,7 +27,7 @@
                 </div>
 
                 <div class="p-4 p-md-5">
-                    @if(app(\App\Services\BookingExchangeService::class)->eligible($booking) || \App\Models\BookingExchange::where('booking_id',$booking->id)->exists())<div class="mb-3"><a class="btn btn-outline-primary" href="{{ route('exchanges.create',$booking) }}">Đổi suất / theo dõi yêu cầu</a><small class="d-block text-muted mt-1">Cùng phim, cùng rạp; trước giờ chiếu hơn 60 phút.</small></div>@endif
+                    @if(app(\App\Services\BookingExchangeService::class)->eligible($booking) || \App\Models\BookingExchange::where('booking_id',$booking->id)->exists())<div class="mb-3"><a class="btn btn-outline-primary" href="{{ route('exchanges.create',$booking) }}">Đổi suất / theo dõi yêu cầu</a><small class="d-block text-muted mt-1">Cùng phim, cùng rạp; trước giờ chiếu ít nhất 12 tiếng.</small></div>@endif
                     <div class="row g-4">
                         <div class="col-md-8">
                             <h3 class="fw-bold">{{ $booking->showtime->movie->title }}</h3>
@@ -109,8 +109,8 @@
                         <article class="card border p-4 text-center ticket-qr-card mx-auto mt-4" style="max-width:460px">
                             <div class="small text-muted">MÃ VẠCH ĐƠN VÉ</div>
                             <div class="fw-bold fs-4 text-brand mb-3">{{ $booking->code }}</div>
-                            <div class="ticket-qr-wrap mx-auto">
-                                <img src="{{ app(\App\Services\TicketBarcode::class)->dataUri($booking) }}" alt="Mã vạch đơn {{ $booking->code }}" style="width:100%;height:auto;max-width:420px">
+                            <div class="ticket-qr-wrap mx-auto" style="width:100%;min-height:0;padding:12px 0;background:#fff">
+                                <img src="{{ app(\App\Services\TicketBarcode::class)->dataUri($booking) }}" alt="Mã vạch đơn {{ $booking->code }}" style="display:block;width:100%;height:auto;max-width:420px;image-rendering:crisp-edges">
                             </div>
                             <div class="mt-3"><strong>Áp dụng cho ghế: {{ $booking->tickets->pluck('seat.label')->join(', ') }}</strong></div>
                             <div class="small text-muted mt-1">Nhân viên quét một lần để check-in toàn bộ ghế của đơn.</div>

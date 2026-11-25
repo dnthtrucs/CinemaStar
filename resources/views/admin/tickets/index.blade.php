@@ -13,13 +13,15 @@
                 <span class="brand-mark"><i class="bi bi-qr-code-scan"></i></span>
                 <div><h2 class="h5 fw-bold mb-1">Quét mã vạch bằng camera</h2><p class="small text-muted mb-0">Một mã vạch cho toàn bộ đơn. Quét mã, xác nhận vé rồi in tại quầy.</p></div>
             </div>
-            <div id="qr-reader" class="rounded overflow-hidden d-none"></div>
+            <div id="scanner-camera-control" class="mb-3" hidden><label for="scanner-camera" class="form-label">Chọn camera (ưu tiên camera sau chính, tránh ống kính góc rộng)</label><select id="scanner-camera" class="form-select"></select></div><div id="qr-reader" class="rounded overflow-hidden d-none"></div>
             <div id="scanner-message" class="small text-muted mb-3">Bấm nút để bật camera sau của điện thoại.</div>
             <button id="start-scanner" class="btn btn-primary w-100" type="button"><i class="bi bi-camera me-2"></i>Mở camera quét mã vạch</button>
+            <div class="d-flex gap-2 mt-2"><button id="stop-scanner" type="button" class="btn btn-outline-secondary" hidden>Tắt camera</button><button id="scanner-torch" type="button" class="btn btn-outline-secondary" aria-pressed="false" hidden>Bật đèn pin</button></div>
+            <p class="small text-muted mt-3">Nếu mã vé đang nằm ngay trên điện thoại này, hãy chọn ảnh mã vạch trong thư viện. Camera không thể quét màn hình của chính điện thoại đang dùng.</p>
             <div class="mt-3">
                 <label for="qr-file" class="form-label small fw-semibold">Hoặc chụp/chọn ảnh mã vạch</label>
                 <input id="qr-file" type="file" accept="image/*" capture="environment" class="form-control">
-                <div class="form-text">Dùng khi điện thoại không mở được camera trực tiếp trên mạng Wi-Fi.</div>
+                <div class="form-text">Dùng ảnh mã vạch gốc từ vé; không cần bật camera trực tiếp.</div>
             </div>
             <form id="scan-form" method="POST" action="{{ $scanRoute }}" class="d-none">@csrf<input id="ticket-token" type="hidden" name="ticket_token"></form>
         </section>
@@ -47,7 +49,7 @@
     </div></div>
 </div>
 @endsection
-
+@push('styles')<style>#qr-reader video{width:100%!important;object-fit:contain!important}#qr-reader{min-width:0;background:#111}#scanner-camera-control[hidden],#stop-scanner[hidden],#scanner-torch[hidden]{display:none!important}</style>@endpush
 @push('scripts')
     @vite('resources/js/checkin.js')
 @endpush

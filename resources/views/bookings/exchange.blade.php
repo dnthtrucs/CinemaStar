@@ -2,7 +2,7 @@
 @section('title','Đổi suất chiếu')
 @section('content')
 <div class="container py-4" style="max-width:900px"><h1 class="h3">Đổi suất — {{ $booking->showtime->movie->title }}</h1>
-<div class="alert alert-info">Đổi cùng phim, cùng rạp, giữ số vị trí và combo. Suất cũ và mới phải còn hơn 60 phút; vé chưa dùng và chưa yêu cầu hoàn. Giá ưu đãi cũ được giữ nguyên, không cộng thêm điểm cho lần đổi. Chênh lệch cần thu bù/hoàn theo chứng từ được quản trị xác nhận. Vé cũ còn hiệu lực trong khi chờ; ghế mới chưa được giữ.</div>
+<div class="alert alert-info">Đổi cùng phim, cùng rạp, giữ số vị trí và combo. Suất cũ và mới phải còn ít nhất 12 tiếng; vé chưa dùng và chưa yêu cầu hoàn. Giá ưu đãi cũ được giữ nguyên, không cộng thêm điểm cho lần đổi. Chênh lệch cần thu bù/hoàn theo chứng từ được quản trị xác nhận. Vé cũ còn hiệu lực trong khi chờ; ghế mới chưa được giữ.</div>
 <p>Đơn {{ $booking->code }} · {{ $booking->quantity }} vị trí · Tổng cũ {{ number_format($booking->total_price) }}₫</p>
 @if(!$eligible)<div class="alert alert-warning">Vé hiện tại không đủ điều kiện lập yêu cầu mới. Bạn vẫn có thể xem lịch sử và rút yêu cầu đang chờ.</div>@elseif($hasPending)<div class="alert alert-info">Bạn có yêu cầu đang chờ. Có thể rút yêu cầu bên dưới để chọn một suất khác; vé hiện tại không thay đổi.</div>@endif
 @if($eligible && !$hasPending)

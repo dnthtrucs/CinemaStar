@@ -22,7 +22,7 @@ class BookingExchangeService
     public function eligible(Booking $booking): bool
     {
         return $booking->status === 'confirmed' && $booking->payment_status === 'paid'
-            && $booking->showtime->status === 'scheduled' && $booking->showtime->starts_at->gt(now()->addHour())
+            && $booking->showtime->status === 'scheduled' && $booking->showtime->starts_at->gte(now()->addHours(12))
             && ! $booking->refundRequest()->exists() && ! $booking->refund_status
             && $booking->tickets()->count() === $booking->quantity
             && ! $booking->tickets()->where(fn ($q) => $q->where('status', '!=', 'valid')->orWhereNotNull('checked_in_at'))->exists();
@@ -31,13 +31,13 @@ class BookingExchangeService
     public function quote(Booking $booking, Showtime $target, array $ids): array
     {
         if (! $this->eligible($booking)) {
-            $this->fail('Chỉ đổi vé đã thanh toán, chưa dùng, chưa yêu cầu hoàn và còn hơn 60 phút trước giờ chiếu.');
+            $this->fail('Chỉ đổi vé đã thanh toán, chưa dùng, chưa yêu cầu hoàn và còn ít nhất 12 tiếng trước giờ chiếu.');
         }
         if ($target->id === $booking->showtime_id || $target->movie_id !== $booking->showtime->movie_id
             || $target->room->cinema_id !== $booking->showtime->room->cinema_id
             || ! $target->room->is_active || ! $target->room->cinema->is_active
-            || $target->status !== 'scheduled' || $target->starts_at->lte(now()->addHour()) || $target->movie->status === 'stopped') {
-            $this->fail('Suất mới phải cùng phim, cùng rạp, còn hoạt động và còn hơn 60 phút.');
+            || $target->status !== 'scheduled' || $target->starts_at->lt(now()->addHours(12)) || $target->movie->status === 'stopped') {
+            $this->fail('Suất mới phải cùng phim, cùng rạp, còn hoạt động và còn ít nhất 12 tiếng.');
         }
         $ids = array_values(array_unique(array_map('intval', $ids)));
         $seats = $target->room->seats()->where('is_active', true)->whereIn('id', $ids)->get();

@@ -17,7 +17,7 @@ class BookingExchangeController extends Controller
         $eligible = $service->eligible($booking);
         $hasPending = BookingExchange::where('booking_id', $booking->id)->where('status', 'pending')->exists();
         $targets = ! $eligible || $hasPending ? collect() : Showtime::available()->where('movie_id', $booking->showtime->movie_id)->where('id', '!=', $booking->showtime_id)
-            ->where('starts_at', '>', now()->addHour())->whereHas('room', fn ($q) => $q->where('cinema_id', $booking->showtime->room->cinema_id)->where('is_active', true))
+            ->where('starts_at', '>=', now()->addHours(12))->whereHas('room', fn ($q) => $q->where('cinema_id', $booking->showtime->room->cinema_id)->where('is_active', true))
             ->with('room')->orderBy('starts_at')->get();
         $target = $targets->firstWhere('id', (int) $request->query('target'));
         if ($target) {
