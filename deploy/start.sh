@@ -9,6 +9,7 @@ php artisan config:clear
 php deploy/preflight.php
 php artisan migrate --force
 php artisan cinema:publish-catalog --no-interaction
+php artisan vouchers:holidays --no-interaction
 # Never seed automatically: demo seeders contain fixed, publicly documented passwords.
 php artisan storage:link --force
 php artisan config:cache

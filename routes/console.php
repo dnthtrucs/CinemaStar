@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Services\BookingService;
 use App\Services\DeploymentCatalogService;
+use App\Services\HolidayVoucherService;
 use App\Services\MovieScheduleService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -61,3 +62,8 @@ Artisan::command('cinema:publish-catalog', function (DeploymentCatalogService $s
 
     return 0;
 })->purpose('Publish the bundled public catalog once without replacing bookings or users');
+
+Artisan::command('vouchers:holidays', function (HolidayVoucherService $service) {
+    $this->info('Đã tạo '.$service->sync().' voucher dịp lễ.');
+})->purpose('Tạo voucher lễ Tết sắp tới, không thay đổi mã đã có');
+Schedule::command('vouchers:holidays')->dailyAt('00:05')->timezone('Asia/Ho_Chi_Minh')->withoutOverlapping();

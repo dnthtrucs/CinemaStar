@@ -3,6 +3,7 @@
 @section('content')
     <div class="container py-4">
         @include('admin.partials.nav')
+        <div class="alert alert-info">Voucher lễ được tự tạo trước 30 ngày: giảm 20.000₫ cho đơn từ 150.000₫; Tết giảm 30.000₫ cho đơn từ 200.000₫. Mỗi mã tối đa 200 lượt, mỗi khách một lần. Có thể tắt mã bên dưới. Lịch Tết âm đã cấu hình đến năm 2027.</div>
         <div class="row g-4">
             <div class="col-lg-4">
                 <div class="card shadow-soft p-4">
@@ -81,6 +82,7 @@
                                         </td>
                                         <td>{{ $voucher->used_count }}{{ $voucher->usage_limit ? '/'.$voucher->usage_limit : '' }}</td>
                                         <td>
+                                            <div class="small">{{ $voucher->starts_at?->format('d/m/Y H:i') ?? 'Ngay lập tức' }}<br>đến {{ $voucher->ends_at?->format('d/m/Y H:i') ?? 'Không giới hạn' }}</div>
                                             <form method="POST" action="{{ route('admin.vouchers.update',$voucher) }}">
                                                 @csrf
                                                 @method('PATCH')

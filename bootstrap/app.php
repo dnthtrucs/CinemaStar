@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\StaffMiddleware;
+use App\Http\Middleware\SyncHolidayVouchers;
 use App\Http\Middleware\SyncMovieSchedule;
 use App\Http\Middleware\TrustCloudProxies;
 use Illuminate\Foundation\Application;
@@ -18,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->replace(TrustProxies::class, TrustCloudProxies::class);
-        $middleware->web(prepend: [SyncMovieSchedule::class], append: [EnsureUserIsActive::class]);
+        $middleware->web(prepend: [SyncMovieSchedule::class, SyncHolidayVouchers::class], append: [EnsureUserIsActive::class]);
 
         $middleware->alias([
             'admin' => AdminMiddleware::class,

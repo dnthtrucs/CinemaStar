@@ -28,6 +28,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieReviewController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\ProfileController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\TicketVerificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/uu-dai', [OfferController::class, 'index'])->name('offers.index');
 Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 Route::get('/movies/{movie}', [MovieController::class, 'show'])->name('movies.show');
 Route::get('/cinemas', [CinemaController::class, 'index'])->name('cinemas.index');
