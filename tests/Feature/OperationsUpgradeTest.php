@@ -128,7 +128,7 @@ class OperationsUpgradeTest extends TestCase
         $b->showtime->movie->update(['title' => 'Tên phim cập nhật']);
         $log = ActivityLog::where('action', 'catalog.updated')->firstOrFail();
         $this->assertSame('Phim Test', $log->properties['before']['title']);
-        $this->assertSame('Tên phim cập nhật',$log->properties['after']['title']);
-        $this->get(route('admin.activity-logs.index',['group' => 'catalog']))->assertOk()->assertSee('Tên phim cập nhật');
+        $this->assertSame('Tên phim cập nhật', $log->properties['after']['title']);
+        $this->get(route('admin.activity-logs.index', ['group' => 'catalog']))->assertOk()->assertSee('Tên phim cập nhật');
     }
 }
