@@ -98,6 +98,8 @@ class ExchangeReceiptTest extends TestCase
         $old = $b->code;
         app(BookingExchangeService::class)->resolve($ex, $admin, true, 'Đã kiểm tra điều kiện', null);
         Notification::fake();
+        $this->actingAs($admin)->get(route('admin.bookings.index', ['q' => $old]))->assertOk()->assertSee($b->fresh()->code);
+        $this->get(route('admin.bookings.show', $b))->assertOk()->assertSee($old);
         $this->actingAs($admin)->post(route('admin.bookings.receipt-email', $b))->assertRedirect();
         Notification::assertSentTo($b->user, PaymentReceiptNotification::class, fn ($notice) => $notice->previousCode === $old && $notice->booking->code === $b->fresh()->code);
     }

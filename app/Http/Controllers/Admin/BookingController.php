@@ -12,7 +12,8 @@ class BookingController extends Controller
     {
         $bookings = Booking::with(['user', 'showtime.movie', 'showtime.room.cinema'])
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->when($request->filled('q'), fn ($query) => $query->where('code', 'like', '%'.$request->string('q').'%'))
+            ->when($request->filled('q'), fn ($query) => $query->where(fn ($match) => $match->where('code', 'like', '%'.$request->string('q').'%')
+                ->orWhereHas('exchanges', fn ($exchange) => $exchange->where('status', 'approved')->where('snapshot->code', 'like', '%'.$request->string('q').'%'))))
             ->latest()->paginate(20)->withQueryString();
 
         return view('admin.bookings.index', compact('bookings'));

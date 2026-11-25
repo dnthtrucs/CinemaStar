@@ -43,6 +43,11 @@ class Booking extends Model
         return $this->hasMany(Ticket::class);
     }
 
+    public function exchanges()
+    {
+        return $this->hasMany(BookingExchange::class);
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class);
