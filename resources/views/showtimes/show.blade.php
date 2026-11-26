@@ -14,11 +14,11 @@
 #bookingSummary>.fs-5{font-size:1rem!important;margin:3px 0 7px}
 #bookingSummary .btn{min-height:44px;font-size:1rem;padding:10px}
 .mobile-next{display:block}.seat-zoom-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0 0 12px}
-#seatStep .seat-row{min-width:0!important;justify-content:center!important;padding-right:0;gap:calc(3px * var(--seat-zoom,1));margin:5px 0}
-#seatStep .seat{width:calc(clamp(20px,5.8vw,34px) * var(--seat-zoom,1));height:calc(29px * var(--seat-zoom,1));font-size:calc(10px * var(--seat-zoom,1));border-radius:5px 5px 3px 3px}
-#seatStep .seat.couple{width:calc((clamp(20px,5.8vw,34px) * 2 + 3px) * var(--seat-zoom,1))}
+#seatStep .seat-row{width:max-content;min-width:0!important;justify-content:flex-start!important;padding:3px 4px;gap:calc(3px * var(--seat-zoom,1));margin:5px auto}
+#seatStep .seat{width:calc(clamp(20px,5.8vw,34px) * var(--seat-zoom,1))!important;height:calc(29px * var(--seat-zoom,1))!important;font-size:calc(10px * var(--seat-zoom,1));border-radius:5px 5px 3px 3px}
+#seatStep .seat.couple{width:calc((clamp(20px,5.8vw,34px) * 2 + 3px) * var(--seat-zoom,1))!important}
 #seatStep .seat.couple small{font-size:calc(7px * var(--seat-zoom,1))}
-#seatStep .row-label{width:16px;font-size:11px;flex-shrink:0}
+#seatStep .row-label{width:20px;font-size:11px;flex-shrink:0;position:sticky;left:0;z-index:2;background:#fff;align-self:stretch;display:grid;place-items:center;box-shadow:2px 0 3px #ffffffcc}
 #nextConcessions{display:none!important}
 }
 </style>
