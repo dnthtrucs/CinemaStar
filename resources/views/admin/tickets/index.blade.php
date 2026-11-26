@@ -35,13 +35,16 @@
 
         @if(request('code'))
             @if($booking)
-                <div class="card shadow-soft p-4"><div class="d-flex justify-content-between align-items-start"><div><div class="small text-muted">MÃ ĐƠN / MÃ CHECK-IN</div><h3 class="fw-bold">{{ $booking->code }}</h3></div><span class="badge h-100 text-bg-{{ $booking->ticket_status_badge }}">{{ $booking->ticket_status_label }}</span></div><hr>
+                <div id="ticket-result" class="card shadow-soft p-4" style="scroll-margin-top: 110px"><div class="d-flex justify-content-between align-items-start"><div><div class="small text-muted">MÃ ĐƠN / MÃ CHECK-IN</div><h3 class="fw-bold">{{ $booking->code }}</h3></div><span class="badge h-100 text-bg-{{ $booking->ticket_status_badge }}">{{ $booking->ticket_status_label }}</span></div><hr>
                 <p><strong>Khách:</strong> {{ $booking->user->name }}</p><p><strong>Phim:</strong> {{ $booking->showtime->movie->title }}</p><p><strong>Suất:</strong> {{ $booking->showtime->starts_at->format('H:i d/m/Y') }}</p><p><strong>Ghế:</strong> {{ $booking->tickets->pluck('seat.label')->filter()->join(', ') }}</p>
                 @include('bookings.concessions')
                 @if($booking->ticket_status === 'checked_in' && $booking->showtime->status === 'scheduled')
                     <a href="{{ route('bookings.print', $booking) }}" target="_blank" rel="noopener" class="btn btn-dark btn-lg w-100 mb-3"><i class="bi bi-printer me-2"></i>In vé tại quầy</a>
                 @endif
-                @if($booking->ticket_status === 'valid')<form method="POST" action="{{ auth()->user()->isAdmin() ? route('admin.tickets.update', $booking) : route('staff.tickets.update', $booking) }}">@csrf @method('PATCH')<button class="btn btn-primary btn-lg w-100">Xác nhận check-in toàn bộ ghế</button></form>
+                @if($booking->ticket_status === 'valid')
+                <div class="alert alert-info">Bước tiếp theo: xác nhận check-in toàn bộ ghế. Sau đó bấm <strong>In vé tại quầy</strong> để mở bản in.</div>
+                <button type="button" class="btn btn-outline-secondary w-100 mb-3" disabled><i class="bi bi-printer me-2"></i>In vé tại quầy — cần xác nhận check-in</button>
+                <form method="POST" action="{{ auth()->user()->isAdmin() ? route('admin.tickets.update', $booking) : route('staff.tickets.update', $booking) }}">@csrf @method('PATCH')<button class="btn btn-primary btn-lg w-100">Xác nhận check-in toàn bộ ghế</button></form>
                 @elseif($booking->ticket_status === 'checked_in')<div class="alert alert-success mb-0">Đơn đã check-in lúc {{ $booking->tickets->first()?->checked_in_at?->format('H:i · d/m/Y') }}.</div>
                 @elseif($booking->ticket_status === 'expired')<div class="alert alert-secondary mb-0">Suất chiếu đã kết thúc. Vé chưa check-in đã hết hiệu lực.</div>
                 @else<div class="alert alert-warning mb-0">Đơn này chưa đủ điều kiện để check-in.</div>@endif</div>

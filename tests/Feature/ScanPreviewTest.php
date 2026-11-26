@@ -16,11 +16,14 @@ class ScanPreviewTest extends TestCase
         $b = $this->bookingFor();
         $b->update(['status' => 'confirmed', 'payment_status' => 'paid']);
         $staff = User::factory()->create(['role' => 'staff', 'cinema_id' => $b->showtime->room->cinema_id]);
-        $this->actingAs($staff)->post(route('staff.tickets.scan'), ['ticket_token' => $b->barcodeValue(), 'intent' => 'preview'])->assertRedirect(route('staff.tickets.index', ['code' => $b->code]));
+        $this->actingAs($staff)->post(route('staff.tickets.scan'), ['ticket_token' => $b->barcodeValue(), 'intent' => 'preview'])->assertRedirect(route('staff.tickets.index', ['code' => $b->code]).'#ticket-result');
         $this->assertDatabaseMissing('tickets', ['booking_id' => $b->id, 'status' => 'used']);
         $this->assertDatabaseCount('ticket_checkins', 0);
         $this->get(route('staff.tickets.index', ['code' => $b->code]))->assertOk()->assertSee($b->code)->assertSee('Xác nhận check-in toàn bộ ghế');
-        $this->patch(route('staff.tickets.update', $b))->assertRedirect();
+        $this->patch(route('staff.tickets.update', $b))->assertRedirect(route('staff.tickets.index', ['code' => $b->code]).'#ticket-result');
+        $this->get(route('staff.tickets.index', ['code' => $b->code]))->assertOk()
+            ->assertSee('href="'.route('bookings.print', $b).'"', false)->assertSee('In vé tại quầy');
+        $this->get(route('bookings.print', $b))->assertOk()->assertSee('window.print()', false);
         $this->assertDatabaseHas('tickets', ['booking_id' => $b->id, 'status' => 'used']);
         $this->assertDatabaseCount('ticket_checkins', 1);
     }

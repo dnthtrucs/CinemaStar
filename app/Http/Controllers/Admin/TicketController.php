@@ -33,7 +33,9 @@ class TicketController extends Controller
     {
         $this->checkInBooking($booking);
 
-        return back()->with('success', "Check-in thành công cho toàn bộ ghế trong đơn {$booking->code}.");
+        return redirect()->route(auth()->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])
+            ->withFragment('ticket-result')
+            ->with('success', "Check-in thành công cho toàn bộ ghế trong đơn {$booking->code}. Bấm In vé tại quầy để in vé.");
     }
 
     public function scan(Request $request)
@@ -92,7 +94,7 @@ class TicketController extends Controller
         $this->authorizeCinema($booking);
 
         return redirect()->route($request->user()->isAdmin() ? 'admin.tickets.index' : 'staff.tickets.index', ['code' => $booking->code])
-            ->with('success', 'Đã đọc mã vé '.$booking->code.'. Kiểm tra thông tin và bấm Xác nhận check-in.');
+            ->withFragment('ticket-result')->with('success', 'Đã đọc mã vé '.$booking->code.'. Kiểm tra thông tin và bấm Xác nhận check-in.');
     }
 
     private function checkInTicket(Ticket $ticket): void
